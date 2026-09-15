@@ -29,9 +29,9 @@ export const navItems: NavItem[] = [
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
   { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
-  { label: 'Campanhas', icon: 'Megaphone', href: '#' },
-  { label: 'Relatórios', icon: 'LineChart', href: '#' },
-  { label: 'Configurações', icon: 'Settings', href: '#' },
+  { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
+  { label: 'Relatórios', icon: 'LineChart', href: '/relatorios' },
+  { label: 'Configurações', icon: 'Settings', href: '/configuracoes' },
 ]
 
 export const kpis = [
@@ -1354,4 +1354,433 @@ export const financeGoals: {
     target: '100',
     percent: 81,
   },
+]
+
+// ----- Campanhas page -----
+
+export type CampaignStatus = 'ativa' | 'agendada' | 'concluida' | 'rascunho'
+
+export type Campaign = {
+  id: string
+  name: string
+  description: string
+  icon: string
+  audience: string
+  sendDate: string
+  sendTime: string
+  sent: number
+  responses: number
+  responseRate: number
+  status: CampaignStatus
+}
+
+export const campaignStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
+}[] = [
+  {
+    label: 'Campanhas ativas',
+    value: '4',
+    icon: 'Send',
+    trend: 33,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Mensagens enviadas',
+    value: '2.850',
+    icon: 'MessageCircle',
+    trend: 52,
+    trendUp: true,
+    tone: 'info',
+  },
+  {
+    label: 'Taxa de resposta',
+    value: '32%',
+    icon: 'Users',
+    trend: 18,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Clientes recuperados',
+    value: '112',
+    icon: 'Crown',
+    trend: 41,
+    trendUp: true,
+    tone: 'gold',
+  },
+]
+
+export const campaignFilters: {
+  key: CampaignStatus | 'todas'
+  label: string
+  count: number
+}[] = [
+  { key: 'todas', label: 'Todas', count: 8 },
+  { key: 'ativa', label: 'Ativas', count: 3 },
+  { key: 'agendada', label: 'Agendadas', count: 2 },
+  { key: 'concluida', label: 'Concluídas', count: 2 },
+  { key: 'rascunho', label: 'Rascunhos', count: 1 },
+]
+
+export const campaigns: Campaign[] = [
+  {
+    id: 'cp1',
+    name: 'Promoção de corte',
+    description: 'Corte + Barba com 20% OFF',
+    icon: 'Scissors',
+    audience: 'Todos os clientes',
+    sendDate: '15/09/2026',
+    sendTime: '14:00',
+    sent: 520,
+    responses: 186,
+    responseRate: 36,
+    status: 'ativa',
+  },
+  {
+    id: 'cp2',
+    name: 'Aniversariantes do mês',
+    description: 'Parabéns pelo seu dia!',
+    icon: 'Cake',
+    audience: 'Aniversariantes',
+    sendDate: '10/09/2026',
+    sendTime: '09:00',
+    sent: 120,
+    responses: 48,
+    responseRate: 40,
+    status: 'concluida',
+  },
+  {
+    id: 'cp3',
+    name: 'Clientes em risco',
+    description: 'Sentimos sua falta!',
+    icon: 'Clock',
+    audience: 'Clientes inativos 30+ dias',
+    sendDate: '12/09/2026',
+    sendTime: '10:00',
+    sent: 430,
+    responses: 98,
+    responseRate: 23,
+    status: 'agendada',
+  },
+  {
+    id: 'cp4',
+    name: 'Clientes VIP',
+    description: 'Atendimento exclusivo',
+    icon: 'Crown',
+    audience: 'Clientes VIP',
+    sendDate: '20/09/2026',
+    sendTime: '16:00',
+    sent: 180,
+    responses: 72,
+    responseRate: 40,
+    status: 'rascunho',
+  },
+  {
+    id: 'cp5',
+    name: 'Novo serviço',
+    description: 'Conheça nosso alisamento',
+    icon: 'Sparkles',
+    audience: 'Todos os clientes',
+    sendDate: '05/09/2026',
+    sendTime: '11:00',
+    sent: 320,
+    responses: 96,
+    responseRate: 30,
+    status: 'concluida',
+  },
+  {
+    id: 'cp6',
+    name: 'Volte a agendar',
+    description: 'Seu horário está te esperando',
+    icon: 'CalendarClock',
+    audience: 'Clientes inativos 45+ dias',
+    sendDate: '18/09/2026',
+    sendTime: '09:30',
+    sent: 260,
+    responses: 74,
+    responseRate: 28,
+    status: 'ativa',
+  },
+  {
+    id: 'cp7',
+    name: 'Indique um amigo',
+    description: 'Ganhe 15% de desconto',
+    icon: 'Gift',
+    audience: 'Clientes ativos',
+    sendDate: '22/09/2026',
+    sendTime: '13:00',
+    sent: 410,
+    responses: 132,
+    responseRate: 32,
+    status: 'ativa',
+  },
+  {
+    id: 'cp8',
+    name: 'Horários de terça',
+    description: 'Agenda aberta com desconto',
+    icon: 'Clock',
+    audience: 'Todos os clientes',
+    sendDate: '25/09/2026',
+    sendTime: '08:00',
+    sent: 610,
+    responses: 154,
+    responseRate: 25,
+    status: 'agendada',
+  },
+]
+
+export const suggestedCampaigns: {
+  id: string
+  title: string
+  icon: string
+  tone: 'gold' | 'success' | 'info' | 'danger'
+}[] = [
+  {
+    id: 'sg1',
+    title: 'Recuperar clientes que não voltam há 30 dias',
+    icon: 'Users',
+    tone: 'info',
+  },
+  {
+    id: 'sg2',
+    title: 'Parabenizar aniversariantes',
+    icon: 'Gift',
+    tone: 'danger',
+  },
+  {
+    id: 'sg3',
+    title: 'Lembrar clientes do próximo corte',
+    icon: 'CalendarClock',
+    tone: 'info',
+  },
+  {
+    id: 'sg4',
+    title: 'Oferecer horário disponível',
+    icon: 'Clock',
+    tone: 'gold',
+  },
+  {
+    id: 'sg5',
+    title: 'Campanha para clientes VIP',
+    icon: 'Crown',
+    tone: 'gold',
+  },
+]
+
+export const campaignPerformance: {
+  label: string
+  value: string
+  percent: string
+  icon: string
+  tone: 'gold' | 'success' | 'info'
+}[] = [
+  { label: 'Enviadas', value: '520', percent: '', icon: 'Send', tone: 'gold' },
+  { label: 'Entregues', value: '498', percent: '96%', icon: 'CircleCheck', tone: 'success' },
+  { label: 'Lidas', value: '420', percent: '81%', icon: 'Eye', tone: 'info' },
+  { label: 'Respondidas', value: '186', percent: '36%', icon: 'MessageCircle', tone: 'success' },
+  { label: 'Agendamentos', value: '48', percent: '9%', icon: 'CalendarCheck', tone: 'gold' },
+]
+
+// normalized daily responses for the mini bar chart (30 days)
+export const campaignDailyResponses: { day: string; value: number }[] = [
+  { day: '01', value: 8 },
+  { day: '02', value: 12 },
+  { day: '03', value: 10 },
+  { day: '04', value: 15 },
+  { day: '05', value: 18 },
+  { day: '06', value: 14 },
+  { day: '07', value: 20 },
+  { day: '08', value: 22 },
+  { day: '09', value: 17 },
+  { day: '10', value: 24 },
+  { day: '11', value: 19 },
+  { day: '12', value: 26 },
+  { day: '13', value: 21 },
+  { day: '14', value: 30 },
+  { day: '15', value: 42 },
+  { day: '16', value: 28 },
+  { day: '17', value: 24 },
+  { day: '18', value: 32 },
+  { day: '19', value: 22 },
+  { day: '20', value: 27 },
+  { day: '21', value: 19 },
+  { day: '22', value: 25 },
+  { day: '23', value: 21 },
+  { day: '24', value: 18 },
+  { day: '25', value: 23 },
+  { day: '26', value: 16 },
+  { day: '27', value: 20 },
+  { day: '28', value: 14 },
+  { day: '29', value: 17 },
+  { day: '30', value: 12 },
+]
+
+// ----- Relatórios page -----
+
+export const reportPeriods: string[] = [
+  'Hoje',
+  'Últimos 7 dias',
+  'Este mês',
+  'Mês anterior',
+  'Personalizado',
+]
+
+export const reportStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
+}[] = [
+  {
+    label: 'Receita total',
+    value: 'R$ 3.240,00',
+    icon: 'CircleDollarSign',
+    trend: 12,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Total de atendimentos',
+    value: '81',
+    icon: 'Scissors',
+    trend: 10,
+    trendUp: true,
+    tone: 'info',
+  },
+  {
+    label: 'Novos clientes',
+    value: '12',
+    icon: 'Users',
+    trend: 33,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Ticket médio',
+    value: 'R$ 40,00',
+    icon: 'Star',
+    trend: 8,
+    trendUp: true,
+    tone: 'gold',
+  },
+]
+
+export type ReportDailyPoint = {
+  day: string
+  revenue: number
+  sessions: number
+}
+
+// Revenue (R$) and sessions per day across the month
+export const reportRevenueSessions: ReportDailyPoint[] = [
+  { day: '01', revenue: 120, sessions: 3 },
+  { day: '02', revenue: 260, sessions: 6 },
+  { day: '03', revenue: 480, sessions: 9 },
+  { day: '04', revenue: 520, sessions: 11 },
+  { day: '05', revenue: 380, sessions: 8 },
+  { day: '06', revenue: 440, sessions: 10 },
+  { day: '07', revenue: 300, sessions: 7 },
+  { day: '08', revenue: 560, sessions: 12 },
+  { day: '09', revenue: 940, sessions: 19 },
+  { day: '10', revenue: 900, sessions: 20 },
+  { day: '11', revenue: 620, sessions: 13 },
+  { day: '12', revenue: 560, sessions: 12 },
+  { day: '13', revenue: 720, sessions: 15 },
+  { day: '14', revenue: 1240, sessions: 24 },
+  { day: '15', revenue: 900, sessions: 18 },
+  { day: '16', revenue: 640, sessions: 14 },
+  { day: '17', revenue: 700, sessions: 15 },
+  { day: '18', revenue: 820, sessions: 17 },
+  { day: '19', revenue: 1120, sessions: 22 },
+  { day: '20', revenue: 900, sessions: 19 },
+  { day: '21', revenue: 760, sessions: 16 },
+  { day: '22', revenue: 1300, sessions: 25 },
+  { day: '23', revenue: 1740, sessions: 33 },
+  { day: '24', revenue: 980, sessions: 21 },
+  { day: '25', revenue: 1300, sessions: 26 },
+  { day: '26', revenue: 720, sessions: 15 },
+  { day: '27', revenue: 640, sessions: 13 },
+  { day: '28', revenue: 900, sessions: 18 },
+  { day: '29', revenue: 700, sessions: 15 },
+  { day: '30', revenue: 660, sessions: 14 },
+]
+
+export const reportTopServices: {
+  name: string
+  count: number
+  percent: number
+}[] = [
+  { name: 'Corte', count: 42, percent: 52 },
+  { name: 'Barba', count: 18, percent: 22 },
+  { name: 'Corte + Barba', count: 12, percent: 15 },
+  { name: 'Sobrancelha', count: 6, percent: 7 },
+  { name: 'Platinado', count: 3, percent: 4 },
+]
+
+export const reportClientsByType: {
+  name: string
+  count: number
+  percent: number
+  color: string
+}[] = [
+  { name: 'Clientes fiéis', count: 48, percent: 39, color: '#d4af37' },
+  { name: 'Novos clientes', count: 32, percent: 26, color: '#9ca3af' },
+  { name: 'Clientes em risco', count: 28, percent: 23, color: '#a97142' },
+  { name: 'Inativos', count: 16, percent: 13, color: '#b4453a' },
+]
+
+export const reportClientsTotal = 124
+
+export const reportClientsGrowth: { month: string; value: number }[] = [
+  { month: 'Jan', value: 28 },
+  { month: 'Fev', value: 38 },
+  { month: 'Mar', value: 52 },
+  { month: 'Abr', value: 63 },
+  { month: 'Mai', value: 78 },
+  { month: 'Jun', value: 92 },
+  { month: 'Jul', value: 108 },
+  { month: 'Ago', value: 124 },
+]
+
+export const reportPaymentMethods: {
+  name: string
+  percent: number
+  color: string
+}[] = [
+  { name: 'Dinheiro', percent: 45, color: '#d4af37' },
+  { name: 'PIX', percent: 32, color: '#9ca3af' },
+  { name: 'Cartão de débito', percent: 18, color: '#a97142' },
+  { name: 'Cartão de crédito', percent: 5, color: '#b4453a' },
+]
+
+export const reportPaymentTotal = 'R$ 3.240'
+
+export const reportTopClients: {
+  name: string
+  sessions: number
+  spent: number
+}[] = [
+  { name: 'João Silva', sessions: 12, spent: 480 },
+  { name: 'Carlos Eduardo', sessions: 10, spent: 400 },
+  { name: 'Matheus Lima', sessions: 8, spent: 320 },
+  { name: 'Rafael Santos', sessions: 7, spent: 280 },
+  { name: 'Gabriel Ferreira', sessions: 6, spent: 240 },
+]
+
+export const reportWeekdayPerformance: { day: string; value: number }[] = [
+  { day: 'Segunda', value: 12 },
+  { day: 'Terça', value: 14 },
+  { day: 'Quarta', value: 16 },
+  { day: 'Quinta', value: 18 },
+  { day: 'Sexta', value: 22 },
+  { day: 'Sábado', value: 6 },
+  { day: 'Domingo', value: 0 },
 ]
