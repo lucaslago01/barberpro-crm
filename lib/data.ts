@@ -30,7 +30,7 @@ export const navItems: NavItem[] = [
   { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
   { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
-  { label: 'Relatórios', icon: 'LineChart', href: '#' },
+  { label: 'Relatórios', icon: 'LineChart', href: '/relatorios' },
   { label: 'Configurações', icon: 'Settings', href: '#' },
 ]
 
@@ -1619,4 +1619,168 @@ export const campaignDailyResponses: { day: string; value: number }[] = [
   { day: '28', value: 14 },
   { day: '29', value: 17 },
   { day: '30', value: 12 },
+]
+
+// ----- Relatórios page -----
+
+export const reportPeriods: string[] = [
+  'Hoje',
+  'Últimos 7 dias',
+  'Este mês',
+  'Mês anterior',
+  'Personalizado',
+]
+
+export const reportStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
+}[] = [
+  {
+    label: 'Receita total',
+    value: 'R$ 3.240,00',
+    icon: 'CircleDollarSign',
+    trend: 12,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Total de atendimentos',
+    value: '81',
+    icon: 'Scissors',
+    trend: 10,
+    trendUp: true,
+    tone: 'info',
+  },
+  {
+    label: 'Novos clientes',
+    value: '12',
+    icon: 'Users',
+    trend: 33,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Ticket médio',
+    value: 'R$ 40,00',
+    icon: 'Star',
+    trend: 8,
+    trendUp: true,
+    tone: 'gold',
+  },
+]
+
+export type ReportDailyPoint = {
+  day: string
+  revenue: number
+  sessions: number
+}
+
+// Revenue (R$) and sessions per day across the month
+export const reportRevenueSessions: ReportDailyPoint[] = [
+  { day: '01', revenue: 120, sessions: 3 },
+  { day: '02', revenue: 260, sessions: 6 },
+  { day: '03', revenue: 480, sessions: 9 },
+  { day: '04', revenue: 520, sessions: 11 },
+  { day: '05', revenue: 380, sessions: 8 },
+  { day: '06', revenue: 440, sessions: 10 },
+  { day: '07', revenue: 300, sessions: 7 },
+  { day: '08', revenue: 560, sessions: 12 },
+  { day: '09', revenue: 940, sessions: 19 },
+  { day: '10', revenue: 900, sessions: 20 },
+  { day: '11', revenue: 620, sessions: 13 },
+  { day: '12', revenue: 560, sessions: 12 },
+  { day: '13', revenue: 720, sessions: 15 },
+  { day: '14', revenue: 1240, sessions: 24 },
+  { day: '15', revenue: 900, sessions: 18 },
+  { day: '16', revenue: 640, sessions: 14 },
+  { day: '17', revenue: 700, sessions: 15 },
+  { day: '18', revenue: 820, sessions: 17 },
+  { day: '19', revenue: 1120, sessions: 22 },
+  { day: '20', revenue: 900, sessions: 19 },
+  { day: '21', revenue: 760, sessions: 16 },
+  { day: '22', revenue: 1300, sessions: 25 },
+  { day: '23', revenue: 1740, sessions: 33 },
+  { day: '24', revenue: 980, sessions: 21 },
+  { day: '25', revenue: 1300, sessions: 26 },
+  { day: '26', revenue: 720, sessions: 15 },
+  { day: '27', revenue: 640, sessions: 13 },
+  { day: '28', revenue: 900, sessions: 18 },
+  { day: '29', revenue: 700, sessions: 15 },
+  { day: '30', revenue: 660, sessions: 14 },
+]
+
+export const reportTopServices: {
+  name: string
+  count: number
+  percent: number
+}[] = [
+  { name: 'Corte', count: 42, percent: 52 },
+  { name: 'Barba', count: 18, percent: 22 },
+  { name: 'Corte + Barba', count: 12, percent: 15 },
+  { name: 'Sobrancelha', count: 6, percent: 7 },
+  { name: 'Platinado', count: 3, percent: 4 },
+]
+
+export const reportClientsByType: {
+  name: string
+  count: number
+  percent: number
+  color: string
+}[] = [
+  { name: 'Clientes fiéis', count: 48, percent: 39, color: '#d4af37' },
+  { name: 'Novos clientes', count: 32, percent: 26, color: '#9ca3af' },
+  { name: 'Clientes em risco', count: 28, percent: 23, color: '#a97142' },
+  { name: 'Inativos', count: 16, percent: 13, color: '#b4453a' },
+]
+
+export const reportClientsTotal = 124
+
+export const reportClientsGrowth: { month: string; value: number }[] = [
+  { month: 'Jan', value: 28 },
+  { month: 'Fev', value: 38 },
+  { month: 'Mar', value: 52 },
+  { month: 'Abr', value: 63 },
+  { month: 'Mai', value: 78 },
+  { month: 'Jun', value: 92 },
+  { month: 'Jul', value: 108 },
+  { month: 'Ago', value: 124 },
+]
+
+export const reportPaymentMethods: {
+  name: string
+  percent: number
+  color: string
+}[] = [
+  { name: 'Dinheiro', percent: 45, color: '#d4af37' },
+  { name: 'PIX', percent: 32, color: '#9ca3af' },
+  { name: 'Cartão de débito', percent: 18, color: '#a97142' },
+  { name: 'Cartão de crédito', percent: 5, color: '#b4453a' },
+]
+
+export const reportPaymentTotal = 'R$ 3.240'
+
+export const reportTopClients: {
+  name: string
+  sessions: number
+  spent: number
+}[] = [
+  { name: 'João Silva', sessions: 12, spent: 480 },
+  { name: 'Carlos Eduardo', sessions: 10, spent: 400 },
+  { name: 'Matheus Lima', sessions: 8, spent: 320 },
+  { name: 'Rafael Santos', sessions: 7, spent: 280 },
+  { name: 'Gabriel Ferreira', sessions: 6, spent: 240 },
+]
+
+export const reportWeekdayPerformance: { day: string; value: number }[] = [
+  { day: 'Segunda', value: 12 },
+  { day: 'Terça', value: 14 },
+  { day: 'Quarta', value: 16 },
+  { day: 'Quinta', value: 18 },
+  { day: 'Sexta', value: 22 },
+  { day: 'Sábado', value: 6 },
+  { day: 'Domingo', value: 0 },
 ]
