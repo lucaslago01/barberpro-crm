@@ -31,7 +31,7 @@ export const navItems: NavItem[] = [
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
   { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
   { label: 'Relatórios', icon: 'LineChart', href: '/relatorios' },
-  { label: 'Configurações', icon: 'Settings', href: '#' },
+  { label: 'Configurações', icon: 'Settings', href: '/configuracoes' },
 ]
 
 export const kpis = [
