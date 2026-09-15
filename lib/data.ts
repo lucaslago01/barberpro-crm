@@ -29,7 +29,7 @@ export const navItems: NavItem[] = [
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
   { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
-  { label: 'Campanhas', icon: 'Megaphone', href: '#' },
+  { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
   { label: 'Relatórios', icon: 'LineChart', href: '#' },
   { label: 'Configurações', icon: 'Settings', href: '#' },
 ]
@@ -1354,4 +1354,269 @@ export const financeGoals: {
     target: '100',
     percent: 81,
   },
+]
+
+// ----- Campanhas page -----
+
+export type CampaignStatus = 'ativa' | 'agendada' | 'concluida' | 'rascunho'
+
+export type Campaign = {
+  id: string
+  name: string
+  description: string
+  icon: string
+  audience: string
+  sendDate: string
+  sendTime: string
+  sent: number
+  responses: number
+  responseRate: number
+  status: CampaignStatus
+}
+
+export const campaignStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
+}[] = [
+  {
+    label: 'Campanhas ativas',
+    value: '4',
+    icon: 'Send',
+    trend: 33,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Mensagens enviadas',
+    value: '2.850',
+    icon: 'MessageCircle',
+    trend: 52,
+    trendUp: true,
+    tone: 'info',
+  },
+  {
+    label: 'Taxa de resposta',
+    value: '32%',
+    icon: 'Users',
+    trend: 18,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Clientes recuperados',
+    value: '112',
+    icon: 'Crown',
+    trend: 41,
+    trendUp: true,
+    tone: 'gold',
+  },
+]
+
+export const campaignFilters: {
+  key: CampaignStatus | 'todas'
+  label: string
+  count: number
+}[] = [
+  { key: 'todas', label: 'Todas', count: 8 },
+  { key: 'ativa', label: 'Ativas', count: 3 },
+  { key: 'agendada', label: 'Agendadas', count: 2 },
+  { key: 'concluida', label: 'Concluídas', count: 2 },
+  { key: 'rascunho', label: 'Rascunhos', count: 1 },
+]
+
+export const campaigns: Campaign[] = [
+  {
+    id: 'cp1',
+    name: 'Promoção de corte',
+    description: 'Corte + Barba com 20% OFF',
+    icon: 'Scissors',
+    audience: 'Todos os clientes',
+    sendDate: '15/09/2026',
+    sendTime: '14:00',
+    sent: 520,
+    responses: 186,
+    responseRate: 36,
+    status: 'ativa',
+  },
+  {
+    id: 'cp2',
+    name: 'Aniversariantes do mês',
+    description: 'Parabéns pelo seu dia!',
+    icon: 'Cake',
+    audience: 'Aniversariantes',
+    sendDate: '10/09/2026',
+    sendTime: '09:00',
+    sent: 120,
+    responses: 48,
+    responseRate: 40,
+    status: 'concluida',
+  },
+  {
+    id: 'cp3',
+    name: 'Clientes em risco',
+    description: 'Sentimos sua falta!',
+    icon: 'Clock',
+    audience: 'Clientes inativos 30+ dias',
+    sendDate: '12/09/2026',
+    sendTime: '10:00',
+    sent: 430,
+    responses: 98,
+    responseRate: 23,
+    status: 'agendada',
+  },
+  {
+    id: 'cp4',
+    name: 'Clientes VIP',
+    description: 'Atendimento exclusivo',
+    icon: 'Crown',
+    audience: 'Clientes VIP',
+    sendDate: '20/09/2026',
+    sendTime: '16:00',
+    sent: 180,
+    responses: 72,
+    responseRate: 40,
+    status: 'rascunho',
+  },
+  {
+    id: 'cp5',
+    name: 'Novo serviço',
+    description: 'Conheça nosso alisamento',
+    icon: 'Sparkles',
+    audience: 'Todos os clientes',
+    sendDate: '05/09/2026',
+    sendTime: '11:00',
+    sent: 320,
+    responses: 96,
+    responseRate: 30,
+    status: 'concluida',
+  },
+  {
+    id: 'cp6',
+    name: 'Volte a agendar',
+    description: 'Seu horário está te esperando',
+    icon: 'CalendarClock',
+    audience: 'Clientes inativos 45+ dias',
+    sendDate: '18/09/2026',
+    sendTime: '09:30',
+    sent: 260,
+    responses: 74,
+    responseRate: 28,
+    status: 'ativa',
+  },
+  {
+    id: 'cp7',
+    name: 'Indique um amigo',
+    description: 'Ganhe 15% de desconto',
+    icon: 'Gift',
+    audience: 'Clientes ativos',
+    sendDate: '22/09/2026',
+    sendTime: '13:00',
+    sent: 410,
+    responses: 132,
+    responseRate: 32,
+    status: 'ativa',
+  },
+  {
+    id: 'cp8',
+    name: 'Horários de terça',
+    description: 'Agenda aberta com desconto',
+    icon: 'Clock',
+    audience: 'Todos os clientes',
+    sendDate: '25/09/2026',
+    sendTime: '08:00',
+    sent: 610,
+    responses: 154,
+    responseRate: 25,
+    status: 'agendada',
+  },
+]
+
+export const suggestedCampaigns: {
+  id: string
+  title: string
+  icon: string
+  tone: 'gold' | 'success' | 'info' | 'danger'
+}[] = [
+  {
+    id: 'sg1',
+    title: 'Recuperar clientes que não voltam há 30 dias',
+    icon: 'Users',
+    tone: 'info',
+  },
+  {
+    id: 'sg2',
+    title: 'Parabenizar aniversariantes',
+    icon: 'Gift',
+    tone: 'danger',
+  },
+  {
+    id: 'sg3',
+    title: 'Lembrar clientes do próximo corte',
+    icon: 'CalendarClock',
+    tone: 'info',
+  },
+  {
+    id: 'sg4',
+    title: 'Oferecer horário disponível',
+    icon: 'Clock',
+    tone: 'gold',
+  },
+  {
+    id: 'sg5',
+    title: 'Campanha para clientes VIP',
+    icon: 'Crown',
+    tone: 'gold',
+  },
+]
+
+export const campaignPerformance: {
+  label: string
+  value: string
+  percent: string
+  icon: string
+  tone: 'gold' | 'success' | 'info'
+}[] = [
+  { label: 'Enviadas', value: '520', percent: '', icon: 'Send', tone: 'gold' },
+  { label: 'Entregues', value: '498', percent: '96%', icon: 'CircleCheck', tone: 'success' },
+  { label: 'Lidas', value: '420', percent: '81%', icon: 'Eye', tone: 'info' },
+  { label: 'Respondidas', value: '186', percent: '36%', icon: 'MessageCircle', tone: 'success' },
+  { label: 'Agendamentos', value: '48', percent: '9%', icon: 'CalendarCheck', tone: 'gold' },
+]
+
+// normalized daily responses for the mini bar chart (30 days)
+export const campaignDailyResponses: { day: string; value: number }[] = [
+  { day: '01', value: 8 },
+  { day: '02', value: 12 },
+  { day: '03', value: 10 },
+  { day: '04', value: 15 },
+  { day: '05', value: 18 },
+  { day: '06', value: 14 },
+  { day: '07', value: 20 },
+  { day: '08', value: 22 },
+  { day: '09', value: 17 },
+  { day: '10', value: 24 },
+  { day: '11', value: 19 },
+  { day: '12', value: 26 },
+  { day: '13', value: 21 },
+  { day: '14', value: 30 },
+  { day: '15', value: 42 },
+  { day: '16', value: 28 },
+  { day: '17', value: 24 },
+  { day: '18', value: 32 },
+  { day: '19', value: 22 },
+  { day: '20', value: 27 },
+  { day: '21', value: 19 },
+  { day: '22', value: 25 },
+  { day: '23', value: 21 },
+  { day: '24', value: 18 },
+  { day: '25', value: 23 },
+  { day: '26', value: 16 },
+  { day: '27', value: 20 },
+  { day: '28', value: 14 },
+  { day: '29', value: 17 },
+  { day: '30', value: 12 },
 ]

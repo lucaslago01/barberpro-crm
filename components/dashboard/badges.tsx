@@ -15,6 +15,7 @@ import type {
   RecoverStatus,
   AgendaStatus,
   ServiceStatus,
+  CampaignStatus,
 } from '@/lib/data'
 
 const statusConfig: Record<
@@ -226,6 +227,55 @@ export function ServiceStatusBadge({ status }: { status: ServiceStatus }) {
         </span>
       ) : (
         <Icon className="size-3.5" />
+      )}
+      {label}
+    </span>
+  )
+}
+
+const campaignStatusConfig: Record<
+  CampaignStatus,
+  { label: string; className: string; dot: string; pulse?: boolean }
+> = {
+  ativa: {
+    label: 'Ativa',
+    className: 'text-success bg-success/12 border-success/25',
+    dot: 'bg-success',
+    pulse: true,
+  },
+  agendada: {
+    label: 'Agendada',
+    className: 'text-info bg-info/12 border-info/25',
+    dot: 'bg-info',
+  },
+  concluida: {
+    label: 'Concluída',
+    className: 'text-muted-foreground bg-white/5 border-border',
+    dot: 'bg-muted-foreground/60',
+  },
+  rascunho: {
+    label: 'Rascunho',
+    className: 'text-warning bg-warning/12 border-warning/25',
+    dot: 'bg-warning',
+  },
+}
+
+export function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
+  const { label, className, dot, pulse } = campaignStatusConfig[status]
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        className,
+      )}
+    >
+      {pulse ? (
+        <span className="relative flex size-1.5">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/70" />
+          <span className={cn('relative inline-flex size-1.5 rounded-full', dot)} />
+        </span>
+      ) : (
+        <span className={cn('size-1.5 rounded-full', dot)} />
       )}
       {label}
     </span>
