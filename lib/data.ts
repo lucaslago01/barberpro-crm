@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
   { label: 'Dashboard', icon: 'LayoutDashboard', href: '/' },
   { label: 'Agenda', icon: 'CalendarDays', href: '/agenda' },
   { label: 'Clientes', icon: 'Users', href: '/clientes' },
-  { label: 'Atendimentos', icon: 'Scissors', href: '#' },
+  { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
   { label: 'WhatsApp', icon: 'MessageCircle', href: '#', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '#' },
   { label: 'Campanhas', icon: 'Megaphone', href: '#' },
@@ -616,4 +616,255 @@ export const clientInteractions: {
   { name: 'João Silva', action: 'Mensagem enviada', time: 'há 2 horas' },
   { name: 'Pedro Ferreira', action: 'Agendamento realizado', time: 'há 5 horas' },
   { name: 'Marcos Costa', action: 'Confirmou o horário', time: 'há 1 dia' },
+]
+
+// ----- Atendimentos page -----
+
+export type ServiceStatus =
+  | 'concluido'
+  | 'em_andamento'
+  | 'agendado'
+  | 'cancelado'
+  | 'nao_compareceu'
+
+export type ServiceRecord = {
+  id: string
+  client: string
+  whatsapp: string
+  service: string
+  date: string
+  time: string
+  duration: string
+  price: number
+  status: ServiceStatus
+  barber: string
+  rating: number | null
+}
+
+export const serviceStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
+}[] = [
+  {
+    label: 'Atendimentos realizados',
+    value: '48',
+    icon: 'CalendarCheck',
+    trend: 12,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Faturamento no período',
+    value: 'R$ 2.480,00',
+    icon: 'CircleDollarSign',
+    trend: 18,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Clientes atendidos',
+    value: '42',
+    icon: 'Users',
+    trend: 9,
+    trendUp: true,
+    tone: 'info',
+  },
+  {
+    label: 'Avaliação média',
+    value: '4,9',
+    icon: 'Star',
+    trend: 3,
+    trendUp: true,
+    tone: 'gold',
+  },
+]
+
+export const serviceStatusFilters: {
+  key: ServiceStatus | 'todos'
+  label: string
+  count: number
+}[] = [
+  { key: 'todos', label: 'Todos', count: 48 },
+  { key: 'concluido', label: 'Concluídos', count: 42 },
+  { key: 'em_andamento', label: 'Em andamento', count: 3 },
+  { key: 'cancelado', label: 'Cancelados', count: 2 },
+  { key: 'nao_compareceu', label: 'Não compareceu', count: 1 },
+]
+
+export const servicesList: ServiceRecord[] = [
+  {
+    id: 's1',
+    client: 'João Silva',
+    whatsapp: '(41) 99123-4567',
+    service: 'Corte',
+    date: '15/09/2025',
+    time: '09:00',
+    duration: '40 min',
+    price: 40,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 5.0,
+  },
+  {
+    id: 's2',
+    client: 'Marcos Costa',
+    whatsapp: '(41) 98876-5432',
+    service: 'Corte + Barba',
+    date: '15/09/2025',
+    time: '10:00',
+    duration: '60 min',
+    price: 72,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 5.0,
+  },
+  {
+    id: 's3',
+    client: 'Pedro Ferreira',
+    whatsapp: '(41) 99765-4321',
+    service: 'Sobrancelha',
+    date: '15/09/2025',
+    time: '11:20',
+    duration: '20 min',
+    price: 25,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 4.8,
+  },
+  {
+    id: 's4',
+    client: 'Rafael Almeida',
+    whatsapp: '(41) 99654-3210',
+    service: 'Corte',
+    date: '15/09/2025',
+    time: '13:00',
+    duration: '40 min',
+    price: 40,
+    status: 'em_andamento',
+    barber: 'Lucas',
+    rating: null,
+  },
+  {
+    id: 's5',
+    client: 'Gabriel Vieira',
+    whatsapp: '(41) 99543-2109',
+    service: 'Corte + Barba',
+    date: '15/09/2025',
+    time: '14:30',
+    duration: '60 min',
+    price: 72,
+    status: 'agendado',
+    barber: 'Lucas',
+    rating: null,
+  },
+  {
+    id: 's6',
+    client: 'Lucas Carvalho',
+    whatsapp: '(41) 99432-1098',
+    service: 'Corte',
+    date: '15/09/2025',
+    time: '16:00',
+    duration: '40 min',
+    price: 40,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 5.0,
+  },
+  {
+    id: 's7',
+    client: 'Felipe Martins',
+    whatsapp: '(41) 99321-0987',
+    service: 'Barba',
+    date: '14/09/2025',
+    time: '18:20',
+    duration: '30 min',
+    price: 35,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 4.9,
+  },
+  {
+    id: 's8',
+    client: 'Bruno Rocha',
+    whatsapp: '(41) 99210-9876',
+    service: 'Corte + Barba',
+    date: '14/09/2025',
+    time: '17:00',
+    duration: '60 min',
+    price: 72,
+    status: 'cancelado',
+    barber: 'Lucas',
+    rating: null,
+  },
+  {
+    id: 's9',
+    client: 'Carlos Mendes',
+    whatsapp: '(41) 99109-8765',
+    service: 'Corte',
+    date: '14/09/2025',
+    time: '15:40',
+    duration: '40 min',
+    price: 40,
+    status: 'nao_compareceu',
+    barber: 'Lucas',
+    rating: null,
+  },
+  {
+    id: 's10',
+    client: 'Daniel Nunes',
+    whatsapp: '(41) 99098-7654',
+    service: 'Corte + Sobrancelha',
+    date: '14/09/2025',
+    time: '14:00',
+    duration: '70 min',
+    price: 85,
+    status: 'concluido',
+    barber: 'Lucas',
+    rating: 5.0,
+  },
+]
+
+export const topServices: { name: string; count: number; percent: number }[] = [
+  { name: 'Corte', count: 28, percent: 58 },
+  { name: 'Corte + Barba', count: 12, percent: 25 },
+  { name: 'Barba', count: 5, percent: 10 },
+  { name: 'Sobrancelha', count: 3, percent: 6 },
+  { name: 'Outros', count: 0, percent: 0 },
+]
+
+export const revenueByService: { name: string; value: number }[] = [
+  { name: 'Corte', value: 1120 },
+  { name: 'Corte + Barba', value: 864 },
+  { name: 'Barba', value: 175 },
+  { name: 'Sobrancelha', value: 75 },
+  { name: 'Outros', value: 0 },
+]
+
+export const latestServices: {
+  name: string
+  service: string
+  price: number
+  time: string
+  status: ServiceStatus
+}[] = [
+  { name: 'João Silva', service: 'Corte', price: 40, time: 'há 2 horas', status: 'concluido' },
+  { name: 'Marcos Costa', service: 'Corte + Barba', price: 72, time: 'há 3 horas', status: 'concluido' },
+  { name: 'Pedro Ferreira', service: 'Sobrancelha', price: 25, time: 'há 4 horas', status: 'concluido' },
+  { name: 'Rafael Almeida', service: 'Corte', price: 40, time: 'há 5 horas', status: 'cancelado' },
+  { name: 'Gabriel Vieira', service: 'Corte + Barba', price: 72, time: 'há 6 horas', status: 'agendado' },
+]
+
+export const recentReviews: {
+  name: string
+  rating: number
+  comment: string
+  time: string
+}[] = [
+  { name: 'João Silva', rating: 5, comment: 'Sempre um ótimo atendimento!', time: 'há 2 horas' },
+  { name: 'Marcos Costa', rating: 5, comment: 'Melhor barbearia da região!', time: 'há 3 horas' },
+  { name: 'Pedro Ferreira', rating: 5, comment: 'Serviço impecável.', time: 'há 4 horas' },
 ]
