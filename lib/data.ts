@@ -27,7 +27,7 @@ export const navItems: NavItem[] = [
   { label: 'Agenda', icon: 'CalendarDays', href: '/agenda' },
   { label: 'Clientes', icon: 'Users', href: '/clientes' },
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
-  { label: 'WhatsApp', icon: 'MessageCircle', href: '#', badge: 3 },
+  { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '#' },
   { label: 'Campanhas', icon: 'Megaphone', href: '#' },
   { label: 'Relatórios', icon: 'LineChart', href: '#' },
@@ -867,4 +867,276 @@ export const recentReviews: {
   { name: 'João Silva', rating: 5, comment: 'Sempre um ótimo atendimento!', time: 'há 2 horas' },
   { name: 'Marcos Costa', rating: 5, comment: 'Melhor barbearia da região!', time: 'há 3 horas' },
   { name: 'Pedro Ferreira', rating: 5, comment: 'Serviço impecável.', time: 'há 4 horas' },
+]
+
+// ----- WhatsApp page -----
+
+export type ChatMessage = {
+  id: string
+  text: string
+  time: string
+  from: 'client' | 'me'
+  read?: boolean
+  dayLabel?: string
+}
+
+export type ChatProfile = {
+  fullName: string
+  phone: string
+  lastVisit: string
+  totalVisits: number
+  totalSpent: number
+  tags: string[]
+}
+
+export type ChatHistoryItem = {
+  service: string
+  date: string
+  price: number
+}
+
+export type ChatAppointmentItem = {
+  service: string
+  date: string
+  time: string
+  status: AgendaStatus
+}
+
+export type Conversation = {
+  id: string
+  name: string
+  phone: string
+  preview: string
+  time: string
+  unread?: number
+  archived?: boolean
+  online?: boolean
+  status: 'Cliente ativo' | 'Cliente VIP' | 'Novo contato'
+  messages: ChatMessage[]
+  profile: ChatProfile
+  history: ChatHistoryItem[]
+  appointments: ChatAppointmentItem[]
+}
+
+export const conversations: Conversation[] = [
+  {
+    id: 'w1',
+    name: 'João Silva',
+    phone: '+55 41 98765-4321',
+    preview: 'Opa, qual o valor do corte hoje?',
+    time: '10:24',
+    unread: 2,
+    online: true,
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Fala, tudo bem?', time: '10:20', dayLabel: 'Hoje' },
+      { id: 'm2', from: 'client', text: 'Opa, qual o valor do corte hoje?', time: '10:24' },
+      {
+        id: 'm3',
+        from: 'me',
+        text: 'Fala, João! Tudo bem? O corte está R$ 40,00.',
+        time: '10:25',
+        read: true,
+      },
+      {
+        id: 'm4',
+        from: 'me',
+        text: 'Quer que eu verifique os horários disponíveis para você hoje?',
+        time: '10:25',
+        read: true,
+      },
+    ],
+    profile: {
+      fullName: 'João Silva',
+      phone: '+55 41 98765-4321',
+      lastVisit: '12/08/2026',
+      totalVisits: 8,
+      totalSpent: 320,
+      tags: ['Frequente', 'Barba'],
+    },
+    history: [
+      { service: 'Corte + Barba', date: '12/08/2026', price: 65 },
+      { service: 'Corte', date: '25/07/2026', price: 40 },
+      { service: 'Corte', date: '08/07/2026', price: 40 },
+    ],
+    appointments: [
+      { service: 'Corte', date: '18/09/2026', time: '15:00', status: 'agendado' },
+    ],
+  },
+  {
+    id: 'w2',
+    name: 'Matheus Lima',
+    phone: '+55 41 99876-1234',
+    preview: 'Quero agendar para amanhã',
+    time: '09:56',
+    unread: 1,
+    online: true,
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Bom dia!', time: '09:54', dayLabel: 'Hoje' },
+      { id: 'm2', from: 'client', text: 'Quero agendar para amanhã', time: '09:56' },
+    ],
+    profile: {
+      fullName: 'Matheus Lima',
+      phone: '+55 41 99876-1234',
+      lastVisit: '30/07/2026',
+      totalVisits: 5,
+      totalSpent: 200,
+      tags: ['Corte'],
+    },
+    history: [
+      { service: 'Corte', date: '30/07/2026', price: 40 },
+      { service: 'Corte', date: '10/07/2026', price: 40 },
+    ],
+    appointments: [],
+  },
+  {
+    id: 'w3',
+    name: 'Carlos Eduardo',
+    phone: '+55 41 99654-7788',
+    preview: 'Valeu! Até lá 👍',
+    time: 'Ontem',
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'me', text: 'Confirmado para quinta às 16h!', time: '17:40', dayLabel: 'Ontem', read: true },
+      { id: 'm2', from: 'client', text: 'Valeu! Até lá 👍', time: '17:42' },
+    ],
+    profile: {
+      fullName: 'Carlos Eduardo',
+      phone: '+55 41 99654-7788',
+      lastVisit: '02/08/2026',
+      totalVisits: 11,
+      totalSpent: 495,
+      tags: ['Frequente'],
+    },
+    history: [
+      { service: 'Corte + Barba', date: '02/08/2026', price: 65 },
+      { service: 'Corte', date: '18/07/2026', price: 40 },
+    ],
+    appointments: [
+      { service: 'Corte + Barba', date: '19/09/2026', time: '16:00', status: 'confirmado' },
+    ],
+  },
+  {
+    id: 'w4',
+    name: 'Rafael Souza',
+    phone: '+55 41 99321-5566',
+    preview: 'Tem horário para as 18h?',
+    time: 'Ontem',
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Boa tarde!', time: '14:10', dayLabel: 'Ontem' },
+      { id: 'm2', from: 'client', text: 'Tem horário para as 18h?', time: '14:11' },
+    ],
+    profile: {
+      fullName: 'Rafael Souza',
+      phone: '+55 41 99321-5566',
+      lastVisit: '20/07/2026',
+      totalVisits: 4,
+      totalSpent: 160,
+      tags: ['Corte'],
+    },
+    history: [{ service: 'Corte', date: '20/07/2026', price: 40 }],
+    appointments: [],
+  },
+  {
+    id: 'w5',
+    name: 'Pedro Henrique',
+    phone: '+55 41 99112-9090',
+    preview: 'Gostei do corte, parabéns!',
+    time: 'Seg',
+    status: 'Cliente VIP',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Gostei do corte, parabéns!', time: '11:20', dayLabel: 'Segunda' },
+      { id: 'm2', from: 'me', text: 'Obrigado, Pedro! Volte sempre.', time: '11:25', read: true },
+    ],
+    profile: {
+      fullName: 'Pedro Henrique',
+      phone: '+55 41 99112-9090',
+      lastVisit: '13/09/2026',
+      totalVisits: 22,
+      totalSpent: 1210,
+      tags: ['VIP', 'Barba'],
+    },
+    history: [
+      { service: 'Corte + Barba', date: '13/09/2026', price: 65 },
+      { service: 'Corte + Barba', date: '28/08/2026', price: 65 },
+    ],
+    appointments: [],
+  },
+  {
+    id: 'w6',
+    name: 'Lucas Martins',
+    phone: '+55 41 99788-2211',
+    preview: 'Pode ser esse mesmo horário',
+    time: 'Seg',
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'me', text: 'Consigo te encaixar sábado às 10h.', time: '09:00', dayLabel: 'Segunda', read: true },
+      { id: 'm2', from: 'client', text: 'Pode ser esse mesmo horário', time: '09:05' },
+    ],
+    profile: {
+      fullName: 'Lucas Martins',
+      phone: '+55 41 99788-2211',
+      lastVisit: '05/08/2026',
+      totalVisits: 6,
+      totalSpent: 260,
+      tags: ['Corte'],
+    },
+    history: [{ service: 'Corte', date: '05/08/2026', price: 40 }],
+    appointments: [
+      { service: 'Corte', date: '20/09/2026', time: '10:00', status: 'agendado' },
+    ],
+  },
+  {
+    id: 'w7',
+    name: 'Gabriel Almeida',
+    phone: '+55 41 99500-3322',
+    preview: 'Manda o pix por favor',
+    time: 'Seg',
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'client', text: 'Manda o pix por favor', time: '16:30', dayLabel: 'Segunda' },
+    ],
+    profile: {
+      fullName: 'Gabriel Almeida',
+      phone: '+55 41 99500-3322',
+      lastVisit: '01/08/2026',
+      totalVisits: 9,
+      totalSpent: 405,
+      tags: ['Frequente'],
+    },
+    history: [{ service: 'Corte + Barba', date: '01/08/2026', price: 65 }],
+    appointments: [],
+  },
+  {
+    id: 'w8',
+    name: 'Thiago Costa',
+    phone: '+55 41 99277-4455',
+    preview: 'Blz, obrigado!',
+    time: 'Dom',
+    status: 'Cliente ativo',
+    messages: [
+      { id: 'm1', from: 'me', text: 'Seu horário está confirmado!', time: '19:10', dayLabel: 'Domingo', read: true },
+      { id: 'm2', from: 'client', text: 'Blz, obrigado!', time: '19:12' },
+    ],
+    profile: {
+      fullName: 'Thiago Costa',
+      phone: '+55 41 99277-4455',
+      lastVisit: '28/07/2026',
+      totalVisits: 7,
+      totalSpent: 300,
+      tags: ['Corte'],
+    },
+    history: [{ service: 'Corte', date: '28/07/2026', price: 40 }],
+    appointments: [],
+  },
+]
+
+export const whatsappQuickActions: { label: string; icon: string }[] = [
+  { label: 'Agendar horário', icon: 'CalendarPlus' },
+  { label: 'Enviar localização', icon: 'MapPin' },
+  { label: 'Tabela de preços', icon: 'ReceiptText' },
+  { label: 'Horários disponíveis', icon: 'Clock' },
+  { label: 'Agradecimento', icon: 'Heart' },
 ]
