@@ -1,0 +1,62 @@
+'use client'
+
+import { Bell, CalendarDays, ChevronDown, Menu } from 'lucide-react'
+import { UserAvatar } from './user-avatar'
+
+export function Topbar({
+  onMenuClick,
+  title = 'Olá, Lucas!',
+  subtitle = 'Confira o resumo da sua barbearia hoje.',
+}: {
+  onMenuClick?: () => void
+  title?: string
+  subtitle?: string
+}) {
+  return (
+    <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex items-start gap-3">
+        <button
+          onClick={onMenuClick}
+          aria-label="Abrir menu"
+          className="mt-1 grid size-9 place-items-center rounded-lg border border-border bg-card text-muted-foreground lg:hidden"
+        >
+          <Menu className="size-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {title}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm text-muted-foreground md:flex">
+          <CalendarDays className="size-4 text-gold" />
+          <span className="whitespace-nowrap">
+            Segunda-feira, 15 de Setembro de 2025
+          </span>
+        </div>
+
+        <button
+          aria-label="Notificações"
+          className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Bell className="size-5" />
+          <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-gold text-[10px] font-bold text-primary-foreground">
+            2
+          </span>
+        </button>
+
+        <button className="flex items-center gap-2.5 rounded-xl border border-border bg-card py-1.5 pl-1.5 pr-3 transition-colors hover:bg-accent">
+          <UserAvatar name="Lucas Barbeiro" size="md" ring />
+          <div className="hidden text-left sm:block">
+            <p className="text-sm font-semibold leading-tight">Lucas</p>
+            <p className="text-xs text-muted-foreground">Barbeiro</p>
+          </div>
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </button>
+      </div>
+    </header>
+  )
+}

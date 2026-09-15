@@ -1,0 +1,70 @@
+'use client'
+
+import { useState, type ReactNode } from 'react'
+import { X } from 'lucide-react'
+import { Sidebar } from './sidebar'
+import { Topbar } from './topbar'
+import { cn } from '@/lib/utils'
+
+export function AppShell({
+  children,
+  title,
+  subtitle,
+}: {
+  children: ReactNode
+  title?: string
+  subtitle?: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop sidebar */}
+      <div className="hidden w-64 shrink-0 border-r border-sidebar-border lg:block">
+        <div className="sticky top-0 h-screen">
+          <Sidebar />
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className={cn(
+              'absolute inset-y-0 left-0 w-64 border-r border-sidebar-border shadow-2xl',
+            )}
+          >
+            <button
+              aria-label="Fechar menu"
+              onClick={() => setOpen(false)}
+              className="absolute right-3 top-3 z-10 grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-white/5"
+            >
+              <X className="size-5" />
+            </button>
+            <Sidebar />
+          </div>
+        </div>
+      )}
+
+      {/* Main */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8">
+          <Topbar
+            onMenuClick={() => setOpen(true)}
+            title={title}
+            subtitle={subtitle}
+          />
+          <main className="mt-6">{children}</main>
+          <footer className="mt-8 flex items-center justify-between border-t border-border py-4 text-[11px] tracking-[0.2em] text-muted-foreground/60">
+            <span className="font-serif font-semibold">BARBERPRO</span>
+            <span>MAIS QUE UM CORTE, UMA EXPERIÊNCIA.</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  )
+}
