@@ -28,7 +28,7 @@ export const navItems: NavItem[] = [
   { label: 'Clientes', icon: 'Users', href: '/clientes' },
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
   { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
-  { label: 'Financeiro', icon: 'CircleDollarSign', href: '#' },
+  { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
   { label: 'Campanhas', icon: 'Megaphone', href: '#' },
   { label: 'Relatórios', icon: 'LineChart', href: '#' },
   { label: 'Configurações', icon: 'Settings', href: '#' },
@@ -1139,4 +1139,219 @@ export const whatsappQuickActions: { label: string; icon: string }[] = [
   { label: 'Tabela de preços', icon: 'ReceiptText' },
   { label: 'Horários disponíveis', icon: 'Clock' },
   { label: 'Agradecimento', icon: 'Heart' },
+]
+
+// ----- Financeiro page -----
+
+export const financePeriod = '01/08/2026 - 31/08/2026'
+
+export const financeStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  tone: 'success' | 'danger' | 'gold' | 'info'
+  trendTone: 'success' | 'danger'
+}[] = [
+  {
+    label: 'Receita total',
+    value: 'R$ 3.240,00',
+    icon: 'TrendingUp',
+    trend: 12,
+    tone: 'success',
+    trendTone: 'success',
+  },
+  {
+    label: 'Despesas totais',
+    value: 'R$ 620,00',
+    icon: 'TrendingDown',
+    trend: 8,
+    tone: 'danger',
+    trendTone: 'danger',
+  },
+  {
+    label: 'Lucro líquido',
+    value: 'R$ 2.620,00',
+    icon: 'CircleDollarSign',
+    trend: 15,
+    tone: 'gold',
+    trendTone: 'success',
+  },
+  {
+    label: 'Total de atendimentos',
+    value: '81',
+    icon: 'CalendarCheck',
+    trend: 10,
+    tone: 'info',
+    trendTone: 'success',
+  },
+]
+
+// Daily revenue (gold) vs expense (gray) for the bar chart — values in R$
+export const financeDaily: { day: string; revenue: number; expense: number }[] = [
+  { day: '01', revenue: 480, expense: 180 },
+  { day: '02', revenue: 390, expense: 120 },
+  { day: '03', revenue: 560, expense: 220 },
+  { day: '04', revenue: 300, expense: 90 },
+  { day: '05', revenue: 580, expense: 240 },
+  { day: '06', revenue: 470, expense: 160 },
+  { day: '07', revenue: 540, expense: 140 },
+  { day: '08', revenue: 600, expense: 300 },
+  { day: '09', revenue: 520, expense: 120 },
+  { day: '10', revenue: 470, expense: 110 },
+  { day: '11', revenue: 560, expense: 160 },
+  { day: '12', revenue: 610, expense: 210 },
+  { day: '13', revenue: 420, expense: 120 },
+  { day: '14', revenue: 600, expense: 200 },
+  { day: '15', revenue: 520, expense: 140 },
+  { day: '16', revenue: 470, expense: 110 },
+  { day: '17', revenue: 610, expense: 210 },
+  { day: '18', revenue: 540, expense: 140 },
+  { day: '19', revenue: 470, expense: 110 },
+  { day: '20', revenue: 560, expense: 160 },
+  { day: '21', revenue: 660, expense: 260 },
+  { day: '22', revenue: 470, expense: 110 },
+  { day: '23', revenue: 690, expense: 190 },
+  { day: '24', revenue: 540, expense: 140 },
+  { day: '25', revenue: 800, expense: 300 },
+  { day: '26', revenue: 600, expense: 200 },
+  { day: '27', revenue: 470, expense: 170 },
+  { day: '28', revenue: 560, expense: 160 },
+  { day: '29', revenue: 760, expense: 260 },
+  { day: '30', revenue: 540, expense: 140 },
+  { day: '31', revenue: 560, expense: 160 },
+]
+
+export const financeCategories: {
+  name: string
+  percent: number
+  value: number
+  color: string
+}[] = [
+  { name: 'Cortes', percent: 62, value: 2008, color: 'oklch(0.8 0.12 84)' },
+  { name: 'Barba', percent: 18, value: 583, color: 'oklch(0.86 0.11 92)' },
+  { name: 'Sobrancelha', percent: 8, value: 259, color: 'oklch(0.7 0.09 96)' },
+  { name: 'Produtos', percent: 6, value: 194, color: 'oklch(0.6 0.02 80)' },
+  { name: 'Outros', percent: 6, value: 196, color: 'oklch(0.44 0.015 80)' },
+]
+
+export type FinanceTransactionType = 'entrada' | 'saida'
+
+export type FinanceTransaction = {
+  id: string
+  date: string
+  description: string
+  category: string
+  categoryIcon: string
+  type: FinanceTransactionType
+  value: number
+}
+
+export const financeTransactions: FinanceTransaction[] = [
+  {
+    id: 'f1',
+    date: '31/08/2026',
+    description: 'Corte - João Silva',
+    category: 'Cortes',
+    categoryIcon: 'Scissors',
+    type: 'entrada',
+    value: 40,
+  },
+  {
+    id: 'f2',
+    date: '31/08/2026',
+    description: 'Produto - Pomada',
+    category: 'Produtos',
+    categoryIcon: 'ShoppingBag',
+    type: 'entrada',
+    value: 60,
+  },
+  {
+    id: 'f3',
+    date: '30/08/2026',
+    description: 'Aluguel',
+    category: 'Despesas',
+    categoryIcon: 'Home',
+    type: 'saida',
+    value: 300,
+  },
+  {
+    id: 'f4',
+    date: '30/08/2026',
+    description: 'Barba - Matheus Lima',
+    category: 'Barba',
+    categoryIcon: 'Brush',
+    type: 'entrada',
+    value: 50,
+  },
+  {
+    id: 'f5',
+    date: '29/08/2026',
+    description: 'Internet',
+    category: 'Despesas',
+    categoryIcon: 'Wifi',
+    type: 'saida',
+    value: 120,
+  },
+  {
+    id: 'f6',
+    date: '29/08/2026',
+    description: 'Corte - Carlos Eduardo',
+    category: 'Cortes',
+    categoryIcon: 'Scissors',
+    type: 'entrada',
+    value: 40,
+  },
+  {
+    id: 'f7',
+    date: '28/08/2026',
+    description: 'Sobrancelha - Rafael',
+    category: 'Sobrancelha',
+    categoryIcon: 'Eye',
+    type: 'entrada',
+    value: 30,
+  },
+  {
+    id: 'f8',
+    date: '28/08/2026',
+    description: 'Energia',
+    category: 'Despesas',
+    categoryIcon: 'Zap',
+    type: 'saida',
+    value: 200,
+  },
+]
+
+export const financeQuickActions: {
+  label: string
+  icon: string
+  tone: 'success' | 'danger' | 'muted'
+}[] = [
+  { label: 'Nova entrada', icon: 'ArrowUpRight', tone: 'success' },
+  { label: 'Nova saída', icon: 'ArrowDownRight', tone: 'danger' },
+  { label: 'Cadastrar despesa', icon: 'FileText', tone: 'muted' },
+  { label: 'Enviar relatório', icon: 'BarChart3', tone: 'muted' },
+]
+
+export const financeGoals: {
+  label: string
+  icon: string
+  current: string
+  target: string
+  percent: number
+}[] = [
+  {
+    label: 'Meta de receita',
+    icon: 'TrendingUp',
+    current: 'R$ 3.240,00',
+    target: 'R$ 4.000,00',
+    percent: 81,
+  },
+  {
+    label: 'Meta de atendimentos',
+    icon: 'Scissors',
+    current: '81',
+    target: '100',
+    percent: 81,
+  },
 ]
