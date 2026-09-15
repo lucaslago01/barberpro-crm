@@ -10,10 +10,12 @@ export function AppShell({
   children,
   title,
   subtitle,
+  headerAction,
 }: {
   children: ReactNode
   title?: string
   subtitle?: string
+  headerAction?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
 
@@ -57,6 +59,7 @@ export function AppShell({
             onMenuClick={() => setOpen(true)}
             title={title}
             subtitle={subtitle}
+            action={headerAction}
           />
           <main className="mt-6">{children}</main>
           <footer className="mt-8 flex items-center justify-between border-t border-border py-4 text-[11px] tracking-[0.2em] text-muted-foreground/60">

@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { Bell, CalendarDays, ChevronDown, Menu } from 'lucide-react'
 import { UserAvatar } from './user-avatar'
 
@@ -7,10 +8,12 @@ export function Topbar({
   onMenuClick,
   title = 'Olá, Lucas!',
   subtitle = 'Confira o resumo da sua barbearia hoje.',
+  action,
 }: {
   onMenuClick?: () => void
   title?: string
   subtitle?: string
+  action?: ReactNode
 }) {
   return (
     <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -56,6 +59,8 @@ export function Topbar({
           </div>
           <ChevronDown className="size-4 text-muted-foreground" />
         </button>
+
+        {action}
       </div>
     </header>
   )

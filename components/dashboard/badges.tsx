@@ -11,8 +11,10 @@ import { cn } from '@/lib/utils'
 import type {
   AppointmentStatus,
   ClientTag,
+  ClientStatus,
   RecoverStatus,
   AgendaStatus,
+  ServiceStatus,
 } from '@/lib/data'
 
 const statusConfig: Record<
@@ -76,6 +78,47 @@ export function ClientTagBadge({ tag }: { tag: ClientTag }) {
   )
 }
 
+const clientStatusConfig: Record<
+  ClientStatus,
+  { label: string; className: string; dot: string }
+> = {
+  ativo: {
+    label: 'Ativo',
+    className: 'text-success bg-success/12 border-success/25',
+    dot: 'bg-success',
+  },
+  vip: {
+    label: 'VIP',
+    className: 'text-gold bg-gold/12 border-gold/30',
+    dot: 'bg-gold',
+  },
+  'em risco': {
+    label: 'Em risco',
+    className: 'text-danger bg-danger/12 border-danger/25',
+    dot: 'bg-danger',
+  },
+  inativo: {
+    label: 'Inativo',
+    className: 'text-muted-foreground bg-white/5 border-border',
+    dot: 'bg-muted-foreground/60',
+  },
+}
+
+export function ClientStatusBadge({ status }: { status: ClientStatus }) {
+  const { label, className, dot } = clientStatusConfig[status]
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        className,
+      )}
+    >
+      <span className={cn('size-1.5 rounded-full', dot)} />
+      {label}
+    </span>
+  )
+}
+
 const agendaStatusConfig: Record<
   AgendaStatus,
   { label: string; className: string; icon: typeof Check; pulse?: boolean }
@@ -115,6 +158,60 @@ const agendaStatusConfig: Record<
 
 export function AgendaStatusBadge({ status }: { status: AgendaStatus }) {
   const { label, className, icon: Icon, pulse } = agendaStatusConfig[status]
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        className,
+      )}
+    >
+      {pulse ? (
+        <span className="relative flex size-2">
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-gold/70" />
+          <span className="relative inline-flex size-2 rounded-full bg-gold" />
+        </span>
+      ) : (
+        <Icon className="size-3.5" />
+      )}
+      {label}
+    </span>
+  )
+}
+
+const serviceStatusConfig: Record<
+  ServiceStatus,
+  { label: string; className: string; icon: typeof Check; pulse?: boolean }
+> = {
+  concluido: {
+    label: 'Concluído',
+    className: 'text-success bg-success/12 border-success/25',
+    icon: CircleCheck,
+  },
+  em_andamento: {
+    label: 'Em andamento',
+    className: 'text-gold bg-gold/12 border-gold/30',
+    icon: Scissors,
+    pulse: true,
+  },
+  agendado: {
+    label: 'Agendado',
+    className: 'text-info bg-info/12 border-info/25',
+    icon: CalendarClock,
+  },
+  cancelado: {
+    label: 'Cancelado',
+    className: 'text-danger bg-danger/12 border-danger/25',
+    icon: X,
+  },
+  nao_compareceu: {
+    label: 'Não compareceu',
+    className: 'text-muted-foreground bg-white/5 border-border',
+    icon: UserX,
+  },
+}
+
+export function ServiceStatusBadge({ status }: { status: ServiceStatus }) {
+  const { label, className, icon: Icon, pulse } = serviceStatusConfig[status]
   return (
     <span
       className={cn(
