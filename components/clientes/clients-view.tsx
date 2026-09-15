@@ -1,0 +1,530 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import {
+  Users,
+  Crown,
+  TriangleAlert,
+  Clock,
+  Search,
+  SlidersHorizontal,
+  Plus,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Pencil,
+  MoreHorizontal,
+  TrendingUp,
+  TrendingDown,
+  type LucideIcon,
+} from 'lucide-react'
+import { Panel, PanelHeader, SeeAll } from '@/components/dashboard/panel'
+import { UserAvatar } from '@/components/dashboard/user-avatar'
+import { ClientStatusBadge } from '@/components/dashboard/badges'
+import { WhatsappIconButton } from '@/components/dashboard/whatsapp-button'
+import {
+  clientStats,
+  clientsList,
+  clientStatusFilters,
+  clientFeatured,
+  clientsToRecover,
+  clientBirthdays,
+  clientInteractions,
+  type Client,
+  type ClientStatus,
+  type FeaturedTab,
+} from '@/lib/data'
+import { cn } from '@/lib/utils'
+import { Cake, MessageCircle, Zap } from 'lucide-react'
+
+const currency = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+})
+
+const statIconMap: Record<string, LucideIcon> = {
+  Users,
+  Crown,
+  TriangleAlert,
+  Clock,
+}
+
+const statToneMap: Record<string, string> = {
+  gold: 'bg-gold/12 text-gold',
+  success: 'bg-success/12 text-success',
+  danger: 'bg-danger/12 text-danger',
+  muted: 'bg-white/5 text-muted-foreground',
+}
+
+function StatCards() {
+  return (
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {clientStats.map((stat) => {
+        const Icon = statIconMap[stat.icon]
+        const Trend = stat.trendUp ? TrendingUp : TrendingDown
+        return (
+          <div
+            key={stat.label}
+            className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span
+                className={cn(
+                  'grid size-10 place-items-center rounded-xl',
+                  statToneMap[stat.tone],
+                )}
+              >
+                <Icon className="size-5" />
+              </span>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-0.5 text-xs font-semibold',
+                  stat.trendUp ? 'text-success' : 'text-danger',
+                )}
+              >
+                <Trend className="size-3.5" />
+                {stat.trend}%
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-bold tracking-tight">{stat.value}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{stat.label}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function FakeSelect({ label }: { label: string }) {
+  return (
+    <button className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border bg-background/40 px-3 text-sm text-muted-foreground transition-colors hover:text-foreground">
+      <span className="whitespace-nowrap">{label}</span>
+      <ChevronDown className="size-4" />
+    </button>
+  )
+}
+
+function RowAction({
+  label,
+  icon: Icon,
+}: {
+  label: string
+  icon: LucideIcon
+}) {
+  return (
+    <button
+      aria-label={label}
+      title={label}
+      className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+    >
+      <Icon className="size-4" />
+    </button>
+  )
+}
+
+function ClientRow({
+  client,
+  checked,
+  onToggle,
+}: {
+  client: Client
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <tr className="group border-t border-border transition-colors hover:bg-white/[0.02]">
+      <td className="py-3 pl-4 pr-2">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          aria-label={`Selecionar ${client.name}`}
+          className="size-4 rounded border-border bg-transparent accent-gold"
+        />
+      </td>
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-3">
+          <UserAvatar name={client.name} size="md" ring={client.status === 'vip'} />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{client.name}</p>
+            <p className="truncate text-xs text-muted-foreground sm:hidden">
+              {client.whatsapp}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="hidden py-3 pr-4 sm:table-cell">
+        <span className="inline-flex items-center gap-1.5 text-sm text-success">
+          <MessageCircle className="size-3.5" />
+          {client.whatsapp}
+        </span>
+      </td>
+      <td className="hidden py-3 pr-4 md:table-cell">
+        <p className="text-sm">{client.lastVisit}</p>
+        <p className="text-xs text-muted-foreground">{client.lastVisitAgo}</p>
+      </td>
+      <td className="hidden py-3 pr-4 text-sm text-muted-foreground lg:table-cell">
+        {client.frequency}
+      </td>
+      <td className="hidden py-3 pr-4 text-sm font-medium tabular-nums lg:table-cell">
+        {client.visits}
+      </td>
+      <td className="hidden py-3 pr-4 text-sm font-semibold tabular-nums md:table-cell">
+        {currency.format(client.avgTicket)}
+      </td>
+      <td className="py-3 pr-4">
+        <ClientStatusBadge status={client.status} />
+      </td>
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-0.5">
+          <RowAction label="Ver perfil" icon={Eye} />
+          <RowAction label="Editar" icon={Pencil} />
+          <WhatsappIconButton label={`Enviar WhatsApp para ${client.name}`} />
+          <RowAction label="Mais opções" icon={MoreHorizontal} />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function ClientsTable() {
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<ClientStatus | 'todos'>('todos')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return clientsList.filter((c) => {
+      const matchesStatus = status === 'todos' || c.status === status
+      const matchesSearch =
+        q === '' ||
+        c.name.toLowerCase().includes(q) ||
+        c.whatsapp.toLowerCase().includes(q)
+      return matchesStatus && matchesSearch
+    })
+  }, [search, status])
+
+  const allChecked = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected((prev) => {
+      if (allChecked) {
+        const next = new Set(prev)
+        filtered.forEach((c) => next.delete(c.id))
+        return next
+      }
+      const next = new Set(prev)
+      filtered.forEach((c) => next.add(c.id))
+      return next
+    })
+  }
+
+  return (
+    <Panel>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3 p-4">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar cliente por nome ou WhatsApp..."
+            className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/40"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as ClientStatus | 'todos')}
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+          >
+            {clientStatusFilters.map((f) => (
+              <option key={f.key} value={f.key} className="bg-card text-foreground">
+                {f.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </div>
+
+        <FakeSelect label="Últimos 3 meses" />
+        <FakeSelect label="Mais recentes" />
+
+        <button
+          aria-label="Mais filtros"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-background/40 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <SlidersHorizontal className="size-4" />
+        </button>
+
+        <button className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105">
+          <Plus className="size-4" />
+          Novo cliente
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <th className="py-2.5 pl-4 pr-2 font-medium">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                  aria-label="Selecionar todos"
+                  className="size-4 rounded border-border bg-transparent accent-gold"
+                />
+              </th>
+              <th className="py-2.5 pr-4 font-medium">Cliente</th>
+              <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">
+                WhatsApp
+              </th>
+              <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
+                Último atendimento
+              </th>
+              <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
+                Frequência
+              </th>
+              <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
+                Visitas
+              </th>
+              <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
+                Ticket médio
+              </th>
+              <th className="py-2.5 pr-4 font-medium">Status</th>
+              <th className="py-2.5 pr-4 font-medium">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((client) => (
+              <ClientRow
+                key={client.id}
+                client={client}
+                checked={selected.has(client.id)}
+                onToggle={() => toggle(client.id)}
+              />
+            ))}
+          </tbody>
+        </table>
+
+        {filtered.length === 0 && (
+          <div className="grid place-items-center gap-2 py-16 text-center">
+            <Users className="size-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum cliente encontrado com esses filtros.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
+        <p className="text-xs text-muted-foreground">
+          Mostrando 1 a {filtered.length} de 126 clientes
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <button
+              aria-label="Página anterior"
+              className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            {[1, 2, 3].map((p) => (
+              <button
+                key={p}
+                className={cn(
+                  'grid size-8 place-items-center rounded-lg border text-sm font-medium transition-colors',
+                  p === 1
+                    ? 'border-gold/40 bg-gold/12 text-gold'
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {p}
+              </button>
+            ))}
+            <span className="px-1 text-muted-foreground">…</span>
+            <button className="grid size-8 place-items-center rounded-lg border border-border text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              13
+            </button>
+            <button
+              aria-label="Próxima página"
+              className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+          <FakeSelect label="10 por página" />
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
+const featuredTabs: { key: FeaturedTab; label: string }[] = [
+  { key: 'vip', label: 'VIP' },
+  { key: 'frequencia', label: 'Maior frequência' },
+  { key: 'ticket', label: 'Maior ticket' },
+]
+
+function FeaturedPanel() {
+  const [tab, setTab] = useState<FeaturedTab>('vip')
+  const rows = clientFeatured[tab]
+
+  return (
+    <Panel>
+      <PanelHeader
+        icon={<Crown className="size-[18px]" />}
+        title="Clientes em destaque"
+        action={<SeeAll />}
+      />
+      <div className="flex gap-1 px-3 pb-1">
+        {featuredTabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+              tab === t.key
+                ? 'bg-gold/12 text-gold'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <ul className="space-y-0.5 px-3 pb-3">
+        {rows.map((c, i) => (
+          <li
+            key={i}
+            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+          >
+            <UserAvatar name={c.name} size="md" ring={tab === 'vip'} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{c.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{c.detail}</p>
+            </div>
+            <Crown className="size-4 text-gold" />
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+function RecoverPanel() {
+  return (
+    <Panel>
+      <PanelHeader
+        icon={<TriangleAlert className="size-[18px]" />}
+        title="Clientes para recuperar"
+        action={<SeeAll />}
+      />
+      <ul className="space-y-0.5 px-3 pb-3">
+        {clientsToRecover.map((c, i) => (
+          <li
+            key={i}
+            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+          >
+            <UserAvatar name={c.name} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{c.name}</p>
+              <p className="truncate text-xs text-danger">{c.days}</p>
+            </div>
+            <WhatsappIconButton label={`Recuperar ${c.name} no WhatsApp`} />
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+function BirthdaysPanel() {
+  return (
+    <Panel>
+      <PanelHeader
+        icon={<Cake className="size-[18px]" />}
+        title="Próximos aniversários"
+        action={<SeeAll />}
+      />
+      <ul className="space-y-0.5 px-3 pb-3">
+        {clientBirthdays.map((b) => (
+          <li
+            key={b.name}
+            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+          >
+            <UserAvatar name={b.name} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{b.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{b.date}</p>
+            </div>
+            <WhatsappIconButton label={`Parabenizar ${b.name} no WhatsApp`} />
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+function InteractionsPanel() {
+  return (
+    <Panel>
+      <PanelHeader
+        icon={<Zap className="size-[18px]" />}
+        title="Últimas interações"
+        action={<SeeAll />}
+      />
+      <ul className="space-y-0.5 px-3 pb-3">
+        {clientInteractions.map((c, i) => (
+          <li
+            key={i}
+            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+          >
+            <UserAvatar name={c.name} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{c.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{c.action}</p>
+            </div>
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              {c.time}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+export function ClientsView() {
+  return (
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_340px]">
+      {/* Main column */}
+      <div className="space-y-5">
+        <StatCards />
+        <ClientsTable />
+      </div>
+
+      {/* Insights column */}
+      <aside className="space-y-5">
+        <FeaturedPanel />
+        <RecoverPanel />
+        <BirthdaysPanel />
+        <InteractionsPanel />
+      </aside>
+    </div>
+  )
+}

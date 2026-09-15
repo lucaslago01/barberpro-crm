@@ -25,7 +25,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { label: 'Dashboard', icon: 'LayoutDashboard', href: '/' },
   { label: 'Agenda', icon: 'CalendarDays', href: '/agenda' },
-  { label: 'Clientes', icon: 'Users', href: '#' },
+  { label: 'Clientes', icon: 'Users', href: '/clientes' },
   { label: 'Atendimentos', icon: 'Scissors', href: '#' },
   { label: 'WhatsApp', icon: 'MessageCircle', href: '#', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '#' },
@@ -392,4 +392,228 @@ export const agendaFilters: { key: AgendaStatus | 'todos'; label: string }[] = [
   { key: 'concluido', label: 'Concluídos' },
   { key: 'cancelado', label: 'Cancelados' },
   { key: 'faltou', label: 'Faltou' },
+]
+
+// ----- Clientes page -----
+
+export type ClientStatus = 'ativo' | 'vip' | 'em risco' | 'inativo'
+
+export type Client = {
+  id: string
+  name: string
+  whatsapp: string
+  lastVisit: string
+  lastVisitAgo: string
+  frequency: string
+  visits: number
+  avgTicket: number
+  status: ClientStatus
+}
+
+export const clientStats: {
+  label: string
+  value: string
+  icon: string
+  trend: number
+  trendUp: boolean
+  tone: 'gold' | 'success' | 'danger' | 'muted'
+}[] = [
+  {
+    label: 'Total de clientes',
+    value: '126',
+    icon: 'Users',
+    trend: 12,
+    trendUp: true,
+    tone: 'gold',
+  },
+  {
+    label: 'Clientes VIP',
+    value: '18',
+    icon: 'Crown',
+    trend: 28,
+    trendUp: true,
+    tone: 'success',
+  },
+  {
+    label: 'Clientes em risco',
+    value: '12',
+    icon: 'TriangleAlert',
+    trend: 5,
+    trendUp: false,
+    tone: 'danger',
+  },
+  {
+    label: 'Clientes inativos',
+    value: '8',
+    icon: 'Clock',
+    trend: 18,
+    trendUp: false,
+    tone: 'muted',
+  },
+]
+
+export const clientsList: Client[] = [
+  {
+    id: 'c1',
+    name: 'João Silva',
+    whatsapp: '(41) 99123-4567',
+    lastVisit: '12/09/2025',
+    lastVisitAgo: 'há 3 dias',
+    frequency: 'A cada 18 dias',
+    visits: 12,
+    avgTicket: 65,
+    status: 'ativo',
+  },
+  {
+    id: 'c2',
+    name: 'Marcos Costa',
+    whatsapp: '(41) 98876-5432',
+    lastVisit: '10/09/2025',
+    lastVisitAgo: 'há 5 dias',
+    frequency: 'A cada 15 dias',
+    visits: 28,
+    avgTicket: 72,
+    status: 'vip',
+  },
+  {
+    id: 'c3',
+    name: 'Pedro Ferreira',
+    whatsapp: '(41) 99765-4321',
+    lastVisit: '02/09/2025',
+    lastVisitAgo: 'há 13 dias',
+    frequency: 'A cada 21 dias',
+    visits: 8,
+    avgTicket: 55,
+    status: 'ativo',
+  },
+  {
+    id: 'c4',
+    name: 'Rafael Almeida',
+    whatsapp: '(41) 99654-3210',
+    lastVisit: '25/08/2025',
+    lastVisitAgo: 'há 21 dias',
+    frequency: 'A cada 30 dias',
+    visits: 6,
+    avgTicket: 48,
+    status: 'em risco',
+  },
+  {
+    id: 'c5',
+    name: 'Gabriel Vieira',
+    whatsapp: '(41) 99543-2109',
+    lastVisit: '01/07/2025',
+    lastVisitAgo: 'há 76 dias',
+    frequency: 'A cada 45 dias',
+    visits: 4,
+    avgTicket: 52,
+    status: 'inativo',
+  },
+  {
+    id: 'c6',
+    name: 'Lucas Carvalho',
+    whatsapp: '(41) 99432-1098',
+    lastVisit: '14/09/2025',
+    lastVisitAgo: 'há 1 dia',
+    frequency: 'A cada 20 dias',
+    visits: 16,
+    avgTicket: 68,
+    status: 'ativo',
+  },
+  {
+    id: 'c7',
+    name: 'Felipe Martins',
+    whatsapp: '(41) 99321-0987',
+    lastVisit: '05/09/2025',
+    lastVisitAgo: 'há 10 dias',
+    frequency: 'A cada 17 dias',
+    visits: 20,
+    avgTicket: 70,
+    status: 'vip',
+  },
+  {
+    id: 'c8',
+    name: 'Bruno Rocha',
+    whatsapp: '(41) 99210-9876',
+    lastVisit: '20/08/2025',
+    lastVisitAgo: 'há 26 dias',
+    frequency: 'A cada 28 dias',
+    visits: 7,
+    avgTicket: 60,
+    status: 'em risco',
+  },
+  {
+    id: 'c9',
+    name: 'Carlos Mendes',
+    whatsapp: '(41) 99109-8765',
+    lastVisit: '18/06/2025',
+    lastVisitAgo: 'há 89 dias',
+    frequency: 'A cada 50 dias',
+    visits: 3,
+    avgTicket: 45,
+    status: 'inativo',
+  },
+  {
+    id: 'c10',
+    name: 'Daniel Nunes',
+    whatsapp: '(41) 99098-7654',
+    lastVisit: '09/09/2025',
+    lastVisitAgo: 'há 6 dias',
+    frequency: 'A cada 16 dias',
+    visits: 14,
+    avgTicket: 66,
+    status: 'ativo',
+  },
+]
+
+export const clientStatusFilters: { key: ClientStatus | 'todos'; label: string }[] = [
+  { key: 'todos', label: 'Todos os status' },
+  { key: 'ativo', label: 'Ativos' },
+  { key: 'vip', label: 'VIP' },
+  { key: 'em risco', label: 'Em risco' },
+  { key: 'inativo', label: 'Inativos' },
+]
+
+export type FeaturedTab = 'vip' | 'frequencia' | 'ticket'
+
+export const clientFeatured: Record<
+  FeaturedTab,
+  { name: string; detail: string }[]
+> = {
+  vip: [
+    { name: 'Marcos Costa', detail: '28 visitas · R$ 72,00' },
+    { name: 'Felipe Martins', detail: '20 visitas · R$ 70,00' },
+    { name: 'Lucas Carvalho', detail: '16 visitas · R$ 68,00' },
+  ],
+  frequencia: [
+    { name: 'Daniel Nunes', detail: 'A cada 16 dias' },
+    { name: 'Marcos Costa', detail: 'A cada 15 dias' },
+    { name: 'Felipe Martins', detail: 'A cada 17 dias' },
+  ],
+  ticket: [
+    { name: 'Marcos Costa', detail: 'R$ 72,00 de ticket' },
+    { name: 'Felipe Martins', detail: 'R$ 70,00 de ticket' },
+    { name: 'Lucas Carvalho', detail: 'R$ 68,00 de ticket' },
+  ],
+}
+
+export const clientsToRecover: { name: string; days: string }[] = [
+  { name: 'Gabriel Vieira', days: 'há 76 dias sem atendimento' },
+  { name: 'Carlos Mendes', days: 'há 89 dias sem atendimento' },
+  { name: 'Thiago Souza', days: 'há 102 dias sem atendimento' },
+]
+
+export const clientBirthdays: { name: string; date: string }[] = [
+  { name: 'Rafael Almeida', date: '18 de Setembro' },
+  { name: 'Bruno Rocha', date: '25 de Setembro' },
+  { name: 'Matheus Lima', date: '03 de Outubro' },
+]
+
+export const clientInteractions: {
+  name: string
+  action: string
+  time: string
+}[] = [
+  { name: 'João Silva', action: 'Mensagem enviada', time: 'há 2 horas' },
+  { name: 'Pedro Ferreira', action: 'Agendamento realizado', time: 'há 5 horas' },
+  { name: 'Marcos Costa', action: 'Confirmou o horário', time: 'há 1 dia' },
 ]

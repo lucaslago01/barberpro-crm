@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import type {
   AppointmentStatus,
   ClientTag,
+  ClientStatus,
   RecoverStatus,
   AgendaStatus,
 } from '@/lib/data'
@@ -72,6 +73,47 @@ export function ClientTagBadge({ tag }: { tag: ClientTag }) {
     >
       {tag === 'vip' && <span className="text-gold">★</span>}
       {tag === 'vip' ? 'VIP' : tag}
+    </span>
+  )
+}
+
+const clientStatusConfig: Record<
+  ClientStatus,
+  { label: string; className: string; dot: string }
+> = {
+  ativo: {
+    label: 'Ativo',
+    className: 'text-success bg-success/12 border-success/25',
+    dot: 'bg-success',
+  },
+  vip: {
+    label: 'VIP',
+    className: 'text-gold bg-gold/12 border-gold/30',
+    dot: 'bg-gold',
+  },
+  'em risco': {
+    label: 'Em risco',
+    className: 'text-danger bg-danger/12 border-danger/25',
+    dot: 'bg-danger',
+  },
+  inativo: {
+    label: 'Inativo',
+    className: 'text-muted-foreground bg-white/5 border-border',
+    dot: 'bg-muted-foreground/60',
+  },
+}
+
+export function ClientStatusBadge({ status }: { status: ClientStatus }) {
+  const { label, className, dot } = clientStatusConfig[status]
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        className,
+      )}
+    >
+      <span className={cn('size-1.5 rounded-full', dot)} />
+      {label}
     </span>
   )
 }
