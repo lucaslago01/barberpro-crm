@@ -29,7 +29,7 @@ export default function Page() {
           <div className="space-y-5">
             <MiniCalendar />
             <Birthdays />
-            <WhatsAppInteractions />
+            <WhatsappInteractions />
             <RecoverClients />
           </div>
         </div>
