@@ -1,18 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import { CalendarDays, Clock } from "lucide-react"
+import { CalendarDays, Clock, User } from "lucide-react"
 import { services } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
 import { ServiceSelection } from "@/components/agendar/service-selection"
 import { DateSelection } from "@/components/agendar/date-selection"
 import { TimeSelection } from "@/components/agendar/time-selection"
+import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
 
 export function AgendarFlow() {
   const [step, setStep] = useState(1)
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<number | null>(18)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [formData, setFormData] = useState<AgendarFormData>({
+    nome: "",
+    whatsapp: "",
+    email: "",
+    observacoes: "",
+    lembrete: true,
+  })
 
   const selectedService = services.find((s) => s.id === selectedServiceId) ?? services[0]
 
@@ -66,6 +74,20 @@ export function AgendarFlow() {
               </p>
             </div>
           )}
+
+          {step === 4 && (
+            <div className="mx-auto max-w-xl text-center">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+                <User className="size-6" />
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+                Seus <span className="text-amber-400">dados</span>
+              </h1>
+              <p className="mt-3 text-sm text-zinc-400 sm:text-base">
+                Preencha suas informações para finalizar o agendamento.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -95,8 +117,21 @@ export function AgendarFlow() {
           onSelectTime={setSelectedTime}
           onBack={() => setStep(2)}
           onChangeService={() => setStep(1)}
+          onContinue={() => setStep(4)}
+        />
+      )}
+
+      {step === 4 && (
+        <DataForm
+          service={selectedService}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          data={formData}
+          onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+          onBack={() => setStep(3)}
+          onChangeService={() => setStep(1)}
           onContinue={() => {
-            /* Passo 4 (Seus dados) será implementado na próxima etapa. */
+            /* Passo 5 (Confirmação) será implementado na próxima etapa. */
           }}
         />
       )}
