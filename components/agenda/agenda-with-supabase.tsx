@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAgendaSlots, updateAppointmentStatus } from '@/lib/supabase-data'
+import { getAgendaSlots, updateAppointmentStatus, updateAppointmentNotes } from '@/lib/supabase-data'
 import { AgendaView } from './agenda-view'
 import type { AgendaSlot } from '@/lib/types'
 import type { AgendaStatus } from '@/lib/data'
@@ -36,8 +36,23 @@ export function AgendaWithSupabase() {
     }
   }
 
+  async function handleUpdateNotes(id: string, notes: string) {
+    try {
+      await updateAppointmentNotes(id, notes)
+      await fetchData()
+    } catch (err) {
+      console.error('Erro ao atualizar observações:', err)
+    }
+  }
+
   if (loading) return <div className="p-8 text-center">Carregando agendamentos...</div>
   if (error) return <div className="p-8 text-center text-red-500">Erro: {error}</div>
 
-  return <AgendaView slots={slots} onUpdateStatus={handleUpdateStatus} />
+  return (
+    <AgendaView
+      slots={slots}
+      onUpdateStatus={handleUpdateStatus}
+      onUpdateNotes={handleUpdateNotes}
+    />
+  )
 }

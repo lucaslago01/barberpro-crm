@@ -32,6 +32,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
       price: apt.barberpro_services?.price || 0,
       status: apt.status,
       available: false,
+      notes: apt.notes || '',
     }))
 
     return slots
@@ -40,6 +41,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
     throw error
   }
 }
+
 export async function updateClient(
   id: string,
   client: {
@@ -104,6 +106,17 @@ export async function updateAppointmentStatus(
 
   if (error) {
     throw new Error(`Erro ao atualizar agendamento: ${error.message}`)
+  }
+}
+
+export async function updateAppointmentNotes(id: string, notes: string): Promise<void> {
+  const { error } = await supabase
+    .from('barberpro_appointments')
+    .update({ notes })
+    .eq('id', id)
+
+  if (error) {
+    throw new Error(`Erro ao atualizar observações: ${error.message}`)
   }
 }
 

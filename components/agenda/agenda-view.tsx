@@ -2,6 +2,7 @@
 interface AgendaViewProps {
   slots?: AgendaSlot[]
   onUpdateStatus?: (id: string, status: AgendaStatus) => void
+  onUpdateNotes?: (id: string, notes: string) => void
 }
 
 import { useMemo, useState } from 'react'
@@ -95,14 +96,83 @@ function IconAction({
   )
 }
 
+function EditAppointmentModal({
+  slot,
+  onClose,
+  onSave,
+}: {
+  slot: AgendaSlot
+  onClose: () => void
+  onSave: (notes: string) => void
+}) {
+  const [notes, setNotes] = useState(slot.notes || '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await onSave(notes)
+    setSaving(false)
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold">Editar agendamento</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="mb-3 rounded-lg border border-border bg-background/40 px-3 py-2">
+          <p className="text-sm font-medium">{slot.client}</p>
+          <p className="text-xs text-muted-foreground">
+            {slot.service} · {slot.time}
+          </p>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Observações</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={4}
+            className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40"
+            placeholder="Observações sobre o agendamento..."
+          />
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+          >
+            {saving ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TimelineRow({
   slot,
   last,
   onUpdateStatus,
+  onEdit,
 }: {
   slot: AgendaSlot
   last: boolean
   onUpdateStatus?: (id: string, status: AgendaStatus) => void
+  onEdit?: (slot: AgendaSlot) => void
 }) {
   const muted = slot.status === 'cancelado' || slot.status === 'faltou'
 
@@ -172,7 +242,7 @@ function TimelineRow({
                 {currency.format(slot.price)}
               </span>
               <div className="flex items-center gap-0.5">
-                <IconAction label="Editar" icon={Pencil} />
+                <IconAction label="Editar" icon={Pencil} onClick={() => onEdit?.(slot)} />
                 <IconAction label="Reagendar" icon={CalendarClock} />
                 <IconAction
                   label="Marcar como concluído"
@@ -204,9 +274,10 @@ function TimelineRow({
   )
 }
 
-export function AgendaView({ slots = [], onUpdateStatus }: AgendaViewProps) {
+export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: AgendaViewProps) {
   const [filter, setFilter] = useState<AgendaStatus | 'todos'>('todos')
   const [dayOffset, setDayOffset] = useState(0)
+  const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
 
   const currentDate = useMemo(() => {
     const d = new Date(BASE_DATE)
@@ -233,6 +304,16 @@ export function AgendaView({ slots = [], onUpdateStatus }: AgendaViewProps) {
 
   return (
     <div className="space-y-5">
+      {editingSlot && (
+        <EditAppointmentModal
+          slot={editingSlot}
+          onClose={() => setEditingSlot(null)}
+          onSave={async (notes) => {
+            await onUpdateNotes?.(editingSlot.id, notes)
+          }}
+        />
+      )}
+
       {/* Controls */}
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
@@ -322,6 +403,7 @@ export function AgendaView({ slots = [], onUpdateStatus }: AgendaViewProps) {
                   slot={slot}
                   last={i === rows.length - 1}
                   onUpdateStatus={onUpdateStatus}
+                  onEdit={(s) => setEditingSlot(s)}
                 />
               ))}
             </ol>

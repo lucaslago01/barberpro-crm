@@ -42,4 +42,5 @@ export interface AgendaSlot {
   price: number
   status: AppointmentStatus
   available?: boolean
+  notes?: string
 }

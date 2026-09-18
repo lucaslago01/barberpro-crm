@@ -258,6 +258,7 @@ export type AgendaSlot = {
   price: number
   status: AgendaStatus
   available?: boolean
+    notes?: string
 }
 
 export const agendaAppointments: AgendaSlot[] = [
