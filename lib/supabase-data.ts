@@ -113,3 +113,61 @@ export async function getDashboardKpis() {
     totalClients: totalClients || 0,
   }
 }
+
+export async function createPublicAppointment(params: {
+  clientName: string
+  clientPhone: string
+  clientEmail?: string
+  serviceName: string
+  dateTime: string
+  notes?: string
+}): Promise<void> {
+  const { data: service, error: serviceError } = await supabase
+    .from('barberpro_services')
+    .select('id')
+    .ilike('name', params.serviceName)
+    .single()
+
+  if (serviceError || !service) {
+    throw new Error(`Serviço "${params.serviceName}" não encontrado`)
+  }
+
+  let clientId: string
+
+  const { data: existingClient } = await supabase
+    .from('barberpro_clients')
+    .select('id')
+    .eq('phone', params.clientPhone)
+    .maybeSingle()
+
+  if (existingClient) {
+    clientId = existingClient.id
+  } else {
+    const { data: newClient, error: clientError } = await supabase
+      .from('barberpro_clients')
+      .insert({
+        name: params.clientName,
+        phone: params.clientPhone,
+        email: params.clientEmail || null,
+      })
+      .select('id')
+      .single()
+
+    if (clientError || !newClient) {
+      throw new Error(`Erro ao criar cliente: ${clientError?.message}`)
+    }
+    clientId = newClient.id
+  }
+
+  const { error: apptError } = await supabase.from('barberpro_appointments').insert({
+    client_id: clientId,
+    service_id: service.id,
+    time: params.dateTime,
+    status: 'agendado',
+    notes: params.notes || null,
+  })
+
+  if (apptError) {
+    throw new Error(`Erro ao criar agendamento: ${apptError.message}`)
+  }
+}

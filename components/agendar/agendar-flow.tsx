@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { CalendarDays, Clock, User } from "lucide-react"
+import { CalendarDays, Clock, User, CheckCircle2 } from "lucide-react"
 import { services } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
 import { ServiceSelection } from "@/components/agendar/service-selection"
 import { DateSelection } from "@/components/agendar/date-selection"
 import { TimeSelection } from "@/components/agendar/time-selection"
 import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
+import { Confirmation } from "@/components/agendar/confirmation"
 
 export function AgendarFlow() {
   const [step, setStep] = useState(1)
@@ -88,6 +89,20 @@ export function AgendarFlow() {
               </p>
             </div>
           )}
+
+          {step === 5 && (
+            <div className="mx-auto max-w-xl text-center">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+                <CheckCircle2 className="size-6" />
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+                Confirme seu <span className="text-amber-400">agendamento</span>
+              </h1>
+              <p className="mt-3 text-sm text-zinc-400 sm:text-base">
+                Revise os dados e confirme para finalizar.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,9 +145,17 @@ export function AgendarFlow() {
           onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
           onBack={() => setStep(3)}
           onChangeService={() => setStep(1)}
-          onContinue={() => {
-            /* Passo 5 (Confirmação) será implementado na próxima etapa. */
-          }}
+          onContinue={() => setStep(5)}
+        />
+      )}
+
+      {step === 5 && (
+        <Confirmation
+          service={selectedService}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          data={formData}
+          onBack={() => setStep(4)}
         />
       )}
     </>
