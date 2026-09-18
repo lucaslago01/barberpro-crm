@@ -1,4 +1,8 @@
 'use client'
+interface AgendaViewProps {
+  slots?: AgendaSlot[]
+  onUpdateStatus?: (id: string, status: AgendaStatus) => void
+}
 
 import { useMemo, useState } from 'react'
 import {
@@ -17,7 +21,6 @@ import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { AgendaStatusBadge } from '@/components/dashboard/badges'
 import { DaySummary } from './day-summary'
 import {
-  agendaAppointments,
   agendaFilters,
   type AgendaSlot,
   type AgendaStatus,
@@ -38,7 +41,6 @@ const dateFmt = new Intl.DateTimeFormat('pt-BR', {
 
 const BASE_DATE = new Date(2025, 8, 15)
 
-// Left accent + card treatment per status
 const cardAccent: Record<AgendaStatus, string> = {
   agendado: 'border-l-border',
   confirmado: 'border-l-info/60',
@@ -62,11 +64,13 @@ function IconAction({
   icon: Icon,
   tone = 'default',
   disabled,
+  onClick,
 }: {
   label: string
   icon: typeof Pencil
   tone?: 'default' | 'success' | 'danger' | 'rose'
   disabled?: boolean
+  onClick?: () => void
 }) {
   const tones = {
     default: 'hover:bg-white/5 hover:text-foreground',
@@ -79,6 +83,7 @@ function IconAction({
       aria-label={label}
       title={label}
       disabled={disabled}
+      onClick={onClick}
       className={cn(
         'grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors',
         tones[tone],
@@ -90,7 +95,15 @@ function IconAction({
   )
 }
 
-function TimelineRow({ slot, last }: { slot: AgendaSlot; last: boolean }) {
+function TimelineRow({
+  slot,
+  last,
+  onUpdateStatus,
+}: {
+  slot: AgendaSlot
+  last: boolean
+  onUpdateStatus?: (id: string, status: AgendaStatus) => void
+}) {
   const muted = slot.status === 'cancelado' || slot.status === 'faltou'
 
   return (
@@ -166,18 +179,21 @@ function TimelineRow({ slot, last }: { slot: AgendaSlot; last: boolean }) {
                   icon={Check}
                   tone="success"
                   disabled={slot.status === 'concluido'}
+                  onClick={() => onUpdateStatus?.(slot.id, 'concluido')}
                 />
                 <IconAction
                   label="Marcar como faltou"
                   icon={UserX}
                   tone="rose"
                   disabled={slot.status === 'faltou'}
+                  onClick={() => onUpdateStatus?.(slot.id, 'faltou')}
                 />
                 <IconAction
                   label="Cancelar"
                   icon={X}
                   tone="danger"
                   disabled={slot.status === 'cancelado'}
+                  onClick={() => onUpdateStatus?.(slot.id, 'cancelado')}
                 />
               </div>
             </div>
@@ -188,7 +204,7 @@ function TimelineRow({ slot, last }: { slot: AgendaSlot; last: boolean }) {
   )
 }
 
-export function AgendaView() {
+export function AgendaView({ slots = [], onUpdateStatus }: AgendaViewProps) {
   const [filter, setFilter] = useState<AgendaStatus | 'todos'>('todos')
   const [dayOffset, setDayOffset] = useState(0)
 
@@ -199,21 +215,21 @@ export function AgendaView() {
   }, [dayOffset])
 
   const counts = useMemo(() => {
-    const scheduled = agendaAppointments.filter((a) => !a.available)
+    const scheduled = slots.filter((a) => !a.available)
     const map: Record<string, number> = { todos: scheduled.length }
     for (const f of agendaFilters) {
       if (f.key === 'todos') continue
       map[f.key] = scheduled.filter((a) => a.status === f.key).length
     }
     return map
-  }, [])
+  }, [slots])
 
   const rows = useMemo(() => {
-    if (filter === 'todos') return agendaAppointments
-    return agendaAppointments.filter(
+    if (filter === 'todos') return slots
+    return slots.filter(
       (a) => !a.available && a.status === filter,
     )
-  }, [filter])
+  }, [filter, slots])
 
   return (
     <div className="space-y-5">
@@ -305,6 +321,7 @@ export function AgendaView() {
                   key={slot.id}
                   slot={slot}
                   last={i === rows.length - 1}
+                  onUpdateStatus={onUpdateStatus}
                 />
               ))}
             </ol>

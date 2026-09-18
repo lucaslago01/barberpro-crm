@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Users,
   Crown,
@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   TrendingUp,
   TrendingDown,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { Panel, PanelHeader, SeeAll } from '@/components/dashboard/panel'
@@ -25,7 +26,6 @@ import { ClientStatusBadge } from '@/components/dashboard/badges'
 import { WhatsappIconButton } from '@/components/dashboard/whatsapp-button'
 import {
   clientStats,
-  clientsList,
   clientStatusFilters,
   clientFeatured,
   clientsToRecover,
@@ -35,6 +35,8 @@ import {
   type ClientStatus,
   type FeaturedTab,
 } from '@/lib/data'
+import { getClients, createClient } from '@/lib/supabase-data'
+import type { Client as SupabaseClient } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Cake, MessageCircle, Zap } from 'lucide-react'
 
@@ -42,6 +44,20 @@ const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 })
+
+function mapToRow(c: SupabaseClient): Client {
+  return {
+    id: c.id,
+    name: c.name,
+    whatsapp: c.phone || '-',
+    lastVisit: c.last_visit || '-',
+    lastVisitAgo: '-',
+    frequency: '-',
+    visits: 0,
+    avgTicket: 0,
+    status: 'ativo',
+  }
+}
 
 const statIconMap: Record<string, LucideIcon> = {
   Users,
@@ -188,14 +204,132 @@ function ClientRow({
   )
 }
 
+function NewClientModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void
+  onCreated: (c: SupabaseClient) => void
+}) {
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    if (!name.trim()) {
+      setError('Nome é obrigatório')
+      return
+    }
+    try {
+      setSaving(true)
+      setError(null)
+      const created = await createClient({
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+      })
+      onCreated(created)
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao criar cliente')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold">Novo cliente</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Nome *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="Nome do cliente"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">WhatsApp</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="(41) 99999-9999"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Email</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="email@exemplo.com"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+          >
+            {saving ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ClientsTable() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ClientStatus | 'todos'>('todos')
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+
+  async function loadClients() {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getClients()
+      setClients(data.map(mapToRow))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar clientes')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadClients()
+  }, [])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return clientsList.filter((c) => {
+    return clients.filter((c) => {
       const matchesStatus = status === 'todos' || c.status === status
       const matchesSearch =
         q === '' ||
@@ -203,7 +337,7 @@ function ClientsTable() {
         c.whatsapp.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
-  }, [search, status])
+  }, [clients, search, status])
 
   const allChecked = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
 
@@ -231,6 +365,13 @@ function ClientsTable() {
 
   return (
     <Panel>
+      {showModal && (
+        <NewClientModal
+          onClose={() => setShowModal(false)}
+          onCreated={() => loadClients()}
+        />
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 p-4">
         <div className="relative min-w-[220px] flex-1">
@@ -268,107 +409,88 @@ function ClientsTable() {
           <SlidersHorizontal className="size-4" />
         </button>
 
-        <button className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105">
+        <button
+          onClick={() => setShowModal(true)}
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+        >
           <Plus className="size-4" />
           Novo cliente
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <th className="py-2.5 pl-4 pr-2 font-medium">
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={toggleAll}
-                  aria-label="Selecionar todos"
-                  className="size-4 rounded border-border bg-transparent accent-gold"
-                />
-              </th>
-              <th className="py-2.5 pr-4 font-medium">Cliente</th>
-              <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">
-                WhatsApp
-              </th>
-              <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
-                Último atendimento
-              </th>
-              <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
-                Frequência
-              </th>
-              <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
-                Visitas
-              </th>
-              <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
-                Ticket médio
-              </th>
-              <th className="py-2.5 pr-4 font-medium">Status</th>
-              <th className="py-2.5 pr-4 font-medium">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((client) => (
-              <ClientRow
-                key={client.id}
-                client={client}
-                checked={selected.has(client.id)}
-                onToggle={() => toggle(client.id)}
-              />
-            ))}
-          </tbody>
-        </table>
+      {loading && (
+        <div className="p-8 text-center text-sm text-muted-foreground">
+          Carregando clientes...
+        </div>
+      )}
 
-        {filtered.length === 0 && (
-          <div className="grid place-items-center gap-2 py-16 text-center">
-            <Users className="size-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
-              Nenhum cliente encontrado com esses filtros.
-            </p>
-          </div>
-        )}
-      </div>
+      {error && (
+        <div className="p-8 text-center text-sm text-danger">Erro: {error}</div>
+      )}
+
+      {/* Table */}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <th className="py-2.5 pl-4 pr-2 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={allChecked}
+                    onChange={toggleAll}
+                    aria-label="Selecionar todos"
+                    className="size-4 rounded border-border bg-transparent accent-gold"
+                  />
+                </th>
+                <th className="py-2.5 pr-4 font-medium">Cliente</th>
+                <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">
+                  WhatsApp
+                </th>
+                <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
+                  Último atendimento
+                </th>
+                <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
+                  Frequência
+                </th>
+                <th className="hidden py-2.5 pr-4 font-medium lg:table-cell">
+                  Visitas
+                </th>
+                <th className="hidden py-2.5 pr-4 font-medium md:table-cell">
+                  Ticket médio
+                </th>
+                <th className="py-2.5 pr-4 font-medium">Status</th>
+                <th className="py-2.5 pr-4 font-medium">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((client) => (
+                <ClientRow
+                  key={client.id}
+                  client={client}
+                  checked={selected.has(client.id)}
+                  onToggle={() => toggle(client.id)}
+                />
+              ))}
+            </tbody>
+          </table>
+
+          {filtered.length === 0 && (
+            <div className="grid place-items-center gap-2 py-16 text-center">
+              <Users className="size-8 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">
+                Nenhum cliente encontrado com esses filtros.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
         <p className="text-xs text-muted-foreground">
-          Mostrando 1 a {filtered.length} de 126 clientes
+          Mostrando {filtered.length} de {clients.length} clientes
         </p>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <button
-              aria-label="Página anterior"
-              className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            {[1, 2, 3].map((p) => (
-              <button
-                key={p}
-                className={cn(
-                  'grid size-8 place-items-center rounded-lg border text-sm font-medium transition-colors',
-                  p === 1
-                    ? 'border-gold/40 bg-gold/12 text-gold'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {p}
-              </button>
-            ))}
-            <span className="px-1 text-muted-foreground">…</span>
-            <button className="grid size-8 place-items-center rounded-lg border border-border text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              13
-            </button>
-            <button
-              aria-label="Próxima página"
-              className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-          <FakeSelect label="10 por página" />
-        </div>
       </div>
     </Panel>
   )

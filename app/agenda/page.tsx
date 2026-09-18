@@ -1,5 +1,5 @@
 import { AppShell } from '@/components/dashboard/app-shell'
-import { AgendaView } from '@/components/agenda/agenda-view'
+import { AgendaWithSupabase } from '@/components/agenda/agenda-with-supabase'
 
 export default function AgendaPage() {
   return (
@@ -7,7 +7,7 @@ export default function AgendaPage() {
       title="Agenda"
       subtitle="Gerencie os atendimentos e horários da barbearia."
     >
-      <AgendaView />
+      <AgendaWithSupabase />
     </AppShell>
   )
 }
