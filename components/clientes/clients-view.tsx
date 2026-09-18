@@ -35,7 +35,7 @@ import {
   type ClientStatus,
   type FeaturedTab,
 } from '@/lib/data'
-import { getClients, createClient } from '@/lib/supabase-data'
+import { getClients, createClient, updateClient } from '@/lib/supabase-data'
 import type { Client as SupabaseClient } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Cake, MessageCircle, Zap } from 'lucide-react'
@@ -124,14 +124,17 @@ function FakeSelect({ label }: { label: string }) {
 function RowAction({
   label,
   icon: Icon,
+  onClick,
 }: {
   label: string
   icon: LucideIcon
+  onClick?: () => void
 }) {
   return (
     <button
       aria-label={label}
       title={label}
+      onClick={onClick}
       className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
     >
       <Icon className="size-4" />
@@ -143,10 +146,12 @@ function ClientRow({
   client,
   checked,
   onToggle,
+  onEdit,
 }: {
   client: Client
   checked: boolean
   onToggle: () => void
+  onEdit: () => void
 }) {
   return (
     <tr className="group border-t border-border transition-colors hover:bg-white/[0.02]">
@@ -195,7 +200,7 @@ function ClientRow({
       <td className="py-3 pr-4">
         <div className="flex items-center gap-0.5">
           <RowAction label="Ver perfil" icon={Eye} />
-          <RowAction label="Editar" icon={Pencil} />
+          <RowAction label="Editar" icon={Pencil} onClick={onEdit} />
           <WhatsappIconButton label={`Enviar WhatsApp para ${client.name}`} />
           <RowAction label="Mais opções" icon={MoreHorizontal} />
         </div>
@@ -301,6 +306,105 @@ function NewClientModal({
   )
 }
 
+function EditClientModal({
+  client,
+  onClose,
+  onUpdated,
+}: {
+  client: SupabaseClient
+  onClose: () => void
+  onUpdated: () => void
+}) {
+  const [name, setName] = useState(client.name)
+  const [phone, setPhone] = useState(client.phone || '')
+  const [email, setEmail] = useState(client.email || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    if (!name.trim()) {
+      setError('Nome é obrigatório')
+      return
+    }
+    try {
+      setSaving(true)
+      setError(null)
+      await updateClient(client.id, {
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+      })
+      onUpdated()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao atualizar cliente')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold">Editar cliente</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Nome *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="Nome do cliente"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">WhatsApp</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="(41) 99999-9999"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Email</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              placeholder="email@exemplo.com"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+          >
+            {saving ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ClientsTable() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ClientStatus | 'todos'>('todos')
@@ -309,6 +413,8 @@ function ClientsTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [editingClient, setEditingClient] = useState<SupabaseClient | null>(null)
+  const [rawClients, setRawClients] = useState<SupabaseClient[]>([])
 
   async function loadClients() {
     try {
@@ -316,6 +422,7 @@ function ClientsTable() {
       setError(null)
       const data = await getClients()
       setClients(data.map(mapToRow))
+      setRawClients(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar clientes')
     } finally {
@@ -369,6 +476,14 @@ function ClientsTable() {
         <NewClientModal
           onClose={() => setShowModal(false)}
           onCreated={() => loadClients()}
+        />
+      )}
+
+      {editingClient && (
+        <EditClientModal
+          client={editingClient}
+          onClose={() => setEditingClient(null)}
+          onUpdated={() => loadClients()}
         />
       )}
 
@@ -470,6 +585,9 @@ function ClientsTable() {
                   client={client}
                   checked={selected.has(client.id)}
                   onToggle={() => toggle(client.id)}
+                  onEdit={() =>
+                    setEditingClient(rawClients.find((c) => c.id === client.id) || null)
+                  }
                 />
               ))}
             </tbody>

@@ -40,6 +40,28 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
     throw error
   }
 }
+export async function updateClient(
+  id: string,
+  client: {
+    name: string
+    phone?: string
+    email?: string
+  },
+): Promise<Client> {
+  const { data, error } = await supabase
+    .from('barberpro_clients')
+    .update(client)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Erro ao atualizar cliente: ${error.message}`)
+  }
+
+  return data
+}
+
 export async function getClients(): Promise<Client[]> {
   const { data, error } = await supabase
     .from('barberpro_clients')
