@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import {
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
+import { getBookedTimes } from "@/lib/supabase-appointments"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 // Grade de horários (5 colunas x 4 linhas), na mesma ordem do layout.
@@ -60,6 +62,33 @@ export function TimeSelection({
   onChangeService,
   onContinue,
 }: TimeSelectionProps) {
+  const [booked, setBooked] = useState<string[]>([])
+
+  // Busca no banco os horários já ocupados do dia escolhido
+  useEffect(() => {
+    if (selectedDate === null) {
+      setBooked([])
+      return
+    }
+    let cancelled = false
+    getBookedTimes(new Date(2026, 8, selectedDate))
+      .then((times) => {
+        if (!cancelled) setBooked(times)
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar horários ocupados:", err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDate])
+
+  function isPast(time: string) {
+    if (selectedDate === null) return false
+    const [h, m] = time.split(":").map(Number)
+    return new Date(2026, 8, selectedDate, h, m).getTime() < Date.now()
+  }
+
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6">
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl shadow-black/40">
@@ -79,8 +108,9 @@ export function TimeSelection({
             {/* Grade de horários */}
             <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-2.5">
               {TIME_SLOTS.map((time) => {
-                const isUnavailable = UNAVAILABLE_SLOTS.has(time)
-                const isSelected = time === selectedTime
+                const isUnavailable =
+                  UNAVAILABLE_SLOTS.has(time) || booked.includes(time) || isPast(time)
+                const isSelected = time === selectedTime && !isUnavailable
 
                 if (isSelected) {
                   return (
