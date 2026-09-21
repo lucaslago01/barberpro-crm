@@ -38,8 +38,7 @@ export async function getServices(): Promise<ServiceOption[]> {
 }
 
 // Devolve os horários já ocupados no dia, ex.: ["09:00", "14:30"].
-// Agendamentos cancelados não contam como ocupados.
-
+// Já considera a duração de cada serviço e os bloqueios do barbeiro.
 export async function getBookedTimes(date: Date): Promise<string[]> {
   const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 
@@ -54,24 +53,21 @@ export async function getBookedTimes(date: Date): Promise<string[]> {
   return (data as string[]) || []
 }
 
-
-
 export async function createAppointment(params: {
   clientId: string
   serviceId: string
   dateTime: string
   notes?: string
 }): Promise<void> {
-  const { error } = await supabase.from('barberpro_appointments').insert({
-    client_id: params.clientId,
-    service_id: params.serviceId,
-    time: toLocalWallClock(new Date(params.dateTime)),
-    status: 'agendado',
-    notes: params.notes || null,
+  const { error } = await supabase.rpc('barberpro_create_appointment', {
+    p_client_id: params.clientId,
+    p_service_id: params.serviceId,
+    p_time: toLocalWallClock(new Date(params.dateTime)),
+    p_notes: params.notes || null,
   })
 
   if (error) {
-    throw new Error(`Erro ao criar agendamento: ${error.message}`)
+    throw new Error(error.message)
   }
 }
 
@@ -80,35 +76,12 @@ export async function rescheduleAppointment(
   id: string,
   dateTime: string,
 ): Promise<void> {
-  const wallClock = toLocalWallClock(new Date(dateTime))
-
-  // Confere se o novo horário está livre (ignora o próprio agendamento e os cancelados)
-  const { data: taken, error: takenError } = await supabase
-    .from('barberpro_appointments')
-    .select('id')
-    .eq('time', wallClock)
-    .neq('status', 'cancelado')
-    .neq('id', id)
-    .limit(1)
-
-  if (takenError) {
-    throw new Error(`Erro ao conferir horário: ${takenError.message}`)
-  }
-
-  if (taken && taken.length > 0) {
-    throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
-  }
-
-  const { error } = await supabase
-    .from('barberpro_appointments')
-    .update({ time: wallClock })
-    .eq('id', id)
+  const { error } = await supabase.rpc('barberpro_reschedule_appointment', {
+    p_id: id,
+    p_time: toLocalWallClock(new Date(dateTime)),
+  })
 
   if (error) {
-    // 23505 = a trava do banco recusou um horário duplicado
-    if ((error as any).code === '23505') {
-      throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
-    }
-    throw new Error(`Erro ao reagendar: ${error.message}`)
+    throw new Error(error.message)
   }
 }
