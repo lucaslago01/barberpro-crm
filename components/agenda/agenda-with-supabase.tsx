@@ -70,6 +70,7 @@ export function AgendaWithSupabase() {
       slots={slots}
       date={date}
       onDateChange={setDate}
+      onReload={() => setReloadKey((k) => k + 1)}
       onUpdateStatus={handleUpdateStatus}
       onUpdateNotes={handleUpdateNotes}
     />

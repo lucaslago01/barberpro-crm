@@ -15,6 +15,8 @@ import {
 import { Panel } from '@/components/dashboard/panel'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { AgendaStatusBadge } from '@/components/dashboard/badges'
+import { NewAppointmentModal } from '@/components/dashboard/new-appointment-modal'
+import { RescheduleModal } from '@/components/dashboard/reschedule-modal'
 import { DaySummary } from './day-summary'
 import {
   agendaFilters,
@@ -27,6 +29,7 @@ interface AgendaViewProps {
   slots?: AgendaSlot[]
   date?: Date
   onDateChange?: (date: Date) => void
+  onReload?: () => void
   onUpdateStatus?: (id: string, status: AgendaStatus) => void
   onUpdateNotes?: (id: string, notes: string) => void
 }
@@ -177,13 +180,16 @@ function TimelineRow({
   last,
   onUpdateStatus,
   onEdit,
+  onReschedule,
 }: {
   slot: AgendaSlot
   last: boolean
   onUpdateStatus?: (id: string, status: AgendaStatus) => void
   onEdit?: (slot: AgendaSlot) => void
+  onReschedule?: (slot: AgendaSlot) => void
 }) {
   const muted = slot.status === 'cancelado' || slot.status === 'faltou'
+  const canReschedule = slot.status === 'agendado' || slot.status === 'confirmado'
 
   return (
     <li className="flex gap-3 sm:gap-4">
@@ -252,7 +258,16 @@ function TimelineRow({
               </span>
               <div className="flex items-center gap-0.5">
                 <IconAction label="Editar" icon={Pencil} onClick={() => onEdit?.(slot)} />
-                <IconAction label="Reagendar" icon={CalendarClock} />
+                <IconAction
+                  label={
+                    canReschedule
+                      ? 'Reagendar'
+                      : 'Só é possível reagendar agendamentos Agendados ou Confirmados'
+                  }
+                  icon={CalendarClock}
+                  disabled={!canReschedule}
+                  onClick={() => onReschedule?.(slot)}
+                />
                 <IconAction
                   label="Marcar como concluído"
                   icon={Check}
@@ -287,12 +302,15 @@ export function AgendaView({
   slots = [],
   date: dateProp,
   onDateChange,
+  onReload,
   onUpdateStatus,
   onUpdateNotes,
 }: AgendaViewProps) {
   const [filter, setFilter] = useState<AgendaStatus | 'todos'>('todos')
   const [internalDate, setInternalDate] = useState(() => new Date())
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
+  const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const currentDate = dateProp ?? internalDate
   const isToday = isSameDay(currentDate, new Date())
@@ -340,6 +358,23 @@ export function AgendaView({
         />
       )}
 
+      {creating && (
+        <NewAppointmentModal
+          initialDate={currentDate}
+          onClose={() => setCreating(false)}
+          onCreated={() => onReload?.()}
+        />
+      )}
+
+      {reschedulingSlot && (
+        <RescheduleModal
+          slot={reschedulingSlot}
+          currentDate={currentDate}
+          onClose={() => setReschedulingSlot(null)}
+          onDone={() => onReload?.()}
+        />
+      )}
+
       {/* Controls */}
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
@@ -376,7 +411,10 @@ export function AgendaView({
             </button>
           </div>
 
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105">
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+          >
             <Plus className="size-4" />
             Novo agendamento
           </button>
@@ -430,6 +468,7 @@ export function AgendaView({
                   last={i === rows.length - 1}
                   onUpdateStatus={onUpdateStatus}
                   onEdit={(s) => setEditingSlot(s)}
+                  onReschedule={(s) => setReschedulingSlot(s)}
                 />
               ))}
             </ol>
