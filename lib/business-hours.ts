@@ -21,13 +21,14 @@ export function isOpenDay(date: Date) {
   return HOURS[date.getDay()] !== null
 }
 
-// Horários do dia, ex.: ["09:00", "09:30", ..., "19:30"]. Vazio se estiver fechado.
+// Horários do dia, ex.: ["09:00", "09:30", ..., "20:00"]. Vazio se estiver fechado.
+// O último horário é o próprio horário de fechamento.
 export function getDaySlots(date: Date): string[] {
   const hours = HOURS[date.getDay()]
   if (!hours) return []
 
   const slots: string[] = []
-  for (let minutes = hours.open * 60; minutes < hours.close * 60; minutes += SLOT_MINUTES) {
+  for (let minutes = hours.open * 60; minutes <= hours.close * 60; minutes += SLOT_MINUTES) {
     slots.push(`${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`)
   }
   return slots
