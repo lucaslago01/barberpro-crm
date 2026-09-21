@@ -32,12 +32,20 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 })
 
-export function Agenda() {
+type AgendaProps = {
+  date?: Date
+  onDateChange?: (date: Date) => void
+}
+
+export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [active, setActive] = useState('todos')
-  const [date, setDate] = useState(() => new Date())
+  const [internalDate, setInternalDate] = useState(() => new Date())
   const [slots, setSlots] = useState<AgendaSlot[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const date = dateProp ?? internalDate
+  const dateKey = date.getTime()
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +54,7 @@ export function Agenda() {
       try {
         setLoading(true)
         setError(null)
-        const data = await getAgendaSlotsByDate(date)
+        const data = await getAgendaSlotsByDate(new Date(dateKey))
         if (!cancelled) setSlots(data)
       } catch (err) {
         if (!cancelled) {
@@ -63,14 +71,16 @@ export function Agenda() {
     return () => {
       cancelled = true
     }
-  }, [date])
+  }, [dateKey])
 
   function changeDay(amount: number) {
-    setDate((current) => {
-      const next = new Date(current)
-      next.setDate(next.getDate() + amount)
-      return next
-    })
+    const next = new Date(date)
+    next.setDate(next.getDate() + amount)
+    if (onDateChange) {
+      onDateChange(next)
+    } else {
+      setInternalDate(next)
+    }
   }
 
   const dateLabel = date.toLocaleDateString('pt-BR', {
