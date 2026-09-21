@@ -9,6 +9,7 @@ import {
   Pencil,
   CalendarClock,
   Clock,
+  Ban,
 } from 'lucide-react'
 import {
   getAgendaSlotsByDate,
@@ -23,6 +24,7 @@ import { AgendaStatusBadge } from './badges'
 import { EditAppointmentModal } from './edit-appointment-modal'
 import { NewAppointmentModal } from './new-appointment-modal'
 import { RescheduleModal } from './reschedule-modal'
+import { BlocksModal } from './blocks-modal'
 import { RowActionsMenu } from './row-actions-menu'
 import { cn } from '@/lib/utils'
 
@@ -53,6 +55,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
   const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
+  const [blocking, setBlocking] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   const date = dateProp ?? internalDate
@@ -161,12 +164,20 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
         />
       )}
 
+      {blocking && (
+        <BlocksModal
+          date={date}
+          onClose={() => setBlocking(false)}
+          onChanged={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
       <div className="flex flex-col gap-3 px-5 pt-4 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <CalendarDays className="size-5 text-gold" />
           <h2 className="text-lg font-semibold tracking-tight">Agenda de hoje</h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 rounded-lg border border-border bg-background/40 px-1 py-1 text-sm">
             <button
               aria-label="Dia anterior"
@@ -186,6 +197,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
               <ChevronRight className="size-4" />
             </button>
           </div>
+          <button
+            onClick={() => setBlocking(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Ban className="size-4" />
+            <span className="hidden sm:inline">Bloquear horário</span>
+            <span className="sm:hidden">Bloquear</span>
+          </button>
           <button
             onClick={() => setCreating(true)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
