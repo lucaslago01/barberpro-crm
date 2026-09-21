@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
+import { getSession, onAuthChange } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 export function AppShell({
@@ -17,7 +19,43 @@ export function AppShell({
   subtitle?: string
   headerAction?: ReactNode
 }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  // Confere a sessão ao abrir a tela
+  useEffect(() => {
+    let cancelled = false
+
+    getSession().then((session) => {
+      if (cancelled) return
+      if (session) {
+        setLoggedIn(true)
+        setChecking(false)
+      } else {
+        router.replace('/login')
+      }
+    })
+
+    // Se a pessoa sair (em qualquer aba), volta para o login
+    const stop = onAuthChange((isLogged) => {
+      if (!isLogged) router.replace('/login')
+    })
+
+    return () => {
+      cancelled = true
+      stop()
+    }
+  }, [router])
+
+  if (checking || !loggedIn) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
+        Carregando...
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
