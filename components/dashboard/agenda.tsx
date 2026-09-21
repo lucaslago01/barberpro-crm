@@ -22,6 +22,7 @@ import { UserAvatar } from './user-avatar'
 import { AgendaStatusBadge } from './badges'
 import { EditAppointmentModal } from './edit-appointment-modal'
 import { NewAppointmentModal } from './new-appointment-modal'
+import { RescheduleModal } from './reschedule-modal'
 import { RowActionsMenu } from './row-actions-menu'
 import { cn } from '@/lib/utils'
 
@@ -50,6 +51,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
+  const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -147,6 +149,15 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
           initialDate={date}
           onClose={() => setCreating(false)}
           onCreated={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
+      {reschedulingSlot && (
+        <RescheduleModal
+          slot={reschedulingSlot}
+          currentDate={date}
+          onClose={() => setReschedulingSlot(null)}
+          onDone={() => setReloadKey((k) => k + 1)}
         />
       )}
 
@@ -251,52 +262,66 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                 </td>
               </tr>
             ) : (
-              visibleSlots.map((a) => (
-                <tr
-                  key={a.id}
-                  className="border-b border-border/60 transition-colors hover:bg-white/[0.02]"
-                >
-                  <td className="px-5 py-3 font-medium tabular-nums">{a.time}</td>
-                  <td className="py-3 pr-6">
-                    <div className="flex items-center gap-2.5">
-                      <UserAvatar name={a.client} size="sm" />
-                      <span className="whitespace-nowrap font-medium">
-                        {a.client}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
-                    {a.service}
-                  </td>
-                  <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
-                    {a.duration}
-                  </td>
-                  <td className="whitespace-nowrap py-3 pr-6 font-medium tabular-nums">
-                    {currency.format(a.price)}
-                  </td>
-                  <td className="py-3">
-                    <AgendaStatusBadge status={a.status as AgendaStatus} />
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-0.5 text-muted-foreground">
-                      <button
-                        aria-label="Editar agendamento"
-                        onClick={() => setEditingSlot(a)}
-                        className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground"
-                      >
-                        <Pencil className="size-4" />
-                      </button>
-                      <button
-                        aria-label="Reagendar"
-                        className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground"
-                      >
-                        <CalendarClock className="size-4" />
-                      </button>
-                      <RowActionsMenu slot={a} onChangeStatus={handleChangeStatus} />
-                    </div>
-                  </td>
-                </tr>
-              ))
+              visibleSlots.map((a) => {
+                const canReschedule = a.status === 'agendado' || a.status === 'confirmado'
+                return (
+                  <tr
+                    key={a.id}
+                    className="border-b border-border/60 transition-colors hover:bg-white/[0.02]"
+                  >
+                    <td className="px-5 py-3 font-medium tabular-nums">{a.time}</td>
+                    <td className="py-3 pr-6">
+                      <div className="flex items-center gap-2.5">
+                        <UserAvatar name={a.client} size="sm" />
+                        <span className="whitespace-nowrap font-medium">
+                          {a.client}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
+                      {a.service}
+                    </td>
+                    <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
+                      {a.duration}
+                    </td>
+                    <td className="whitespace-nowrap py-3 pr-6 font-medium tabular-nums">
+                      {currency.format(a.price)}
+                    </td>
+                    <td className="py-3">
+                      <AgendaStatusBadge status={a.status as AgendaStatus} />
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-0.5 text-muted-foreground">
+                        <button
+                          aria-label="Editar agendamento"
+                          onClick={() => setEditingSlot(a)}
+                          className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground"
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                        <button
+                          aria-label="Reagendar"
+                          title={
+                            canReschedule
+                              ? 'Reagendar'
+                              : 'Só é possível reagendar agendamentos Agendados ou Confirmados'
+                          }
+                          disabled={!canReschedule}
+                          onClick={() => setReschedulingSlot(a)}
+                          className={cn(
+                            'grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground',
+                            !canReschedule &&
+                              'cursor-not-allowed opacity-30 hover:bg-transparent hover:text-muted-foreground',
+                          )}
+                        >
+                          <CalendarClock className="size-4" />
+                        </button>
+                        <RowActionsMenu slot={a} onChangeStatus={handleChangeStatus} />
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

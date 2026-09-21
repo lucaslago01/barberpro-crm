@@ -81,3 +81,41 @@ export async function createAppointment(params: {
     throw new Error(`Erro ao criar agendamento: ${error.message}`)
   }
 }
+
+// Muda o dia e a hora de um agendamento que já existe. O status não é alterado.
+export async function rescheduleAppointment(
+  id: string,
+  dateTime: string,
+): Promise<void> {
+  const wallClock = toLocalWallClock(new Date(dateTime))
+
+  // Confere se o novo horário está livre (ignora o próprio agendamento e os cancelados)
+  const { data: taken, error: takenError } = await supabase
+    .from('barberpro_appointments')
+    .select('id')
+    .eq('time', wallClock)
+    .neq('status', 'cancelado')
+    .neq('id', id)
+    .limit(1)
+
+  if (takenError) {
+    throw new Error(`Erro ao conferir horário: ${takenError.message}`)
+  }
+
+  if (taken && taken.length > 0) {
+    throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
+  }
+
+  const { error } = await supabase
+    .from('barberpro_appointments')
+    .update({ time: wallClock })
+    .eq('id', id)
+
+  if (error) {
+    // 23505 = a trava do banco recusou um horário duplicado
+    if ((error as any).code === '23505') {
+      throw new Error('Esse horário acabou de ser ocupado. Escolha outro.')
+    }
+    throw new Error(`Erro ao reagendar: ${error.message}`)
+  }
+}
