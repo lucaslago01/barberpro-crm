@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
+import { formatFullDate } from "@/lib/agendar/date-utils"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 export interface AgendarFormData {
@@ -29,7 +30,7 @@ export interface AgendarFormData {
 
 interface DataFormProps {
   service: AgendarService
-  selectedDate: number | null
+  selectedDate: Date | null
   selectedTime: string | null
   data: AgendarFormData
   onChange: (patch: Partial<AgendarFormData>) => void
@@ -39,11 +40,6 @@ interface DataFormProps {
 }
 
 const MAX_OBS = 300
-
-function formatFullDate(day: number | null) {
-  if (day === null) return "Ainda não selecionada"
-  return `${day} de Setembro de 2026`
-}
 
 // Aplica a máscara (41) 99999-9999 conforme o usuário digita.
 function maskWhatsapp(value: string) {

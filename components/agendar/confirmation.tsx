@@ -1,42 +1,49 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, Scissors, User, Wallet } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
+import { formatFullDate } from "@/lib/agendar/date-utils"
 import type { AgendarFormData } from "@/components/agendar/data-form"
 import { createPublicAppointment } from "@/lib/supabase-data"
 
 interface ConfirmationProps {
   service: AgendarService
-  selectedDate: number | null
+  selectedDate: Date | null
   selectedTime: string | null
   data: AgendarFormData
   onBack: () => void
-}
-
-function formatFullDate(day: number | null) {
-  if (day === null) return "Data não selecionada"
-  return `${day} de Setembro de 2026`
 }
 
 export function Confirmation({ service, selectedDate, selectedTime, data, onBack }: ConfirmationProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const submittingRef = useRef(false)
 
   async function handleConfirm() {
+    if (submittingRef.current) return
+
     if (!selectedDate || !selectedTime) {
       setError("Data ou horário inválidos")
       return
     }
+
+    submittingRef.current = true
 
     try {
       setSubmitting(true)
       setError(null)
 
       const [hours, minutes] = selectedTime.split(":").map(Number)
-      const dateTime = new Date(2026, 8, selectedDate, hours, minutes)
+      const dateTime = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        hours,
+        minutes,
+      )
 
       await createPublicAppointment({
         clientName: data.nome,
@@ -51,6 +58,7 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao confirmar agendamento")
     } finally {
+      submittingRef.current = false
       setSubmitting(false)
     }
   }
@@ -69,7 +77,7 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
           </p>
           <div className="mt-6 space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-left">
             <p className="text-sm text-zinc-300">
-              <span className="text-zinc-500">Data:</span> {formatFullDate(selectedDate)}
+              <span className="text-zinc-500">Data:</span> {formatFullDate(selectedDate, "Data não selecionada")}
             </p>
             <p className="text-sm text-zinc-300">
               <span className="text-zinc-500">Horário:</span> {selectedTime}
@@ -102,7 +110,9 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
               <Calendar className="mt-0.5 size-4 shrink-0 text-amber-400" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Data</dt>
-                <dd className="text-sm font-medium text-white">{formatFullDate(selectedDate)}</dd>
+                <dd className="text-sm font-medium text-white">
+                  {formatFullDate(selectedDate, "Data não selecionada")}
+                </dd>
               </div>
             </div>
             <div className="flex items-start gap-3">

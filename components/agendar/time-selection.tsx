@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
+import { formatFullDate } from "@/lib/agendar/date-utils"
 import { getBookedTimes } from "@/lib/supabase-appointments"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
@@ -28,7 +29,7 @@ const UNAVAILABLE_SLOTS = new Set<string>(["12:00", "12:30", "13:00", "13:30", "
 
 interface TimeSelectionProps {
   service: AgendarService
-  selectedDate: number | null
+  selectedDate: Date | null
   selectedTime: string | null
   onSelectTime: (time: string) => void
   onBack: () => void
@@ -36,14 +37,8 @@ interface TimeSelectionProps {
   onContinue: () => void
 }
 
-function formatFullDate(day: number | null) {
-  if (day === null) return "Ainda não selecionada"
-  return `${day} de Setembro de 2026`
-}
-
-function formatWeekdayDate(day: number | null) {
-  if (day === null) return "Selecione uma data"
-  const date = new Date(2026, 8, day)
+function formatWeekdayDate(date: Date | null) {
+  if (!date) return "Selecione uma data"
   const label = date.toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -63,15 +58,16 @@ export function TimeSelection({
   onContinue,
 }: TimeSelectionProps) {
   const [booked, setBooked] = useState<string[]>([])
+  const dateKey = selectedDate ? selectedDate.getTime() : null
 
   // Busca no banco os horários já ocupados do dia escolhido
   useEffect(() => {
-    if (selectedDate === null) {
+    if (dateKey === null) {
       setBooked([])
       return
     }
     let cancelled = false
-    getBookedTimes(new Date(2026, 8, selectedDate))
+    getBookedTimes(new Date(dateKey))
       .then((times) => {
         if (!cancelled) setBooked(times)
       })
@@ -81,12 +77,20 @@ export function TimeSelection({
     return () => {
       cancelled = true
     }
-  }, [selectedDate])
+  }, [dateKey])
 
   function isPast(time: string) {
-    if (selectedDate === null) return false
+    if (!selectedDate) return false
     const [h, m] = time.split(":").map(Number)
-    return new Date(2026, 8, selectedDate, h, m).getTime() < Date.now()
+    return (
+      new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        h,
+        m,
+      ).getTime() < Date.now()
+    )
   }
 
   return (

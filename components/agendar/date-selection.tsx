@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import {
   ArrowLeft,
@@ -15,32 +16,17 @@ import {
 } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
+import { formatFullDate, isSameDay, startOfToday } from "@/lib/agendar/date-utils"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-const MONTH_LABEL = "Setembro 2026"
-const DAYS_IN_MONTH = 30
-// Setembro/2026 começa numa terça-feira -> 1 célula vazia no layout Seg-Dom.
-const LEADING_BLANKS = 1
-const TODAY = 15
-// Dias passados (1-14) e domingos (20, 27) ficam indisponíveis.
-const UNAVAILABLE_DAYS = new Set<number>([
-  ...Array.from({ length: 14 }, (_, i) => i + 1),
-  20,
-  27,
-])
 
 interface DateSelectionProps {
   service: AgendarService
-  selectedDate: number | null
-  onSelectDate: (day: number) => void
+  selectedDate: Date | null
+  onSelectDate: (date: Date) => void
   onBack: () => void
   onContinue: () => void
-}
-
-function formatFullDate(day: number | null) {
-  if (day === null) return "Ainda não selecionada"
-  return `${day} de Setembro de 2026`
 }
 
 export function DateSelection({
@@ -50,9 +36,36 @@ export function DateSelection({
   onBack,
   onContinue,
 }: DateSelectionProps) {
+  const today = startOfToday()
+
+  const [viewDate, setViewDate] = useState(() => {
+    const base = selectedDate ?? today
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+
+  const monthLabelRaw = viewDate.toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  })
+  const monthLabel = monthLabelRaw.charAt(0).toUpperCase() + monthLabelRaw.slice(1)
+
+  // Layout Seg-Dom: getDay() devolve 0 = domingo, então deslocamos
+  const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() === month
+
+  function changeMonth(amount: number) {
+    setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1))
+  }
+
   const cells: (number | null)[] = [
-    ...Array.from({ length: LEADING_BLANKS }, () => null),
-    ...Array.from({ length: DAYS_IN_MONTH }, (_, i) => i + 1),
+    ...Array.from({ length: leadingBlanks }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
 
   return (
@@ -76,14 +89,17 @@ export function DateSelection({
               <button
                 type="button"
                 aria-label="Mês anterior"
-                className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-white/20 hover:text-white"
+                disabled={isCurrentMonth}
+                onClick={() => changeMonth(-1)}
+                className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:text-zinc-400"
               >
                 <ChevronLeft className="size-4.5" />
               </button>
-              <p className="text-sm font-semibold text-white sm:text-base">{MONTH_LABEL}</p>
+              <p className="text-sm font-semibold text-white sm:text-base">{monthLabel}</p>
               <button
                 type="button"
                 aria-label="Próximo mês"
+                onClick={() => changeMonth(1)}
                 className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:border-white/20 hover:text-white"
               >
                 <ChevronRight className="size-4.5" />
@@ -109,17 +125,20 @@ export function DateSelection({
                   return <div key={`blank-${index}`} aria-hidden="true" />
                 }
 
-                const isUnavailable = UNAVAILABLE_DAYS.has(day)
-                const isSelected = day === selectedDate
-                const isToday = day === TODAY
+                const dayDate = new Date(year, month, day)
+                const isPastDay = dayDate.getTime() < today.getTime()
+                const isSunday = dayDate.getDay() === 0
+                const isUnavailable = isPastDay || isSunday
+                const isSelected = selectedDate !== null && isSameDay(dayDate, selectedDate)
+                const isToday = isSameDay(dayDate, today)
 
-                if (isSelected) {
+                if (isSelected && !isUnavailable) {
                   return (
                     <button
                       key={day}
                       type="button"
                       aria-pressed="true"
-                      onClick={() => onSelectDate(day)}
+                      onClick={() => onSelectDate(dayDate)}
                       className="relative flex h-11 items-center justify-center rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 text-sm font-bold text-black shadow-[0_0_0_1px_rgba(251,191,36,0.25)] transition-all sm:h-12"
                     >
                       {day}
@@ -145,7 +164,7 @@ export function DateSelection({
                   <button
                     key={day}
                     type="button"
-                    onClick={() => onSelectDate(day)}
+                    onClick={() => onSelectDate(dayDate)}
                     className={
                       isToday
                         ? "relative flex h-11 items-center justify-center rounded-xl border border-amber-400/50 text-sm font-semibold text-white transition-colors hover:bg-white/5 sm:h-12"

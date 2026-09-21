@@ -13,7 +13,7 @@ import { Confirmation } from "@/components/agendar/confirmation"
 export function AgendarFlow() {
   const [step, setStep] = useState(1)
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<number | null>(18)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [formData, setFormData] = useState<AgendarFormData>({
     nome: "",
@@ -24,6 +24,13 @@ export function AgendarFlow() {
   })
 
   const selectedService = services.find((s) => s.id === selectedServiceId) ?? services[0]
+
+  function handleSelectDate(date: Date) {
+    if (!selectedDate || selectedDate.getTime() !== date.getTime()) {
+      setSelectedTime(null)
+    }
+    setSelectedDate(date)
+  }
 
   return (
     <>
@@ -118,7 +125,7 @@ export function AgendarFlow() {
         <DateSelection
           service={selectedService}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDate}
           onBack={() => setStep(1)}
           onContinue={() => setStep(3)}
         />
