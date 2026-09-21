@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+
 import {
   LayoutDashboard,
   CalendarDays,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react'
 import { navItems } from '@/lib/data'
 import { UserAvatar } from './user-avatar'
+import { getSession, signOut } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, LucideIcon> = {
@@ -35,6 +38,19 @@ const iconMap: Record<string, LucideIcon> = {
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    getSession().then((session) => {
+      setUserEmail(session?.user?.email ?? '')
+    })
+  }, [])
+
+  async function handleSignOut() {
+    await signOut()
+    router.replace('/login')
+  }
 
   return (
     <aside className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
@@ -100,21 +116,21 @@ export function Sidebar() {
       </p>
 
       {/* Profile */}
-      <div className="border-t border-sidebar-border p-3">
-        <button className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-white/5">
-          <UserAvatar name="Lucas Barbeiro" size="md" ring />
+            <div className="border-t border-sidebar-border p-3">
+        <div className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left">
+          <UserAvatar name={userEmail || 'Usuário'} size="md" ring />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">Lucas</p>
-            <p className="truncate text-xs text-muted-foreground">Barbeiro</p>
+            <p className="truncate text-sm font-semibold">
+              {userEmail ? userEmail.split('@')[0] : 'Usuário'}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
           </div>
-          <ChevronsUpDown className="size-4 text-muted-foreground" />
-        </button>
+        </div>
         <div className="mt-1 space-y-0.5">
-          <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
-            <UserRound className="size-4" />
-            Meu perfil
-          </button>
-          <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+          >
             <LogOut className="size-4" />
             Sair
           </button>
