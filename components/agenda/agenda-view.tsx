@@ -1,9 +1,4 @@
 'use client'
-interface AgendaViewProps {
-  slots?: AgendaSlot[]
-  onUpdateStatus?: (id: string, status: AgendaStatus) => void
-  onUpdateNotes?: (id: string, notes: string) => void
-}
 
 import { useMemo, useState } from 'react'
 import {
@@ -28,6 +23,14 @@ import {
 } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
+interface AgendaViewProps {
+  slots?: AgendaSlot[]
+  date?: Date
+  onDateChange?: (date: Date) => void
+  onUpdateStatus?: (id: string, status: AgendaStatus) => void
+  onUpdateNotes?: (id: string, notes: string) => void
+}
+
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -40,7 +43,13 @@ const dateFmt = new Intl.DateTimeFormat('pt-BR', {
   year: 'numeric',
 })
 
-const BASE_DATE = new Date(2025, 8, 15)
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
 
 const cardAccent: Record<AgendaStatus, string> = {
   agendado: 'border-l-border',
@@ -274,16 +283,33 @@ function TimelineRow({
   )
 }
 
-export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: AgendaViewProps) {
+export function AgendaView({
+  slots = [],
+  date: dateProp,
+  onDateChange,
+  onUpdateStatus,
+  onUpdateNotes,
+}: AgendaViewProps) {
   const [filter, setFilter] = useState<AgendaStatus | 'todos'>('todos')
-  const [dayOffset, setDayOffset] = useState(0)
+  const [internalDate, setInternalDate] = useState(() => new Date())
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
 
-  const currentDate = useMemo(() => {
-    const d = new Date(BASE_DATE)
-    d.setDate(d.getDate() + dayOffset)
-    return d
-  }, [dayOffset])
+  const currentDate = dateProp ?? internalDate
+  const isToday = isSameDay(currentDate, new Date())
+
+  function setDate(next: Date) {
+    if (onDateChange) {
+      onDateChange(next)
+    } else {
+      setInternalDate(next)
+    }
+  }
+
+  function shiftDay(amount: number) {
+    const next = new Date(currentDate)
+    next.setDate(next.getDate() + amount)
+    setDate(next)
+  }
 
   const counts = useMemo(() => {
     const scheduled = slots.filter((a) => !a.available)
@@ -321,7 +347,7 @@ export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: Agenda
             <div className="flex items-center gap-1 rounded-lg border border-border bg-background/40 px-1 py-1">
               <button
                 aria-label="Dia anterior"
-                onClick={() => setDayOffset((o) => o - 1)}
+                onClick={() => shiftDay(-1)}
                 className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
               >
                 <ChevronLeft className="size-4" />
@@ -331,17 +357,17 @@ export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: Agenda
               </span>
               <button
                 aria-label="Próximo dia"
-                onClick={() => setDayOffset((o) => o + 1)}
+                onClick={() => shiftDay(1)}
                 className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
               >
                 <ChevronRight className="size-4" />
               </button>
             </div>
             <button
-              onClick={() => setDayOffset(0)}
+              onClick={() => setDate(new Date())}
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-                dayOffset === 0
+                isToday
                   ? 'border-gold/40 bg-gold/12 text-gold'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
               )}
@@ -392,7 +418,7 @@ export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: Agenda
             <div className="grid place-items-center gap-2 py-16 text-center">
               <Clock className="size-8 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
-                Nenhum agendamento neste filtro.
+                Nenhum agendamento neste dia ou filtro.
               </p>
             </div>
           ) : (
@@ -410,7 +436,7 @@ export function AgendaView({ slots = [], onUpdateStatus, onUpdateNotes }: Agenda
           )}
         </Panel>
 
-        <DaySummary />
+        <DaySummary slots={slots} />
       </div>
     </div>
   )

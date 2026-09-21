@@ -1,8 +1,34 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Bell, CalendarDays, ChevronDown, Menu } from 'lucide-react'
 import { UserAvatar } from './user-avatar'
+
+function formatToday(date: Date) {
+  const label = date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  // "segunda-feira, 21 de setembro de 2026" -> "Segunda-feira, 21 de Setembro de 2026"
+  return label
+    .replace(/^./, (c) => c.toUpperCase())
+    .replace(/ de ([a-zç]+) de /, (_, m: string) => ` de ${m.charAt(0).toUpperCase()}${m.slice(1)} de `)
+}
+
+function TodayLabel() {
+  const [label, setLabel] = useState('')
+
+  useEffect(() => {
+    const update = () => setLabel(formatToday(new Date()))
+    update()
+    const id = setInterval(update, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  return <span className="min-w-[16rem] whitespace-nowrap">{label}</span>
+}
 
 export function Topbar({
   onMenuClick,
@@ -36,9 +62,7 @@ export function Topbar({
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm text-muted-foreground md:flex">
           <CalendarDays className="size-4 text-gold" />
-          <span className="whitespace-nowrap">
-            Segunda-feira, 15 de Setembro de 2025
-          </span>
+          <TodayLabel />
         </div>
 
         <button
