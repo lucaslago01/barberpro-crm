@@ -216,70 +216,16 @@ export async function createPublicAppointment(params: {
   dateTime: string
   notes?: string
 }): Promise<void> {
-  const wallClock = toLocalWallClock(new Date(params.dateTime))
-
-  // Confere se o horário ainda está livre (cancelados não contam)
-  const { data: taken, error: takenError } = await supabase
-    .from('barberpro_appointments')
-    .select('id')
-    .eq('time', wallClock)
-    .neq('status', 'cancelado')
-    .limit(1)
-
-  if (takenError) {
-    throw new Error(`Erro ao conferir horário: ${takenError.message}`)
-  }
-
-  if (taken && taken.length > 0) {
-    throw new Error('Esse horário acabou de ser ocupado. Volte e escolha outro.')
-  }
-
-  const { data: service, error: serviceError } = await supabase
-    .from('barberpro_services')
-    .select('id')
-    .ilike('name', params.serviceName)
-    .single()
-
-  if (serviceError || !service) {
-    throw new Error(`Serviço "${params.serviceName}" não encontrado`)
-  }
-
-  let clientId: string
-
-  const { data: existingClient } = await supabase
-    .from('barberpro_clients')
-    .select('id')
-    .eq('phone', params.clientPhone)
-    .maybeSingle()
-
-  if (existingClient) {
-    clientId = existingClient.id
-  } else {
-    const { data: newClient, error: clientError } = await supabase
-      .from('barberpro_clients')
-      .insert({
-        name: params.clientName,
-        phone: params.clientPhone,
-        email: params.clientEmail || null,
-      })
-      .select('id')
-      .single()
-
-    if (clientError || !newClient) {
-      throw new Error(`Erro ao criar cliente: ${clientError?.message}`)
-    }
-    clientId = newClient.id
-  }
-
-  const { error: apptError } = await supabase.from('barberpro_appointments').insert({
-    client_id: clientId,
-    service_id: service.id,
-    time: wallClock,
-    status: 'agendado',
-    notes: params.notes || null,
+  const { error } = await supabase.rpc('barberpro_create_public_appointment', {
+    p_client_name: params.clientName,
+    p_client_phone: params.clientPhone,
+    p_service_name: params.serviceName,
+    p_time: toLocalWallClock(new Date(params.dateTime)),
+    p_client_email: params.clientEmail ?? null,
+    p_notes: params.notes ?? null,
   })
 
-  if (apptError) {
-    throw new Error(`Erro ao criar agendamento: ${apptError.message}`)
+  if (error) {
+    throw new Error(error.message)
   }
 }

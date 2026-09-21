@@ -39,29 +39,22 @@ export async function getServices(): Promise<ServiceOption[]> {
 
 // Devolve os horários já ocupados no dia, ex.: ["09:00", "14:30"].
 // Agendamentos cancelados não contam como ocupados.
-export async function getBookedTimes(date: Date): Promise<string[]> {
-  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
-  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0, 0, 0)
 
-  const { data, error } = await supabase
-    .from('barberpro_appointments')
-    .select('time, status')
-    .gte('time', toLocalWallClock(start))
-    .lt('time', toLocalWallClock(end))
+export async function getBookedTimes(date: Date): Promise<string[]> {
+  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+
+  const { data, error } = await supabase.rpc('barberpro_booked_times', {
+    p_day: day,
+  })
 
   if (error) {
     throw new Error(`Erro ao buscar horários ocupados: ${error.message}`)
   }
 
-  return (data || [])
-    .filter((a: any) => a.status !== 'cancelado')
-    .map((a: any) =>
-      new Date(a.time).toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    )
+  return (data as string[]) || []
 }
+
+
 
 export async function createAppointment(params: {
   clientId: string
