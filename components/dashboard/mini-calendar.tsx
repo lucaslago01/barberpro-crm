@@ -1,17 +1,48 @@
 'use client'
 
+import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Panel } from './panel'
 import { cn } from '@/lib/utils'
 
 const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-// September 2025 starts on a Monday (index 1 with Sunday-first grid)
-const leadingBlanks = 1
-const daysInMonth = 30
-const today = 15
-const dotDays = [18, 22, 27]
+
+const monthNames = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+]
 
 export function MiniCalendar() {
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
+
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+
+  const leadingBlanks = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const now = new Date()
+  const isCurrentMonth =
+    now.getFullYear() === year && now.getMonth() === month
+  const today = isCurrentMonth ? now.getDate() : null
+
+  function changeMonth(amount: number) {
+    setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1))
+  }
+
   const cells: (number | null)[] = [
     ...Array.from({ length: leadingBlanks }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
@@ -22,13 +53,17 @@ export function MiniCalendar() {
       <div className="mb-3 flex items-center justify-between">
         <button
           aria-label="Mês anterior"
+          onClick={() => changeMonth(-1)}
           className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
         </button>
-        <p className="text-sm font-semibold">Setembro 2025</p>
+        <p className="text-sm font-semibold">
+          {monthNames[month]} {year}
+        </p>
         <button
           aria-label="Próximo mês"
+          onClick={() => changeMonth(1)}
           className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
         >
           <ChevronRight className="size-4" />
@@ -47,7 +82,6 @@ export function MiniCalendar() {
         {cells.map((day, i) => {
           if (day === null) return <span key={`b-${i}`} />
           const isToday = day === today
-          const hasDot = dotDays.includes(day)
           return (
             <button
               key={day}
@@ -59,9 +93,6 @@ export function MiniCalendar() {
               )}
             >
               {day}
-              {hasDot && !isToday && (
-                <span className="absolute bottom-1 size-1 rounded-full bg-gold" />
-              )}
             </button>
           )
         })}
