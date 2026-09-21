@@ -8,20 +8,21 @@ import {
   Plus,
   Pencil,
   CalendarClock,
-  MoreVertical,
   Clock,
 } from 'lucide-react'
 import {
   getAgendaSlotsByDate,
   updateAppointmentNotes,
+  updateAppointmentStatus,
 } from '@/lib/supabase-data'
-import type { AgendaSlot } from '@/lib/types'
+import type { AgendaSlot, AppointmentStatus } from '@/lib/types'
 import type { AgendaStatus } from '@/lib/data'
 import { Panel } from './panel'
 import { UserAvatar } from './user-avatar'
 import { AgendaStatusBadge } from './badges'
 import { EditAppointmentModal } from './edit-appointment-modal'
 import { NewAppointmentModal } from './new-appointment-modal'
+import { RowActionsMenu } from './row-actions-menu'
 import { cn } from '@/lib/utils'
 
 const tabDefs = [
@@ -100,6 +101,16 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
       console.error('Erro ao salvar observações:', err)
       alert('Não foi possível salvar as observações. Tente de novo.')
       throw err
+    }
+  }
+
+  async function handleChangeStatus(id: string, status: AppointmentStatus) {
+    try {
+      await updateAppointmentStatus(id, status)
+      setReloadKey((k) => k + 1)
+    } catch (err) {
+      console.error('Erro ao atualizar status:', err)
+      alert('Não foi possível atualizar o status. Tente de novo.')
     }
   }
 
@@ -281,12 +292,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                       >
                         <CalendarClock className="size-4" />
                       </button>
-                      <button
-                        aria-label="Mais ações"
-                        className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground"
-                      >
-                        <MoreVertical className="size-4" />
-                      </button>
+                      <RowActionsMenu slot={a} onChangeStatus={handleChangeStatus} />
                     </div>
                   </td>
                 </tr>
