@@ -36,6 +36,7 @@ import {
   type FeaturedTab,
 } from '@/lib/data'
 import { getClients, createClient, updateClient } from '@/lib/supabase-data'
+import { getClientStats, type ClientStats } from '@/lib/supabase-client-stats'
 import type { Client as SupabaseClient } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Cake, MessageCircle, Zap } from 'lucide-react'
@@ -45,17 +46,17 @@ const currency = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 })
 
-function mapToRow(c: SupabaseClient): Client {
+function mapToRow(c: SupabaseClient, stats?: ClientStats): Client {
   return {
     id: c.id,
     name: c.name,
     whatsapp: c.phone || '-',
-    lastVisit: c.last_visit || '-',
-    lastVisitAgo: '-',
-    frequency: '-',
-    visits: 0,
-    avgTicket: 0,
-    status: 'ativo',
+    lastVisit: stats?.lastVisit || '-',
+    lastVisitAgo: stats?.lastVisitAgo || '-',
+    frequency: stats?.frequency || '-',
+    visits: stats?.visits || 0,
+    avgTicket: stats?.avgTicket || 0,
+    status: stats?.status || 'ativo',
   }
 }
 
@@ -421,8 +422,20 @@ function ClientsTable() {
       setLoading(true)
       setError(null)
       const data = await getClients()
-      setClients(data.map(mapToRow))
+      let stats: Record<string, ClientStats> = {}
+      try {
+        stats = await getClientStats()
+      } catch (statsErr) {
+        console.error('Erro ao calcular estatísticas dos clientes:', statsErr)
+      }
+      setClients(data.map((c) => mapToRow(c, stats[c.id])))
       setRawClients(data)
+
+
+
+
+      
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar clientes')
     } finally {
