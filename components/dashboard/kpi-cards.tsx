@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { getDashboardKpis } from '@/lib/supabase-data'
+import { getClientKpis, RISK_DAYS } from '@/lib/supabase-kpis'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, LucideIcon> = {
@@ -41,50 +42,59 @@ export function KpiCards() {
 
   useEffect(() => {
     async function load() {
-      try {
-        const data = await getDashboardKpis()
-        setKpis([
-          {
-            label: 'Agendamentos no mês',
-            value: String(data.totalAppointments),
-            icon: 'CalendarCheck',
-            trend: 0,
-            trendUp: true,
-          },
-          {
-            label: 'Faturamento do mês (concluídos)',
-            value: currency.format(data.revenue),
-            icon: 'CircleDollarSign',
-            trend: 0,
-            trendUp: true,
-          },
-          {
-            label: 'Clientes totais',
-            value: String(data.totalClients),
-            icon: 'Users',
-            trend: 0,
-            trendUp: true,
-          },
-          {
-            label: 'Clientes em risco',
-            value: '12',
-            icon: 'Star',
-            trend: 5,
-            trendUp: false,
-          },
-          {
-            label: 'Novos clientes',
-            value: '18',
-            icon: 'UserPlus',
-            trend: 28,
-            trendUp: true,
-          },
-        ])
-      } catch (err) {
-        console.error('Erro ao carregar KPIs:', err)
-      } finally {
-        setLoading(false)
+      const [main, clientKpis] = await Promise.allSettled([
+        getDashboardKpis(),
+        getClientKpis(),
+      ])
+
+      if (main.status === 'rejected') {
+        console.error('Erro ao carregar KPIs:', main.reason)
       }
+      if (clientKpis.status === 'rejected') {
+        console.error('Erro ao carregar KPIs de clientes:', clientKpis.reason)
+      }
+
+      const data = main.status === 'fulfilled' ? main.value : null
+      const clients = clientKpis.status === 'fulfilled' ? clientKpis.value : null
+
+      setKpis([
+        {
+          label: 'Agendamentos no mês',
+          value: data ? String(data.totalAppointments) : '-',
+          icon: 'CalendarCheck',
+          trend: 0,
+          trendUp: true,
+        },
+        {
+          label: 'Faturamento do mês (concluídos)',
+          value: data ? currency.format(data.revenue) : '-',
+          icon: 'CircleDollarSign',
+          trend: 0,
+          trendUp: true,
+        },
+        {
+          label: 'Clientes totais',
+          value: data ? String(data.totalClients) : '-',
+          icon: 'Users',
+          trend: 0,
+          trendUp: true,
+        },
+        {
+          label: `Clientes em risco (+${RISK_DAYS} dias)`,
+          value: clients ? String(clients.atRisk) : '-',
+          icon: 'Star',
+          trend: 0,
+          trendUp: false,
+        },
+        {
+          label: 'Novos clientes no mês',
+          value: clients ? String(clients.newClients) : '-',
+          icon: 'UserPlus',
+          trend: 0,
+          trendUp: true,
+        },
+      ])
+      setLoading(false)
     }
     load()
   }, [])
