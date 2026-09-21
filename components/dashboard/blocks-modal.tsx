@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Trash2, X } from 'lucide-react'
+import { Ban, Trash2, X } from 'lucide-react'
 import {
   createBlock,
   deleteBlock,
   getBlocksByDay,
   type Block,
 } from '@/lib/supabase-blocks'
-import { getDaySlots, SLOT_MINUTES } from '@/lib/business-hours'
+import { getDaySlots, isOpenDay, SLOT_MINUTES } from '@/lib/business-hours'
 
 function addMinutes(time: string, minutes: number) {
   const [h, m] = time.split(':').map(Number)
@@ -43,17 +43,26 @@ export function BlocksModal({
   const savingRef = useRef(false)
 
   const daySlots = getDaySlots(date)
+  const open = isOpenDay(date)
 
-  // Inícios possíveis: todos os horários do dia.
-  // Finais possíveis: cada horário + 30 min (o último termina no fechamento).
-  const startOptions = daySlots
-  const endOptions = daySlots.map((s) => addMinutes(s, SLOT_MINUTES))
+  // Inícios possíveis: todos os horários do dia (sem o último, que é o fechamento).
+  // Finais possíveis: cada horário + 30 min.
+  const startOptions = daySlots.slice(0, -1)
+  const endOptions = daySlots.slice(1)
 
   const dateLabel = date.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   })
+
+  // O dia inteiro já está bloqueado se existe um bloqueio cobrindo do abre ao fecha
+  const wholeDayBlocked =
+    open &&
+    daySlots.length > 0 &&
+    blocks.some(
+      (b) => shortTime(b.start_time) === daySlots[0] && shortTime(b.end_time) === daySlots[daySlots.length - 1],
+    )
 
   useEffect(() => {
     let cancelled = false
@@ -96,6 +105,30 @@ export function BlocksModal({
       onChanged()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar bloqueio')
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
+  }
+
+  async function handleBlockWholeDay() {
+    if (savingRef.current || daySlots.length === 0) return
+    setError(null)
+
+    savingRef.current = true
+    setSaving(true)
+    try {
+      await createBlock({
+        date,
+        start: daySlots[0],
+        end: daySlots[daySlots.length - 1],
+        reason: reason.trim() || 'Fechado o dia todo',
+      })
+      setReason('')
+      setReloadKey((k) => k + 1)
+      onChanged()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao bloquear o dia')
     } finally {
       savingRef.current = false
       setSaving(false)
@@ -169,58 +202,70 @@ export function BlocksModal({
           )}
         </div>
 
-        {/* Novo bloqueio */}
-        {daySlots.length === 0 ? (
+        {!open ? (
           <p className="text-sm text-muted-foreground">A barbearia não abre neste dia.</p>
         ) : (
-          <div className="space-y-3 border-t border-border pt-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Novo bloqueio
-            </p>
+          <div className="space-y-4 border-t border-border pt-4">
+            {/* Bloquear o dia inteiro */}
+            <button
+              onClick={handleBlockWholeDay}
+              disabled={saving || wholeDayBlocked}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Ban className="size-4" />
+              {wholeDayBlocked ? 'Dia inteiro já bloqueado' : 'Bloquear o dia inteiro'}
+            </button>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Das</label>
-                <select
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                  className={fieldClass}
-                >
-                  <option value="">Início</option>
-                  {startOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Até</label>
-                <select
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                  className={fieldClass}
-                >
-                  <option value="">Fim</option>
-                  {endOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            {/* Novo bloqueio por horário */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Ou bloqueie só um horário
+              </p>
 
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Motivo (opcional)
-              </label>
-              <input
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className={fieldClass}
-                placeholder="Ex.: almoço"
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Das</label>
+                  <select
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                    className={fieldClass}
+                  >
+                    <option value="">Início</option>
+                    {startOptions.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Até</label>
+                  <select
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                    className={fieldClass}
+                  >
+                    <option value="">Fim</option>
+                    {endOptions.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Motivo (opcional)
+                </label>
+                <input
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className={fieldClass}
+                  placeholder="Ex.: almoço, feriado"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -234,7 +279,7 @@ export function BlocksModal({
           >
             Fechar
           </button>
-          {daySlots.length > 0 && (
+          {open && (
             <button
               onClick={handleCreate}
               disabled={saving}
