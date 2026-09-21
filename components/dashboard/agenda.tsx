@@ -21,6 +21,7 @@ import { Panel } from './panel'
 import { UserAvatar } from './user-avatar'
 import { AgendaStatusBadge } from './badges'
 import { EditAppointmentModal } from './edit-appointment-modal'
+import { NewAppointmentModal } from './new-appointment-modal'
 import { cn } from '@/lib/utils'
 
 const tabDefs = [
@@ -48,6 +49,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
+  const [creating, setCreating] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   const date = dateProp ?? internalDate
@@ -129,6 +131,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
         />
       )}
 
+      {creating && (
+        <NewAppointmentModal
+          initialDate={date}
+          onClose={() => setCreating(false)}
+          onCreated={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
       <div className="flex flex-col gap-3 px-5 pt-4 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <CalendarDays className="size-5 text-gold" />
@@ -154,7 +164,10 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
               <ChevronRight className="size-4" />
             </button>
           </div>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105">
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+          >
             <Plus className="size-4" />
             <span className="hidden sm:inline">Novo agendamento</span>
             <span className="sm:hidden">Novo</span>
