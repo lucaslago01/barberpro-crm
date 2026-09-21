@@ -1,6 +1,18 @@
 import { supabase } from './supabase'
 import type { AgendaSlot, Client } from './types'
 
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
+
+// A coluna "time" não tem fuso, então comparamos e gravamos o relógio local (ex.: 2026-09-21T11:30:00)
+function toLocalWallClock(date: Date) {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00`
+  )
+}
+
 export async function getAgendaSlots(): Promise<AgendaSlot[]> {
   try {
     const { data: appointments, error } = await supabase
@@ -56,8 +68,8 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       barberpro_clients (name, phone),
       barberpro_services (name, duration, price)
     `)
-    .gte('time', start.toISOString())
-    .lt('time', end.toISOString())
+    .gte('time', toLocalWallClock(start))
+    .lt('time', toLocalWallClock(end))
     .order('time', { ascending: true })
 
   if (error) {
@@ -196,6 +208,24 @@ export async function createPublicAppointment(params: {
   dateTime: string
   notes?: string
 }): Promise<void> {
+  const wallClock = toLocalWallClock(new Date(params.dateTime))
+
+  // Confere se o horário ainda está livre (cancelados não contam)
+  const { data: taken, error: takenError } = await supabase
+    .from('barberpro_appointments')
+    .select('id')
+    .eq('time', wallClock)
+    .neq('status', 'cancelado')
+    .limit(1)
+
+  if (takenError) {
+    throw new Error(`Erro ao conferir horário: ${takenError.message}`)
+  }
+
+  if (taken && taken.length > 0) {
+    throw new Error('Esse horário acabou de ser ocupado. Volte e escolha outro.')
+  }
+
   const { data: service, error: serviceError } = await supabase
     .from('barberpro_services')
     .select('id')
@@ -236,7 +266,7 @@ export async function createPublicAppointment(params: {
   const { error: apptError } = await supabase.from('barberpro_appointments').insert({
     client_id: clientId,
     service_id: service.id,
-    time: params.dateTime,
+    time: wallClock,
     status: 'agendado',
     notes: params.notes || null,
   })

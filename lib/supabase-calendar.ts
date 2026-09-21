@@ -1,5 +1,16 @@
 import { supabase } from './supabase'
 
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
+
+function toLocalWallClock(date: Date) {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00`
+  )
+}
+
 // month: 0 = Janeiro, 11 = Dezembro
 export async function getDaysWithAppointments(
   year: number,
@@ -11,8 +22,8 @@ export async function getDaysWithAppointments(
   const { data, error } = await supabase
     .from('barberpro_appointments')
     .select('time, status')
-    .gte('time', start.toISOString())
-    .lt('time', end.toISOString())
+    .gte('time', toLocalWallClock(start))
+    .lt('time', toLocalWallClock(end))
 
   if (error) {
     throw new Error(`Erro ao buscar dias com agendamento: ${error.message}`)
