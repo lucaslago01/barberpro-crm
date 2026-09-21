@@ -42,6 +42,45 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
   }
 }
 
+export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 0, 0, 0, 0)
+
+  const { data: appointments, error } = await supabase
+    .from('barberpro_appointments')
+    .select(`
+      id,
+      time,
+      status,
+      notes,
+      barberpro_clients (name, phone),
+      barberpro_services (name, duration, price)
+    `)
+    .gte('time', start.toISOString())
+    .lt('time', end.toISOString())
+    .order('time', { ascending: true })
+
+  if (error) {
+    throw new Error(`Erro ao buscar agendamentos do dia: ${error.message}`)
+  }
+
+  if (!appointments || appointments.length === 0) {
+    return []
+  }
+
+  return appointments.map((apt: any) => ({
+    id: apt.id,
+    time: new Date(apt.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    client: apt.barberpro_clients?.name || 'Cliente desconhecido',
+    service: apt.barberpro_services?.name || 'Serviço desconhecido',
+    duration: `${apt.barberpro_services?.duration || 0} min`,
+    price: apt.barberpro_services?.price || 0,
+    status: apt.status,
+    available: false,
+    notes: apt.notes || '',
+  }))
+}
+
 export async function updateClient(
   id: string,
   client: {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CalendarDays,
   ChevronLeft,
@@ -11,18 +11,20 @@ import {
   MoreVertical,
   Clock,
 } from 'lucide-react'
-import { appointments } from '@/lib/data'
+import { getAgendaSlotsByDate } from '@/lib/supabase-data'
+import type { AgendaSlot } from '@/lib/types'
+import type { AgendaStatus } from '@/lib/data'
 import { Panel } from './panel'
 import { UserAvatar } from './user-avatar'
-import { StatusBadge } from './badges'
+import { AgendaStatusBadge } from './badges'
 import { cn } from '@/lib/utils'
 
-const tabs = [
-  { key: 'todos', label: 'Todos', count: 8 },
-  { key: 'agendados', label: 'Agendados', count: 2 },
-  { key: 'confirmados', label: 'Confirmados', count: 4 },
-  { key: 'atendimento', label: 'Em atendimento', count: 1 },
-  { key: 'concluidos', label: 'Concluídos', count: 1 },
+const tabDefs = [
+  { key: 'todos', label: 'Todos', status: null },
+  { key: 'agendados', label: 'Agendados', status: 'agendado' },
+  { key: 'confirmados', label: 'Confirmados', status: 'confirmado' },
+  { key: 'atendimento', label: 'Em atendimento', status: 'atendimento' },
+  { key: 'concluidos', label: 'Concluídos', status: 'concluido' },
 ]
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -32,6 +34,62 @@ const currency = new Intl.NumberFormat('pt-BR', {
 
 export function Agenda() {
   const [active, setActive] = useState('todos')
+  const [date, setDate] = useState(() => new Date())
+  const [slots, setSlots] = useState<AgendaSlot[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getAgendaSlotsByDate(date)
+        if (!cancelled) setSlots(data)
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'Erro ao carregar agendamentos',
+          )
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [date])
+
+  function changeDay(amount: number) {
+    setDate((current) => {
+      const next = new Date(current)
+      next.setDate(next.getDate() + amount)
+      return next
+    })
+  }
+
+  const dateLabel = date.toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  const tabs = tabDefs.map((tab) => ({
+    ...tab,
+    count: tab.status
+      ? slots.filter((s) => s.status === tab.status).length
+      : slots.length,
+  }))
+
+  const activeTab = tabDefs.find((t) => t.key === active)
+  const visibleSlots = activeTab?.status
+    ? slots.filter((s) => s.status === activeTab.status)
+    : slots
 
   return (
     <Panel className="flex flex-col">
@@ -44,15 +102,17 @@ export function Agenda() {
           <div className="flex items-center gap-1 rounded-lg border border-border bg-background/40 px-1 py-1 text-sm">
             <button
               aria-label="Dia anterior"
+              onClick={() => changeDay(-1)}
               className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
             >
               <ChevronLeft className="size-4" />
             </button>
             <span className="whitespace-nowrap px-1 text-xs font-medium text-muted-foreground">
-              15 de Setembro de 2025
+              {dateLabel}
             </span>
             <button
               aria-label="Próximo dia"
+              onClick={() => changeDay(1)}
               className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
             >
               <ChevronRight className="size-4" />
@@ -109,32 +169,29 @@ export function Agenda() {
             </tr>
           </thead>
           <tbody>
-            {appointments.map((a) => {
-              if (a.available) {
-                return (
-                  <tr
-                    key={a.id}
-                    className="border-b border-border/60 border-dashed"
-                  >
-                    <td className="px-5 py-3 font-medium tabular-nums text-muted-foreground">
-                      {a.time}
-                    </td>
-                    <td colSpan={5} className="py-3">
-                      <span className="inline-flex items-center gap-2 text-sm italic text-muted-foreground">
-                        <Clock className="size-4" />
-                        Horário disponível
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button className="inline-flex items-center gap-1 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-1.5 text-xs font-medium text-gold transition-colors hover:bg-gold/20">
-                        <Plus className="size-3.5" />
-                        Agendar
-                      </button>
-                    </td>
-                  </tr>
-                )
-              }
-              return (
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
+                  Carregando agendamentos...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center text-red-500">
+                  Erro: {error}
+                </td>
+              </tr>
+            ) : visibleSlots.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center">
+                  <span className="inline-flex items-center gap-2 text-sm italic text-muted-foreground">
+                    <Clock className="size-4" />
+                    Nenhum agendamento neste dia
+                  </span>
+                </td>
+              </tr>
+            ) : (
+              visibleSlots.map((a) => (
                 <tr
                   key={a.id}
                   className="border-b border-border/60 transition-colors hover:bg-white/[0.02]"
@@ -158,7 +215,7 @@ export function Agenda() {
                     {currency.format(a.price)}
                   </td>
                   <td className="py-3">
-                    <StatusBadge status={a.status} />
+                    <AgendaStatusBadge status={a.status as AgendaStatus} />
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-0.5 text-muted-foreground">
@@ -183,8 +240,8 @@ export function Agenda() {
                     </div>
                   </td>
                 </tr>
-              )
-            })}
+              ))
+            )}
           </tbody>
         </table>
       </div>
