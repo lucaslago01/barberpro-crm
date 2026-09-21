@@ -14,18 +14,8 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
 import { getBookedTimes } from "@/lib/supabase-appointments"
+import { getDaySlots } from "@/lib/business-hours"
 import { InfoStrip } from "@/components/agendar/info-strip"
-
-// Grade de horários (5 colunas x 4 linhas), na mesma ordem do layout.
-const TIME_SLOTS = [
-  "09:00", "09:30", "10:00", "10:30", "11:00",
-  "11:30", "12:00", "12:30", "13:00", "13:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00",
-  "16:30", "17:00", "17:30", "18:00", "18:30",
-]
-
-// Horário de almoço e fim de expediente indisponíveis.
-const UNAVAILABLE_SLOTS = new Set<string>(["12:00", "12:30", "13:00", "13:30", "18:30"])
 
 interface TimeSelectionProps {
   service: AgendarService
@@ -59,6 +49,9 @@ export function TimeSelection({
 }: TimeSelectionProps) {
   const [booked, setBooked] = useState<string[]>([])
   const dateKey = selectedDate ? selectedDate.getTime() : null
+
+  // Horários do dia escolhido (vazio se a barbearia estiver fechada)
+  const daySlots = selectedDate ? getDaySlots(selectedDate) : []
 
   // Busca no banco os horários já ocupados do dia escolhido
   useEffect(() => {
@@ -111,9 +104,8 @@ export function TimeSelection({
 
             {/* Grade de horários */}
             <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-2.5">
-              {TIME_SLOTS.map((time) => {
-                const isUnavailable =
-                  UNAVAILABLE_SLOTS.has(time) || booked.includes(time) || isPast(time)
+              {daySlots.map((time) => {
+                const isUnavailable = booked.includes(time) || isPast(time)
                 const isSelected = time === selectedTime && !isUnavailable
 
                 if (isSelected) {
@@ -156,6 +148,12 @@ export function TimeSelection({
                 )
               })}
             </div>
+
+            {daySlots.length === 0 && (
+              <p className="mt-6 text-sm text-zinc-400">
+                A barbearia não abre neste dia. Volte e escolha outra data.
+              </p>
+            )}
 
             {/* Legenda */}
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2.5">

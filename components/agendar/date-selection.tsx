@@ -17,6 +17,7 @@ import {
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate, isSameDay, startOfToday } from "@/lib/agendar/date-utils"
+import { isOpenDay } from "@/lib/business-hours"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
@@ -127,8 +128,8 @@ export function DateSelection({
 
                 const dayDate = new Date(year, month, day)
                 const isPastDay = dayDate.getTime() < today.getTime()
-                const isSunday = dayDate.getDay() === 0
-                const isUnavailable = isPastDay || isSunday
+                const isClosed = !isOpenDay(dayDate)
+                const isUnavailable = isPastDay || isClosed
                 const isSelected = selectedDate !== null && isSameDay(dayDate, selectedDate)
                 const isToday = isSameDay(dayDate, today)
 
