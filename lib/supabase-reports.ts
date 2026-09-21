@@ -1,4 +1,6 @@
 import { supabase } from './supabase'
+import { getClients } from './supabase-data'
+import { getClientStats } from './supabase-client-stats'
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -58,6 +60,12 @@ export function getPreviousPeriod(p: Period, preset: PeriodPreset): Period {
   }
 }
 
+export interface DailyRevenue {
+  label: string // "21/09"
+  revenue: number // avulso + clube do dia
+  sessions: number // atendimentos concluídos do dia
+}
+
 export interface PeriodStats {
   completed: number
   noShows: number
@@ -73,6 +81,7 @@ export interface PeriodStats {
   byHour: { hour: string; count: number }[]
   topClients: { name: string; count: number; total: number }[]
   noShowRate: number // 0 a 100
+  daily: DailyRevenue[]
 }
 
 export async function getPeriodStats(p: Period): Promise<PeriodStats> {
@@ -88,7 +97,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
       .lt('time', `${endDay}T00:00:00`),
     supabase
       .from('barberpro_club_payments')
-      .select('amount')
+      .select('day, amount')
       .gte('day', startDay)
       .lt('day', endDay),
     supabase
@@ -108,7 +117,20 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   const cancelled = rows.filter((a) => a.status === 'cancelado').length
 
   const walkIn = done.reduce((s, a) => s + Number(a.barberpro_services?.price || 0), 0)
-  const clubTotal = (club.data || []).reduce((s: number, c: any) => s + Number(c.amount || 0), 0)
+  const clubRows: any[] = club.data || []
+  const clubTotal = clubRows.reduce((s, c) => s + Number(c.amount || 0), 0)
+
+  // Série por dia (todos os dias do período, mesmo os vazios)
+  const dailyMap = new Map<string, DailyRevenue>()
+  const cursor = new Date(p.from.getFullYear(), p.from.getMonth(), p.from.getDate())
+  while (cursor.getTime() <= p.to.getTime()) {
+    dailyMap.set(dayString(cursor), {
+      label: `${pad(cursor.getDate())}/${pad(cursor.getMonth() + 1)}`,
+      revenue: 0,
+      sessions: 0,
+    })
+    cursor.setDate(cursor.getDate() + 1)
+  }
 
   const svc = new Map<string, { count: number; total: number }>()
   const weekday = [0, 0, 0, 0, 0, 0, 0]
@@ -124,6 +146,13 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     svc.set(sName, s)
 
     const t = String(a.time)
+    const dayKey = t.slice(0, 10)
+    const point = dailyMap.get(dayKey)
+    if (point) {
+      point.revenue += price
+      point.sessions += 1
+    }
+
     const d = new Date(
       Number(t.slice(0, 4)),
       Number(t.slice(5, 7)) - 1,
@@ -139,6 +168,11 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     c.count += 1
     c.total += price
     cli.set(key, c)
+  }
+
+  for (const c of clubRows) {
+    const point = dailyMap.get(String(c.day))
+    if (point) point.revenue += Number(c.amount || 0)
   }
 
   const scheduledForRate = done.length + noShows
@@ -162,10 +196,83 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
       .map(([hour, count]) => ({ hour, count }))
       .sort((a, b) => a.hour.localeCompare(b.hour)),
     topClients: Array.from(cli.values())
-      .sort((a, b) => b.count - a.count || b.total - a.total)
+      .sort((a, b) => b.total - a.total || b.count - a.count)
       .slice(0, 5),
     noShowRate: scheduledForRate > 0 ? (noShows / scheduledForRate) * 100 : 0,
+    daily: Array.from(dailyMap.values()),
   }
+}
+
+/* ---------- Clientes por tipo (rosca) ---------- */
+
+export interface ClientTypeCount {
+  name: string
+  count: number
+}
+
+// Mesmas regras da tela /clientes. Quem nunca foi atendido entra em "Sem atendimento".
+export async function getClientsByType(): Promise<{ total: number; types: ClientTypeCount[] }> {
+  const [clients, stats] = await Promise.all([getClients(), getClientStats()])
+
+  let vip = 0
+  let ativo = 0
+  let risco = 0
+  let inativo = 0
+  let sem = 0
+
+  for (const c of clients) {
+    const s = stats[c.id]
+    if (!s) sem += 1
+    else if (s.status === 'vip') vip += 1
+    else if (s.status === 'em risco') risco += 1
+    else if (s.status === 'inativo') inativo += 1
+    else ativo += 1
+  }
+
+  return {
+    total: clients.length,
+    types: [
+      { name: 'VIP', count: vip },
+      { name: 'Ativos', count: ativo },
+      { name: 'Em risco', count: risco },
+      { name: 'Inativos', count: inativo },
+      { name: 'Sem atendimento', count: sem },
+    ],
+  }
+}
+
+/* ---------- Evolução de clientes (últimos 6 meses) ---------- */
+
+const MONTH_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+export interface GrowthPoint {
+  month: string
+  year: number
+  value: number
+}
+
+// Total acumulado de clientes cadastrados até o fim de cada mês
+export async function getClientsGrowth(): Promise<GrowthPoint[]> {
+  const { data, error } = await supabase.from('barberpro_clients').select('created_at')
+
+  if (error) throw new Error(`Erro ao buscar evolução de clientes: ${error.message}`)
+
+  const keys: string[] = (data || [])
+    .map((c: any) => (c.created_at ? String(c.created_at).slice(0, 7) : ''))
+    .filter(Boolean)
+
+  const now = new Date()
+  const points: GrowthPoint[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const key = monthKey(d)
+    points.push({
+      month: MONTH_SHORT[d.getMonth()],
+      year: d.getFullYear(),
+      value: keys.filter((k) => k <= key).length,
+    })
+  }
+  return points
 }
 
 /* ---------- Metas ---------- */
