@@ -11,7 +11,7 @@ import {
 } from '@/lib/supabase-appointments'
 import type { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { getDaySlots } from '@/lib/business-hours'
+import { getDaySlots, isOpenDay } from '@/lib/business-hours'
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -23,6 +23,11 @@ function toInputValue(date: Date) {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+// "20:15" válido; "20:5", "abc", "25:00" não
+function isValidTimeFormat(value: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
 }
 
 export function NewAppointmentModal({
@@ -42,6 +47,7 @@ export function NewAppointmentModal({
   const [serviceId, setServiceId] = useState('')
   const [dateStr, setDateStr] = useState(() => toInputValue(initialDate))
   const [time, setTime] = useState<string | null>(null)
+  const [customTime, setCustomTime] = useState('')
   const [notes, setNotes] = useState('')
 
   const [booked, setBooked] = useState<string[]>([])
@@ -107,12 +113,30 @@ export function NewAppointmentModal({
     return getDaySlots(new Date(y, m - 1, d))
   })()
 
+  const dayIsOpen = (() => {
+    if (!dateStr) return false
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return isOpenDay(new Date(y, m - 1, d))
+  })()
+
   function isPast(slot: string) {
     if (!dateStr) return false
     const [y, m, d] = dateStr.split('-').map(Number)
     const [h, min] = slot.split(':').map(Number)
     return new Date(y, m - 1, d, h, min).getTime() < Date.now()
   }
+
+  function chooseSlot(slot: string) {
+    setTime(slot)
+    setCustomTime('')
+  }
+
+  function handleCustomTimeChange(value: string) {
+    setCustomTime(value)
+    setTime(null)
+  }
+
+  const effectiveTime = customTime || time
 
   async function handleSave() {
     if (savingRef.current) return
@@ -121,21 +145,29 @@ export function NewAppointmentModal({
     if (!clientId) return setError('Escolha o cliente.')
     if (!serviceId) return setError('Escolha o serviço.')
     if (!dateStr) return setError('Escolha a data.')
-    if (!time) return setError('Escolha o horário.')
-    if (!daySlots.includes(time)) return setError('Escolha um horário disponível.')
+    if (!effectiveTime) return setError('Escolha ou digite o horário.')
+
+    if (customTime) {
+      if (!isValidTimeFormat(customTime)) {
+        return setError('Digite o horário no formato hh:mm, ex.: 20:15.')
+      }
+    } else if (!daySlots.includes(effectiveTime)) {
+      return setError('Escolha um horário disponível.')
+    }
 
     savingRef.current = true
     setSaving(true)
 
     try {
       const [y, m, d] = dateStr.split('-').map(Number)
-      const [h, min] = time.split(':').map(Number)
+      const [h, min] = effectiveTime.split(':').map(Number)
 
       // Confere de novo, logo antes de gravar, se o horário ainda está livre
       const freshBooked = await getBookedTimes(new Date(y, m - 1, d))
-      if (freshBooked.includes(time)) {
+      if (freshBooked.includes(effectiveTime)) {
         setBooked(freshBooked)
         setTime(null)
+        setCustomTime('')
         setError('Esse horário acabou de ser ocupado. Escolha outro.')
         return
       }
@@ -221,41 +253,57 @@ export function NewAppointmentModal({
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Horário</label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {daySlots.map((slot) => {
-                  const unavailable = booked.includes(slot) || isPast(slot)
-                  const selected = slot === time
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      disabled={unavailable}
-                      onClick={() => setTime(slot)}
-                      className={cn(
-                        'h-9 rounded-lg border text-xs font-medium transition-colors',
-                        selected
-                          ? 'border-gold bg-gold text-primary-foreground'
-                          : unavailable
-                            ? 'cursor-not-allowed border-border/40 text-muted-foreground/40 line-through'
-                            : 'border-border hover:bg-white/5',
-                      )}
-                    >
-                      {slot}
-                    </button>
-                  )
-                })}
-              </div>
-              {daySlots.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  A barbearia não abre neste dia.
-                </p>
-              )}
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Riscados: já agendados ou horários que já passaram.
+            {!dayIsOpen ? (
+              <p className="text-sm text-muted-foreground">
+                A barbearia não abre neste dia.
               </p>
-            </div>
+            ) : (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Horário</label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {daySlots.map((slot) => {
+                    const unavailable = booked.includes(slot) || isPast(slot)
+                    const selected = slot === time && !customTime
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        disabled={unavailable}
+                        onClick={() => chooseSlot(slot)}
+                        className={cn(
+                          'h-9 rounded-lg border text-xs font-medium transition-colors',
+                          selected
+                            ? 'border-gold bg-gold text-primary-foreground'
+                            : unavailable
+                              ? 'cursor-not-allowed border-border/40 text-muted-foreground/40 line-through'
+                              : 'border-border hover:bg-white/5',
+                        )}
+                      >
+                        {slot}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Riscados: já agendados ou horários que já passaram.
+                </p>
+
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Ou digite outro horário (encaixe)
+                  </label>
+                  <input
+                    value={customTime}
+                    onChange={(e) => handleCustomTimeChange(e.target.value)}
+                    placeholder="Ex.: 20:15"
+                    className={cn(fieldClass, customTime && 'border-gold/40')}
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Use para encaixar fora dos horários fixos, dentro do expediente do dia.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
