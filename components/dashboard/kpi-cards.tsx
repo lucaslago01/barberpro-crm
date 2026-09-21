@@ -45,14 +45,14 @@ export function KpiCards() {
         const data = await getDashboardKpis()
         setKpis([
           {
-            label: 'Total de agendamentos',
+            label: 'Agendamentos no mês',
             value: String(data.totalAppointments),
             icon: 'CalendarCheck',
             trend: 0,
             trendUp: true,
           },
           {
-            label: 'Faturamento (concluídos)',
+            label: 'Faturamento do mês (concluídos)',
             value: currency.format(data.revenue),
             icon: 'CircleDollarSign',
             trend: 0,

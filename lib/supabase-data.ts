@@ -172,9 +172,15 @@ export async function updateAppointmentNotes(id: string, notes: string): Promise
 }
 
 export async function getDashboardKpis() {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0)
+
   const { data: appointments, error: apptError } = await supabase
     .from('barberpro_appointments')
     .select('status, barberpro_services (price)')
+    .gte('time', toLocalWallClock(monthStart))
+    .lt('time', toLocalWallClock(nextMonthStart))
 
   if (apptError) {
     throw new Error(`Erro ao buscar agendamentos: ${apptError.message}`)
@@ -188,8 +194,10 @@ export async function getDashboardKpis() {
     throw new Error(`Erro ao buscar clientes: ${clientsError.message}`)
   }
 
-  const totalAppointments = appointments?.length || 0
-  const revenue = (appointments || [])
+  // Cancelados não contam como agendamento do mês
+  const active = (appointments || []).filter((a: any) => a.status !== 'cancelado')
+  const totalAppointments = active.length
+  const revenue = active
     .filter((a: any) => a.status === 'concluido')
     .reduce((sum: number, a: any) => sum + (a.barberpro_services?.price || 0), 0)
 
