@@ -11,17 +11,7 @@ import {
 } from '@/lib/supabase-appointments'
 import type { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
-
-// Mesma grade da página pública /agendar
-const TIME_SLOTS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00',
-  '11:30', '12:00', '12:30', '13:00', '13:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00',
-  '16:30', '17:00', '17:30', '18:00', '18:30',
-]
-
-// Almoço e fim de expediente, como na página pública
-const BLOCKED_SLOTS = new Set(['12:00', '12:30', '13:00', '13:30', '18:30'])
+import { getDaySlots } from '@/lib/business-hours'
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -110,6 +100,13 @@ export function NewAppointmentModal({
 
   const selectedService = services.find((s) => s.id === serviceId)
 
+  // Horários do dia escolhido (vazio se a barbearia estiver fechada)
+  const daySlots = (() => {
+    if (!dateStr) return []
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return getDaySlots(new Date(y, m - 1, d))
+  })()
+
   function isPast(slot: string) {
     if (!dateStr) return false
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -125,6 +122,7 @@ export function NewAppointmentModal({
     if (!serviceId) return setError('Escolha o serviço.')
     if (!dateStr) return setError('Escolha a data.')
     if (!time) return setError('Escolha o horário.')
+    if (!daySlots.includes(time)) return setError('Escolha um horário disponível.')
 
     savingRef.current = true
     setSaving(true)
@@ -226,9 +224,8 @@ export function NewAppointmentModal({
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Horário</label>
               <div className="grid grid-cols-5 gap-1.5">
-                {TIME_SLOTS.map((slot) => {
-                  const unavailable =
-                    BLOCKED_SLOTS.has(slot) || booked.includes(slot) || isPast(slot)
+                {daySlots.map((slot) => {
+                  const unavailable = booked.includes(slot) || isPast(slot)
                   const selected = slot === time
                   return (
                     <button
@@ -250,8 +247,13 @@ export function NewAppointmentModal({
                   )
                 })}
               </div>
+              {daySlots.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  A barbearia não abre neste dia.
+                </p>
+              )}
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Riscados: almoço, já agendados ou horários que já passaram.
+                Riscados: já agendados ou horários que já passaram.
               </p>
             </div>
 

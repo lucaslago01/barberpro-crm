@@ -3,19 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { getBookedTimes, rescheduleAppointment } from '@/lib/supabase-appointments'
+import { getDaySlots } from '@/lib/business-hours'
 import type { AgendaSlot } from '@/lib/types'
 import { cn } from '@/lib/utils'
-
-// Mesma grade da página pública /agendar
-const TIME_SLOTS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00',
-  '11:30', '12:00', '12:30', '13:00', '13:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00',
-  '16:30', '17:00', '17:30', '18:00', '18:30',
-]
-
-// Almoço e fim de expediente, como na página pública
-const BLOCKED_SLOTS = new Set(['12:00', '12:30', '13:00', '13:30', '18:30'])
 
 function toInputValue(date: Date) {
   const y = date.getFullYear()
@@ -43,6 +33,13 @@ export function RescheduleModal({
   const savingRef = useRef(false)
 
   const originalDateStr = toInputValue(currentDate)
+
+  // Horários do dia escolhido (vazio se a barbearia estiver fechada)
+  const daySlots = (() => {
+    if (!dateStr) return []
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return getDaySlots(new Date(y, m - 1, d))
+  })()
 
   // Busca horários ocupados sempre que a data muda
   useEffect(() => {
@@ -87,6 +84,7 @@ export function RescheduleModal({
     setError(null)
     if (!dateStr) return setError('Escolha a data.')
     if (!time) return setError('Escolha o horário.')
+    if (!daySlots.includes(time)) return setError('Escolha um horário disponível.')
 
     savingRef.current = true
     setSaving(true)
@@ -145,8 +143,8 @@ export function RescheduleModal({
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Novo horário</label>
             <div className="grid grid-cols-5 gap-1.5">
-              {TIME_SLOTS.map((t) => {
-                const unavailable = BLOCKED_SLOTS.has(t) || isTaken(t) || isPast(t)
+              {daySlots.map((t) => {
+                const unavailable = isTaken(t) || isPast(t)
                 const selected = t === time
                 return (
                   <button
@@ -168,8 +166,13 @@ export function RescheduleModal({
                 )
               })}
             </div>
+            {daySlots.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                A barbearia não abre neste dia.
+              </p>
+            )}
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Riscados: almoço, já agendados ou horários que já passaram.
+              Riscados: já agendados ou horários que já passaram.
             </p>
           </div>
         </div>
