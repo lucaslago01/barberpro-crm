@@ -232,7 +232,11 @@ function ClientRow({
         <div className="flex items-center gap-0.5">
           <RowAction label="Ver perfil" icon={Eye} />
           <RowAction label="Editar" icon={Pencil} onClick={onEdit} />
-          <WhatsappIconButton label={`Enviar WhatsApp para ${client.name}`} />
+                    <WhatsappIconButton
+            label={`Enviar WhatsApp para ${client.name}`}
+            phone={client.whatsapp === '-' ? null : client.whatsapp}
+          />
+
           <RowAction label="Mais opções" icon={MoreHorizontal} />
         </div>
       </td>
