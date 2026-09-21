@@ -11,12 +11,16 @@ import {
   MoreVertical,
   Clock,
 } from 'lucide-react'
-import { getAgendaSlotsByDate } from '@/lib/supabase-data'
+import {
+  getAgendaSlotsByDate,
+  updateAppointmentNotes,
+} from '@/lib/supabase-data'
 import type { AgendaSlot } from '@/lib/types'
 import type { AgendaStatus } from '@/lib/data'
 import { Panel } from './panel'
 import { UserAvatar } from './user-avatar'
 import { AgendaStatusBadge } from './badges'
+import { EditAppointmentModal } from './edit-appointment-modal'
 import { cn } from '@/lib/utils'
 
 const tabDefs = [
@@ -43,6 +47,8 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [slots, setSlots] = useState<AgendaSlot[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const date = dateProp ?? internalDate
   const dateKey = date.getTime()
@@ -71,7 +77,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
     return () => {
       cancelled = true
     }
-  }, [dateKey])
+  }, [dateKey, reloadKey])
 
   function changeDay(amount: number) {
     const next = new Date(date)
@@ -80,6 +86,18 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
       onDateChange(next)
     } else {
       setInternalDate(next)
+    }
+  }
+
+  async function handleSaveNotes(notes: string) {
+    if (!editingSlot) return
+    try {
+      await updateAppointmentNotes(editingSlot.id, notes)
+      setReloadKey((k) => k + 1)
+    } catch (err) {
+      console.error('Erro ao salvar observações:', err)
+      alert('Não foi possível salvar as observações. Tente de novo.')
+      throw err
     }
   }
 
@@ -103,6 +121,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
 
   return (
     <Panel className="flex flex-col">
+      {editingSlot && (
+        <EditAppointmentModal
+          slot={editingSlot}
+          onClose={() => setEditingSlot(null)}
+          onSave={handleSaveNotes}
+        />
+      )}
+
       <div className="flex flex-col gap-3 px-5 pt-4 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <CalendarDays className="size-5 text-gold" />
@@ -231,6 +257,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                     <div className="flex items-center justify-end gap-0.5 text-muted-foreground">
                       <button
                         aria-label="Editar agendamento"
+                        onClick={() => setEditingSlot(a)}
                         className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-foreground"
                       >
                         <Pencil className="size-4" />
