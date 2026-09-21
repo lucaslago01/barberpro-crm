@@ -75,37 +75,67 @@ const statToneMap: Record<string, string> = {
 }
 
 function StatCards() {
+  const [counts, setCounts] = useState<{
+    total: number
+    vip: number
+    risk: number
+    inactive: number
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const [clients, stats] = await Promise.all([getClients(), getClientStats()])
+        if (cancelled) return
+        const values = Object.values(stats)
+        setCounts({
+          total: clients.length,
+          vip: values.filter((s) => s.status === 'vip').length,
+          risk: values.filter((s) => s.status === 'em risco').length,
+          inactive: values.filter((s) => s.status === 'inativo').length,
+        })
+      } catch (err) {
+        console.error('Erro ao carregar cartões de clientes:', err)
+        if (!cancelled) setCounts(null)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const cards = [
+    { label: 'Total de clientes', value: counts?.total, icon: 'Users', tone: 'gold' },
+    { label: 'Clientes VIP', value: counts?.vip, icon: 'Crown', tone: 'success' },
+    { label: 'Clientes em risco', value: counts?.risk, icon: 'TriangleAlert', tone: 'danger' },
+    { label: 'Clientes inativos', value: counts?.inactive, icon: 'Clock', tone: 'muted' },
+  ]
+
   return (
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      {clientStats.map((stat) => {
-        const Icon = statIconMap[stat.icon]
-        const Trend = stat.trendUp ? TrendingUp : TrendingDown
+      {cards.map((card) => {
+        const Icon = statIconMap[card.icon]
         return (
           <div
-            key={stat.label}
+            key={card.label}
             className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30"
           >
-            <div className="flex items-start justify-between gap-2">
-              <span
-                className={cn(
-                  'grid size-10 place-items-center rounded-xl',
-                  statToneMap[stat.tone],
-                )}
-              >
-                <Icon className="size-5" />
-              </span>
-              <span
-                className={cn(
-                  'inline-flex items-center gap-0.5 text-xs font-semibold',
-                  stat.trendUp ? 'text-success' : 'text-danger',
-                )}
-              >
-                <Trend className="size-3.5" />
-                {stat.trend}%
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-bold tracking-tight">{stat.value}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{stat.label}</p>
+            <span
+              className={cn(
+                'grid size-10 place-items-center rounded-xl',
+                statToneMap[card.tone],
+              )}
+            >
+              <Icon className="size-5" />
+            </span>
+            <p className="mt-3 text-2xl font-bold tracking-tight">
+              {card.value === undefined ? '-' : card.value}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{card.label}</p>
           </div>
         )
       })}
