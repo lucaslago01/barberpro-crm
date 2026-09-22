@@ -90,3 +90,34 @@ export async function getClientStats(): Promise<Record<string, ClientStats>> {
 
   return result
 }
+export interface RecoverableClient {
+  id: string
+  name: string
+  phone: string
+  daysSince: number
+  status: ClientStatusValue
+}
+
+export async function getRecoverableClients(): Promise<RecoverableClient[]> {
+  const { data: clients, error } = await supabase
+    .from('barberpro_clients')
+    .select('id, name, phone')
+
+  if (error) {
+    throw new Error(`Erro ao buscar clientes: ${error.message}`)
+  }
+
+  const stats = await getClientStats()
+
+  const result: RecoverableClient[] = []
+  for (const c of clients || []) {
+    const s = stats[c.id]
+    if (!s) continue
+    if (s.status !== 'em risco' && s.status !== 'inativo') continue
+    const daysSince = Math.round((Date.now() - s.lastVisitTimestamp) / DAY_MS)
+    result.push({ id: c.id, name: c.name, phone: c.phone || '', daysSince, status: s.status })
+  }
+
+  result.sort((a, b) => b.daysSince - a.daysSince)
+  return result
+}

@@ -23,7 +23,6 @@ import { WhatsappIconButton } from '@/components/dashboard/whatsapp-button'
 import {
   clientFeatured,
   clientStatusFilters,
-  clientsToRecover,
   clientBirthdays,
   clientInteractions,
   type Client,
@@ -38,7 +37,12 @@ import {
   deleteClient,
   type ClientAppointmentHistoryItem,
 } from '@/lib/supabase-data'
-import { getClientStats, type ClientStats } from '@/lib/supabase-client-stats'
+import {
+  getClientStats,
+  type ClientStats,
+  getRecoverableClients,
+  type RecoverableClient,
+} from '@/lib/supabase-client-stats'
 import {
   CLUB_PLANS,
   cancelClub,
@@ -1478,28 +1482,93 @@ function FeaturedPanel() {
 }
 
 function RecoverPanel() {
+  const [clients, setClients] = useState<RecoverableClient[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getRecoverableClients()
+      .then((data) => {
+        if (!cancelled) setClients(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar clientes')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function daysLabel(c: RecoverableClient) {
+    return `há ${c.daysSince} dias sem atendimento`
+  }
+
+  function renderRow(c: RecoverableClient) {
+    return (
+      <li
+        key={c.id}
+        className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+      >
+        <UserAvatar name={c.name} size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{c.name}</p>
+          <p className="truncate text-xs text-danger">{daysLabel(c)}</p>
+        </div>
+        <WhatsappIconButton
+          label={`Recuperar ${c.name} no WhatsApp`}
+          phone={c.phone || null}
+        />
+      </li>
+    )
+  }
+
+  const visibleClients = clients?.slice(0, 3) || []
+
   return (
     <Panel>
       <PanelHeader
         icon={<TriangleAlert className="size-[18px]" />}
         title="Clientes para recuperar"
-        action={<SeeAll />}
+        action={
+          clients !== null && clients.length > 3 ? (
+            <SeeAll onClick={() => setShowAll(true)} />
+          ) : undefined
+        }
       />
-      <ul className="space-y-0.5 px-3 pb-3">
-        {clientsToRecover.map((c, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
-          >
-            <UserAvatar name={c.name} size="md" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{c.name}</p>
-              <p className="truncate text-xs text-danger">{c.days}</p>
+      <div className="px-3 pb-3">
+        {error && <p className="px-2 py-3 text-xs text-danger">{error}</p>}
+        {!error && clients === null && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">Carregando...</p>
+        )}
+        {clients !== null && clients.length === 0 && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">
+            Nenhum cliente para recuperar no momento.
+          </p>
+        )}
+        {clients !== null && clients.length > 0 && (
+          <ul className="space-y-0.5">{visibleClients.map(renderRow)}</ul>
+        )}
+      </div>
+
+      {showAll && clients && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Clientes para recuperar</h3>
+              <button
+                onClick={() => setShowAll(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
             </div>
-            <WhatsappIconButton label={`Recuperar ${c.name} no WhatsApp`} />
-          </li>
-        ))}
-      </ul>
+            <ul className="max-h-96 space-y-0.5 overflow-y-auto">
+              {clients.map(renderRow)}
+            </ul>
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }
