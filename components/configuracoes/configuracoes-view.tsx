@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import {
   Settings2,
   Scissors,
@@ -340,9 +340,6 @@ function WorkingHours() {
 /* ---------- Agendamento tab ---------- */
 
 function BookingSettings() {
-  const [allowCancel, setAllowCancel] = useState(true)
-  const [autoConfirm, setAutoConfirm] = useState(true)
-
   return (
     <Panel className="p-5">
       <PanelHeader
@@ -351,42 +348,19 @@ function BookingSettings() {
         title="Configurações de agendamento"
       />
       <p className="-mt-2 mb-5 text-sm text-muted-foreground">
-        Personalize como os agendamentos funcionam.
+        Regras aplicadas hoje pelo sistema.
       </p>
       <div className="space-y-4">
-        <Field label="Antecedência mínima">
-          <Select
-            defaultValue="2 horas"
-            options={['30 minutos', '1 hora', '2 horas', '4 horas', '1 dia']}
-          />
-        </Field>
-        <Field label="Intervalo entre atendimentos">
-          <Select
-            defaultValue="15 minutos"
-            options={['Nenhum', '5 minutos', '10 minutos', '15 minutos', '30 minutos']}
-          />
-        </Field>
         <div className="flex items-center justify-between rounded-xl border border-border bg-background/30 px-3 py-2.5">
-          <span className="text-sm font-medium">Permitir cancelamento</span>
-          <Switch
-            checked={allowCancel}
-            onChange={setAllowCancel}
-            label="Permitir cancelamento"
-          />
-        </div>
-        <Field label="Prazo para cancelamento">
-          <Select
-            defaultValue="2 horas"
-            options={['1 hora', '2 horas', '6 horas', '12 horas', '1 dia']}
-          />
-        </Field>
-        <div className="flex items-center justify-between rounded-xl border border-border bg-background/30 px-3 py-2.5">
-          <span className="text-sm font-medium">Confirmação automática</span>
-          <Switch
-            checked={autoConfirm}
-            onChange={setAutoConfirm}
-            label="Confirmação automática"
-          />
+          <div>
+            <span className="text-sm font-medium">Prazo para cancelamento</span>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              O cliente só pode cancelar pelo WhatsApp com pelo menos 2 horas de antecedência.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-lg bg-gold/10 px-3 py-1.5 text-sm font-semibold text-gold">
+            2 horas
+          </span>
         </div>
       </div>
     </Panel>
