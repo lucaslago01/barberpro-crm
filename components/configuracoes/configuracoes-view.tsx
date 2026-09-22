@@ -24,6 +24,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { ServicesSettings } from './servicos-settings'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { cn } from '@/lib/utils'
 
@@ -437,60 +438,6 @@ function WhatsappConnection() {
 }
 
 /* ---------- Serviços tab ---------- */
-
-const serviceItems = [
-  { name: 'Corte', duration: '40 min', price: 40 },
-  { name: 'Corte + Barba', duration: '60 min', price: 65 },
-  { name: 'Barba', duration: '30 min', price: 30 },
-  { name: 'Sobrancelha', duration: '20 min', price: 25 },
-  { name: 'Corte + Sobrancelha', duration: '60 min', price: 70 },
-]
-
-const currency = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
-
-function ServicesSettings() {
-  return (
-    <Panel className="p-5">
-      <PanelHeader
-        className="px-0 pt-0"
-        icon={<Scissors className="size-[18px]" />}
-        title="Serviços oferecidos"
-        action={
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-xl bg-gold px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
-          >
-            <Plus className="size-4" />
-            Novo serviço
-          </button>
-        }
-      />
-      <p className="-mt-2 mb-4 text-sm text-muted-foreground">
-        Gerencie os serviços, durações e valores da sua barbearia.
-      </p>
-      <ul className="space-y-2">
-        {serviceItems.map((s) => (
-          <li
-            key={s.name}
-            className="flex items-center gap-3 rounded-xl border border-border bg-background/30 px-4 py-3"
-          >
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold/12 text-gold">
-              <Scissors className="size-4" />
-            </span>
-            <span className="flex-1 text-sm font-medium">{s.name}</span>
-            <span className="text-sm text-muted-foreground">{s.duration}</span>
-            <span className="w-20 text-right text-sm font-semibold tabular-nums text-gold">
-              {currency.format(s.price)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Panel>
-  )
-}
 
 /* ---------- Notificações tab ---------- */
 

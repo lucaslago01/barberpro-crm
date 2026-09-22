@@ -85,3 +85,30 @@ export async function rescheduleAppointment(
     throw new Error(error.message)
   }
 }
+export interface ServiceInput {
+  name: string
+  duration: number
+  price: number
+}
+
+export async function createService(input: ServiceInput): Promise<void> {
+  const { error } = await supabase.from('barberpro_services').insert(input)
+  if (error) throw new Error(`Erro ao criar serviço: ${error.message}`)
+}
+
+export async function updateService(id: string, input: ServiceInput): Promise<void> {
+  const { error } = await supabase.from('barberpro_services').update(input).eq('id', id)
+  if (error) throw new Error(`Erro ao atualizar serviço: ${error.message}`)
+}
+
+export async function deleteService(id: string): Promise<void> {
+  const { error } = await supabase.from('barberpro_services').delete().eq('id', id)
+  if (error) {
+    if ((error as any).code === '23503') {
+      throw new Error(
+        'Esse serviço já foi usado em algum agendamento e não pode ser apagado.',
+      )
+    }
+    throw new Error(`Erro ao apagar serviço: ${error.message}`)
+  }
+}
