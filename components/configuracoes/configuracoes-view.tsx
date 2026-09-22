@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
 import { ServicesSettings } from './servicos-settings'
+import { SecuritySettings } from './security-settings'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { cn } from '@/lib/utils'
 
@@ -501,93 +502,6 @@ const sessions = [
   { device: 'Windows · Edge', location: 'São Paulo, SP', current: false, time: 'há 3 dias' },
 ]
 
-function SecuritySettings() {
-  return (
-    <div className="grid gap-5 xl:grid-cols-2">
-      <Panel className="p-5">
-        <PanelHeader
-          className="px-0 pt-0"
-          icon={<KeyRound className="size-[18px]" />}
-          title="Alterar senha"
-        />
-        <p className="-mt-2 mb-4 text-sm text-muted-foreground">
-          Recomendamos uma senha forte e única.
-        </p>
-        <div className="space-y-3.5">
-          <Field label="Senha atual">
-            <TextInput placeholder="••••••••" />
-          </Field>
-          <Field label="Nova senha">
-            <TextInput placeholder="••••••••" />
-          </Field>
-          <Field label="Confirmar senha">
-            <TextInput placeholder="••••••••" />
-          </Field>
-          <div className="sm:grid sm:grid-cols-[140px_1fr] sm:gap-4">
-            <span className="hidden sm:block" />
-            <button
-              type="button"
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-gold px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
-            >
-              <Lock className="size-4" />
-              Atualizar senha
-            </button>
-          </div>
-        </div>
-      </Panel>
-
-      <Panel className="p-5">
-        <PanelHeader
-          className="px-0 pt-0"
-          icon={<MonitorSmartphone className="size-[18px]" />}
-          title="Sessões ativas"
-        />
-        <p className="-mt-2 mb-4 text-sm text-muted-foreground">
-          Dispositivos com acesso à sua conta.
-        </p>
-        <ul className="space-y-2">
-          {sessions.map((s) => (
-            <li
-              key={s.device}
-              className="flex items-center gap-3 rounded-xl border border-border bg-background/30 px-4 py-3"
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/5 text-muted-foreground">
-                <MonitorSmartphone className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{s.device}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {s.location} · {s.time}
-                </p>
-              </div>
-              {s.current ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2.5 py-1 text-xs font-medium text-success">
-                  <span className="size-1.5 rounded-full bg-success" />
-                  Atual
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-danger/40 hover:text-danger"
-                  aria-label={`Encerrar sessão ${s.device}`}
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-4 text-sm font-medium text-danger transition-colors hover:bg-danger/20"
-        >
-          <LogOut className="size-4" />
-          Sair de todos os dispositivos
-        </button>
-      </Panel>
-    </div>
-  )
-}
 
 /* ---------- Tab content ---------- */
 
