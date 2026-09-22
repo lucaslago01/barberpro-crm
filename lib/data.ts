@@ -411,6 +411,7 @@ export type Client = {
   avgTicket: number
   status: ClientStatus
   isClubMember?: boolean
+  clubPlan?: string | null
 }
 
 export const clientStats: {

@@ -78,6 +78,7 @@ function mapToRow(c: SupabaseClient, stats?: ClientStats): Client {
     avgTicket: stats?.avgTicket || 0,
     status: stats?.status || 'ativo',
     isClubMember: Boolean(c.club_plan),
+    clubPlan: c.club_plan || null,
   }
 }
 
@@ -898,6 +899,12 @@ function ClientsTable() {
   const [period, setPeriod] = useState<'todos' | '3m'>('todos')
   const [sortBy, setSortBy] = useState<'recentes' | 'nome'>('recentes')
   const [onlyClub, setOnlyClub] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [minVisits, setMinVisits] = useState('')
+  const [maxVisits, setMaxVisits] = useState('')
+  const [minTicket, setMinTicket] = useState('')
+  const [maxTicket, setMaxTicket] = useState('')
+  const [clubPlanFilter, setClubPlanFilter] = useState<string>('todos')
   const [viewingClient, setViewingClient] = useState<SupabaseClient | null>(null)
   const [viewingTab, setViewingTab] = useState<'info' | 'historico'>('info')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
@@ -948,7 +955,22 @@ function ClientsTable() {
         period === 'todos' ||
         (c.lastVisitTimestamp !== undefined && c.lastVisitTimestamp >= threeMonthsAgo)
       const matchesClub = !onlyClub || c.isClubMember
-      return matchesStatus && matchesSearch && matchesPeriod && matchesClub
+      const matchesMinVisits = minVisits === '' || c.visits >= Number(minVisits)
+      const matchesMaxVisits = maxVisits === '' || c.visits <= Number(maxVisits)
+      const matchesMinTicket = minTicket === '' || c.avgTicket >= Number(minTicket)
+      const matchesMaxTicket = maxTicket === '' || c.avgTicket <= Number(maxTicket)
+      const matchesClubPlan = clubPlanFilter === 'todos' || c.clubPlan === clubPlanFilter
+      return (
+        matchesStatus &&
+        matchesSearch &&
+        matchesPeriod &&
+        matchesClub &&
+        matchesMinVisits &&
+        matchesMaxVisits &&
+        matchesMinTicket &&
+        matchesMaxTicket &&
+        matchesClubPlan
+      )
     })
 
     result.sort((a, b) => {
@@ -957,7 +979,7 @@ function ClientsTable() {
     })
 
     return result
-  }, [clients, search, status, period, sortBy, onlyClub])
+   }, [clients, search, status, period, sortBy, onlyClub, minVisits, maxVisits, minTicket, maxTicket, clubPlanFilter])
 
   const allChecked = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
 
@@ -1103,7 +1125,12 @@ function ClientsTable() {
 
         <button
           aria-label="Mais filtros"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-background/40 text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg border transition-colors ${
+            showAdvanced
+              ? 'border-gold/40 bg-gold/10 text-gold'
+              : 'border-border bg-background/40 text-muted-foreground hover:text-foreground'
+          }`}
         >
           <SlidersHorizontal className="size-4" />
         </button>
@@ -1116,6 +1143,85 @@ function ClientsTable() {
           Novo cliente
         </button>
       </div>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-1 gap-3 border-t border-border p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Visitas (mín. / máx.)</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min="0"
+                value={minVisits}
+                onChange={(e) => setMinVisits(e.target.value)}
+                placeholder="Mín."
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              />
+              <input
+                type="number"
+                min="0"
+                value={maxVisits}
+                onChange={(e) => setMaxVisits(e.target.value)}
+                placeholder="Máx."
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Ticket médio (mín. / máx.)</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min="0"
+                value={minTicket}
+                onChange={(e) => setMinTicket(e.target.value)}
+                placeholder="R$ mín."
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              />
+              <input
+                type="number"
+                min="0"
+                value={maxTicket}
+                onChange={(e) => setMaxTicket(e.target.value)}
+                placeholder="R$ máx."
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Plano do clube</label>
+            <select
+              value={clubPlanFilter}
+              onChange={(e) => setClubPlanFilter(e.target.value)}
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+            >
+              <option value="todos" className="bg-card text-foreground">Todos os planos</option>
+              {CLUB_PLANS.map((p) => (
+                <option key={p} value={p} className="bg-card text-foreground">
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-3">
+            <button
+              onClick={() => {
+                setMinVisits('')
+                setMaxVisits('')
+                setMinTicket('')
+                setMaxTicket('')
+                setClubPlanFilter('todos')
+              }}
+              className="text-xs text-muted-foreground underline hover:text-foreground"
+            >
+              Limpar filtros avançados
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div className="p-8 text-center text-sm text-muted-foreground">
@@ -1216,6 +1322,7 @@ function ClientsTable() {
 function ClubMembersPanel() {
   const [members, setMembers] = useState<ClubMember[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -1245,11 +1352,40 @@ function ClubMembersPanel() {
     return 'text-muted-foreground'
   }
 
+  function renderMemberRow(m: ClubMember) {
+    return (
+      <li
+        key={m.id}
+        className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+      >
+        <UserAvatar name={m.name} size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{m.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{m.plan}</p>
+          <p className={cn('truncate text-xs font-medium', toneClass(m))}>
+            {dueLabel(m)}
+          </p>
+        </div>
+        <WhatsappIconButton
+          label={`Cobrar ${m.name} no WhatsApp`}
+          phone={m.phone}
+        />
+      </li>
+    )
+  }
+
+  const visibleMembers = members?.slice(0, 3) || []
+
   return (
     <Panel>
       <PanelHeader
         icon={<Crown className="size-[18px]" />}
         title="Assinantes do clube"
+        action={
+          members !== null && members.length > 3 ? (
+            <SeeAll onClick={() => setShowAll(true)} />
+          ) : undefined
+        }
       />
       <div className="px-3 pb-3">
         {error && <p className="px-2 py-3 text-xs text-danger">{error}</p>}
@@ -1263,32 +1399,32 @@ function ClubMembersPanel() {
         )}
         {members !== null && members.length > 0 && (
           <ul className="space-y-0.5">
-            {members.map((m) => (
-              <li
-                key={m.id}
-                className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
-              >
-                <UserAvatar name={m.name} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{m.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{m.plan}</p>
-                  <p className={cn('truncate text-xs font-medium', toneClass(m))}>
-                    {dueLabel(m)}
-                  </p>
-                </div>
-                <WhatsappIconButton
-                  label={`Cobrar ${m.name} no WhatsApp`}
-                  phone={m.phone}
-                />
-              </li>
-            ))}
+            {visibleMembers.map(renderMemberRow)}
           </ul>
         )}
       </div>
+
+      {showAll && members && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Assinantes do clube</h3>
+              <button
+                onClick={() => setShowAll(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <ul className="max-h-96 space-y-0.5 overflow-y-auto">
+              {members.map(renderMemberRow)}
+            </ul>
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }
-
 const featuredTabs: { key: FeaturedTab; label: string }[] = [
   { key: 'vip', label: 'VIP' },
   { key: 'frequencia', label: 'Maior frequência' },

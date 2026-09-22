@@ -48,9 +48,18 @@ export function PanelHeader({
   )
 }
 
-export function SeeAll({ children = 'Ver todos' }: { children?: ReactNode }) {
+export function SeeAll({
+  children = 'Ver todos',
+  onClick,
+}: {
+  children?: ReactNode
+  onClick?: () => void
+}) {
   return (
-    <button className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-gold">
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-gold"
+    >
       {children}
       <ChevronRight className="size-3.5" />
     </button>
