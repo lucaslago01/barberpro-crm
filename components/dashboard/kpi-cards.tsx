@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { getDashboardKpis } from '@/lib/supabase-data'
 import { getClientKpis, RISK_DAYS } from '@/lib/supabase-kpis'
+import { onDataChanged } from '@/lib/refresh-bus'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, LucideIcon> = {
@@ -97,6 +98,8 @@ export function KpiCards() {
       setLoading(false)
     }
     load()
+    const unsubscribe = onDataChanged(load)
+    return unsubscribe
   }, [])
 
   if (loading) {

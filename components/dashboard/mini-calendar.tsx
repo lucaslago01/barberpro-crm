@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { getDaysWithAppointments } from '@/lib/supabase-calendar'
+import { onDataChanged } from '@/lib/refresh-bus'
 import { Panel } from './panel'
 import { cn } from '@/lib/utils'
 
@@ -63,11 +64,13 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
       }
     }
 
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [year, month])
+      load()
+      const unsubscribe = onDataChanged(load)
+      return () => {
+        cancelled = true
+        unsubscribe()
+      }
+    }, [year, month])
 
   const leadingBlanks = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()

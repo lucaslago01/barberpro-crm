@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { notifyDataChanged } from './refresh-bus'
 import type { AgendaSlot, Client } from './types'
 
 function pad(n: number) {
@@ -112,6 +113,7 @@ export async function updateClient(
     throw new Error(`Erro ao atualizar cliente: ${error.message}`)
   }
 
+  notifyDataChanged()
   return data
 }
 
@@ -145,6 +147,7 @@ export async function createClient(client: {
     throw new Error(`Erro ao criar cliente: ${error.message}`)
   }
 
+  notifyDataChanged()
   return data
 }
 
@@ -160,6 +163,8 @@ export async function updateAppointmentStatus(
   if (error) {
     throw new Error(`Erro ao atualizar agendamento: ${error.message}`)
   }
+
+  notifyDataChanged()
 }
 
 export async function updateAppointmentNotes(id: string, notes: string): Promise<void> {
@@ -272,4 +277,6 @@ export async function deleteClient(id: string): Promise<void> {
   if (error) {
     throw new Error(`Erro ao excluir cliente: ${error.message}`)
   }
+
+  notifyDataChanged()
 }

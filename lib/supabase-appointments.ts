@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { notifyDataChanged } from './refresh-bus'
 
 export interface ServiceOption {
   id: string
@@ -69,6 +70,8 @@ export async function createAppointment(params: {
   if (error) {
     throw new Error(error.message)
   }
+
+  notifyDataChanged()
 }
 
 // Muda o dia e a hora de um agendamento que já existe. O status não é alterado.
@@ -84,6 +87,8 @@ export async function rescheduleAppointment(
   if (error) {
     throw new Error(error.message)
   }
+
+  notifyDataChanged()
 }
 export interface ServiceInput {
   name: string
