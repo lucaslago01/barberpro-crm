@@ -10,13 +10,9 @@ import {
   SlidersHorizontal,
   Plus,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Pencil,
   MoreHorizontal,
-  TrendingUp,
-  TrendingDown,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -25,9 +21,8 @@ import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { ClientStatusBadge } from '@/components/dashboard/badges'
 import { WhatsappIconButton } from '@/components/dashboard/whatsapp-button'
 import {
-  clientStats,
-  clientStatusFilters,
   clientFeatured,
+  clientStatusFilters,
   clientsToRecover,
   clientBirthdays,
   clientInteractions,
@@ -37,6 +32,16 @@ import {
 } from '@/lib/data'
 import { getClients, createClient, updateClient } from '@/lib/supabase-data'
 import { getClientStats, type ClientStats } from '@/lib/supabase-client-stats'
+import {
+  CLUB_PLANS,
+  cancelClub,
+  getClubInfo,
+  getClubMembers,
+  markClubPaymentAndRecord,
+  setClubDueDate,
+  type ClubInfo,
+  type ClubMember,
+} from '@/lib/supabase-club'
 import type { Client as SupabaseClient } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Cake, MessageCircle, Zap } from 'lucide-react'
@@ -45,6 +50,13 @@ const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 })
+
+// Valor sugerido de cada plano (o Juan pode ajustar na hora de confirmar o pagamento)
+const PLAN_PRICES: Record<string, number> = {
+  Corte: 139,
+  'Corte e barba': 229,
+  Barba: 159,
+}
 
 function mapToRow(c: SupabaseClient, stats?: ClientStats): Client {
   return {
@@ -232,11 +244,10 @@ function ClientRow({
         <div className="flex items-center gap-0.5">
           <RowAction label="Ver perfil" icon={Eye} />
           <RowAction label="Editar" icon={Pencil} onClick={onEdit} />
-                    <WhatsappIconButton
+          <WhatsappIconButton
             label={`Enviar WhatsApp para ${client.name}`}
             phone={client.whatsapp === '-' ? null : client.whatsapp}
           />
-
           <RowAction label="Mais opções" icon={MoreHorizontal} />
         </div>
       </td>
@@ -341,6 +352,251 @@ function NewClientModal({
   )
 }
 
+function ConfirmPaymentModal({
+  plan,
+  onClose,
+  onConfirm,
+}: {
+  plan: string
+  onClose: () => void
+  onConfirm: (amount: number) => Promise<void>
+}) {
+  const [amount, setAmount] = useState(String(PLAN_PRICES[plan] ?? ''))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function parseAmount(value: string) {
+    const n = Number(value.replace(/\./g, '').replace(',', '.'))
+    return Number.isFinite(n) ? n : NaN
+  }
+
+  async function handleConfirm() {
+    setError(null)
+    const value = parseAmount(amount)
+    if (!(value > 0)) return setError('Informe um valor maior que zero.')
+
+    setSaving(true)
+    try {
+      await onConfirm(value)
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar pagamento')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4">
+      <div className="w-full max-w-xs rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Confirmar pagamento</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Plano: <span className="font-medium text-foreground">{plan}</span>
+        </p>
+        <label className="mb-1 block text-xs text-muted-foreground">Valor recebido (R$)</label>
+        <input
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          inputMode="decimal"
+          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+          placeholder="0,00"
+        />
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Empurra o vencimento +30 dias e lança essa entrada no Financeiro.
+        </p>
+        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={saving}
+            className="rounded-lg bg-gold px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+          >
+            {saving ? 'Confirmando...' : 'Confirmar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ClubSection({ clientId }: { clientId: string }) {
+  const [info, setInfo] = useState<ClubInfo | null>(null)
+  const [plan, setPlan] = useState('')
+  const [customDate, setCustomDate] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [confirmingPayment, setConfirmingPayment] = useState(false)
+
+  async function load() {
+    try {
+      setLoading(true)
+      const data = await getClubInfo(clientId)
+      setInfo(data)
+      setPlan(data.club_plan || CLUB_PLANS[0])
+      setCustomDate(data.club_due_date || '')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar o plano')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId])
+
+  async function handleConfirmPayment(amount: number) {
+    await markClubPaymentAndRecord(clientId, plan, info?.club_due_date ?? null, amount)
+    await load()
+  }
+
+  async function handleSaveDate() {
+    if (!customDate) return setError('Escolha uma data.')
+    setError(null)
+    setSaving(true)
+    try {
+      // Se ainda não tem plano, define o plano escolhido junto com a data
+      if (!info?.club_plan) {
+        await setClubDueDate(clientId, customDate)
+        // garante que o plano também fica salvo
+        await markClubPaymentAndRecord(clientId, plan, null, 0).catch(() => {})
+      }
+      await setClubDueDate(clientId, customDate)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar a data')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleCancel() {
+    if (!window.confirm('Cancelar o plano do clube deste cliente?')) return
+    setError(null)
+    setSaving(true)
+    try {
+      await cancelClub(clientId)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao cancelar o plano')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return <p className="text-xs text-muted-foreground">Carregando plano...</p>
+  }
+
+  const dueLabel = info?.club_due_date
+    ? new Date(`${info.club_due_date}T00:00:00`).toLocaleDateString('pt-BR')
+    : null
+
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-3">
+      {confirmingPayment && (
+        <ConfirmPaymentModal
+          plan={plan}
+          onClose={() => setConfirmingPayment(false)}
+          onConfirm={handleConfirmPayment}
+        />
+      )}
+
+      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Clube (assinatura)
+      </p>
+
+      <div className="mb-3">
+        <label className="mb-1 block text-xs text-muted-foreground">Plano</label>
+        <select
+          value={plan}
+          onChange={(e) => setPlan(e.target.value)}
+          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+        >
+          {CLUB_PLANS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {info?.club_plan && (
+        <div className="mb-3 flex items-center justify-between gap-2 text-sm">
+          <span className="text-muted-foreground">
+            {info.club_plan} · vence {dueLabel}
+          </span>
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+              info.status === 'em_dia'
+                ? 'bg-success/15 text-success'
+                : 'bg-danger/15 text-danger',
+            )}
+          >
+            {info.status === 'em_dia' ? 'Em dia' : 'Vencido'}
+          </span>
+        </div>
+      )}
+
+      <div className="mb-3">
+        <label className="mb-1 block text-xs text-muted-foreground">
+          Vencimento (editar manualmente, sem lançar no Financeiro)
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={customDate}
+            onChange={(e) => setCustomDate(e.target.value)}
+            className="h-9 flex-1 rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+          />
+          <button
+            onClick={handleSaveDate}
+            disabled={saving}
+            className="shrink-0 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60"
+          >
+            Salvar data
+          </button>
+        </div>
+      </div>
+
+      {error && <p className="mb-2 text-xs text-danger">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => setConfirmingPayment(true)}
+          disabled={saving}
+          className="flex-1 rounded-lg bg-gold px-3 py-2 text-xs font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+        >
+          Marcar pagamento (+30 dias)
+        </button>
+        {info?.club_plan && (
+          <button
+            onClick={handleCancel}
+            disabled={saving}
+            className="rounded-lg border border-danger/30 px-3 py-2 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-60"
+          >
+            Cancelar plano
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function EditClientModal({
   client,
   onClose,
@@ -379,7 +635,7 @@ function EditClientModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">Editar cliente</h3>
@@ -419,6 +675,10 @@ function EditClientModal({
         </div>
 
         {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+
+        <div className="my-4 h-px bg-border" />
+
+        <ClubSection clientId={client.id} />
 
         <div className="mt-5 flex justify-end gap-2">
           <button
@@ -464,12 +724,6 @@ function ClientsTable() {
       }
       setClients(data.map((c) => mapToRow(c, stats[c.id])))
       setRawClients(data)
-
-
-
-
-      
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar clientes')
     } finally {
@@ -661,6 +915,82 @@ function ClientsTable() {
   )
 }
 
+function ClubMembersPanel() {
+  const [members, setMembers] = useState<ClubMember[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getClubMembers()
+      .then((data) => {
+        if (!cancelled) setMembers(data)
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar assinantes')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function dueLabel(m: ClubMember) {
+    if (m.days < 0) return `Vencido há ${Math.abs(m.days)} dia(s)`
+    if (m.days === 0) return 'Vence hoje'
+    return `Vence em ${m.days} dia(s)`
+  }
+
+  function toneClass(m: ClubMember) {
+    if (m.days < 0) return 'text-danger'
+    if (m.days <= 5) return 'text-warning'
+    return 'text-muted-foreground'
+  }
+
+  return (
+    <Panel>
+      <PanelHeader
+        icon={<Crown className="size-[18px]" />}
+        title="Assinantes do clube"
+      />
+      <div className="px-3 pb-3">
+        {error && <p className="px-2 py-3 text-xs text-danger">{error}</p>}
+        {!error && members === null && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">Carregando...</p>
+        )}
+        {members !== null && members.length === 0 && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">
+            Nenhum assinante cadastrado ainda.
+          </p>
+        )}
+        {members !== null && members.length > 0 && (
+          <ul className="space-y-0.5">
+            {members.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+              >
+                <UserAvatar name={m.name} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{m.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{m.plan}</p>
+                  <p className={cn('truncate text-xs font-medium', toneClass(m))}>
+                    {dueLabel(m)}
+                  </p>
+                </div>
+                <WhatsappIconButton
+                  label={`Cobrar ${m.name} no WhatsApp`}
+                  phone={m.phone}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Panel>
+  )
+}
+
 const featuredTabs: { key: FeaturedTab; label: string }[] = [
   { key: 'vip', label: 'VIP' },
   { key: 'frequencia', label: 'Maior frequência' },
@@ -807,6 +1137,7 @@ export function ClientsView() {
 
       {/* Insights column */}
       <aside className="space-y-5">
+        <ClubMembersPanel />
         <FeaturedPanel />
         <RecoverPanel />
         <BirthdaysPanel />
