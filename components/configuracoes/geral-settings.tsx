@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, Store } from 'lucide-react'
+import { Check, Store, Upload } from 'lucide-react'
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
-import { getSettings, updateSettings, type BarbershopSettings } from '@/lib/supabase-settings'
+import {
+  getSettings,
+  updateSettings,
+  uploadLogo,
+  type BarbershopSettings,
+} from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
 const inputClass =
@@ -24,15 +29,18 @@ const emptySettings: BarbershopSettings = {
   address: '',
   instagram: '',
   description: '',
+  logoUrl: null,
 }
 
 export function GeralSettings() {
   const [settings, setSettings] = useState<BarbershopSettings>(emptySettings)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const savingRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -80,6 +88,32 @@ export function GeralSettings() {
     }
   }
 
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setError('Escolha um arquivo de imagem (PNG, JPG, etc.).')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('A imagem precisa ter no máximo 2 MB.')
+      return
+    }
+
+    setError(null)
+    setUploading(true)
+    try {
+      const url = await uploadLogo(file)
+      update({ logoUrl: url })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao enviar a logo')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   if (loading) {
     return (
       <Panel className="p-5">
@@ -99,60 +133,91 @@ export function GeralSettings() {
         Dados que aparecem para seus clientes no site e no sistema.
       </p>
 
-      <div className="space-y-3.5">
-        <Field label="Nome da barbearia">
+      <div className="flex flex-col gap-6 sm:flex-row">
+        <div className="flex shrink-0 flex-col items-center gap-3">
+          <div className="grid size-28 place-items-center overflow-hidden rounded-2xl border border-border bg-background/40">
+            {settings.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settings.logoUrl}
+                alt="Logo da barbearia"
+                className="size-full object-cover"
+              />
+            ) : (
+              <Store className="size-8 text-muted-foreground/50" />
+            )}
+          </div>
           <input
-            value={settings.barbershopName}
-            onChange={(e) => update({ barbershopName: e.target.value })}
-            className={inputClass}
-            placeholder="Ex.: BarberPro"
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleLogoChange}
+            className="hidden"
+            id="logo-upload"
           />
-        </Field>
-        <Field label="Telefone / WhatsApp">
-          <input
-            value={settings.phone}
-            onChange={(e) => update({ phone: e.target.value })}
-            className={inputClass}
-            placeholder="(41) 99999-9999"
-          />
-        </Field>
-        <Field label="Endereço">
-          <input
-            value={settings.address}
-            onChange={(e) => update({ address: e.target.value })}
-            className={inputClass}
-            placeholder="Rua, número - Bairro, Cidade - UF"
-          />
-        </Field>
-        <Field label="Instagram">
-          <input
-            value={settings.instagram}
-            onChange={(e) => update({ instagram: e.target.value })}
-            className={inputClass}
-            placeholder="@suabarbearia"
-          />
-        </Field>
-        <div className="grid gap-1.5 sm:grid-cols-[140px_1fr] sm:gap-4">
-          <label className="text-sm text-muted-foreground sm:pt-2">Descrição</label>
-          <textarea
-            value={settings.description}
-            onChange={(e) => update({ description: e.target.value })}
-            rows={3}
-            className={cn(inputClass, 'h-auto resize-none py-2 leading-relaxed')}
-            placeholder="Uma frase sobre a barbearia..."
-          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background/40 px-3 text-xs font-medium text-foreground transition-colors hover:border-gold/40 disabled:opacity-60"
+          >
+            <Upload className="size-3.5 text-gold" />
+            {uploading ? 'Enviando...' : 'Alterar logo'}
+          </button>
         </div>
 
-        {error && <p className="text-xs text-danger sm:col-start-2">{error}</p>}
-        {success && (
-          <p className="inline-flex items-center gap-1.5 text-xs font-medium text-success sm:col-start-2">
-            <Check className="size-3.5" />
-            Salvo com sucesso.
-          </p>
-        )}
+        <div className="flex-1 space-y-3.5">
+          <Field label="Nome da barbearia">
+            <input
+              value={settings.barbershopName}
+              onChange={(e) => update({ barbershopName: e.target.value })}
+              className={inputClass}
+              placeholder="Ex.: BarberPro"
+            />
+          </Field>
+          <Field label="Telefone / WhatsApp">
+            <input
+              value={settings.phone}
+              onChange={(e) => update({ phone: e.target.value })}
+              className={inputClass}
+              placeholder="(41) 99999-9999"
+            />
+          </Field>
+          <Field label="Endereço">
+            <input
+              value={settings.address}
+              onChange={(e) => update({ address: e.target.value })}
+              className={inputClass}
+              placeholder="Rua, número - Bairro, Cidade - UF"
+            />
+          </Field>
+          <Field label="Instagram">
+            <input
+              value={settings.instagram}
+              onChange={(e) => update({ instagram: e.target.value })}
+              className={inputClass}
+              placeholder="@suabarbearia"
+            />
+          </Field>
+          <div className="grid gap-1.5 sm:grid-cols-[140px_1fr] sm:gap-4">
+            <label className="text-sm text-muted-foreground sm:pt-2">Descrição</label>
+            <textarea
+              value={settings.description}
+              onChange={(e) => update({ description: e.target.value })}
+              rows={3}
+              className={cn(inputClass, 'h-auto resize-none py-2 leading-relaxed')}
+              placeholder="Uma frase sobre a barbearia..."
+            />
+          </div>
 
-        <div className="sm:grid sm:grid-cols-[140px_1fr] sm:gap-4">
-          <span className="hidden sm:block" />
+          {error && <p className="text-xs text-danger">{error}</p>}
+          {success && (
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
+              <Check className="size-3.5" />
+              Salvo com sucesso.
+            </p>
+          )}
+
           <button
             type="button"
             onClick={handleSave}

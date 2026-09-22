@@ -8,6 +8,7 @@ export function SiteHeader() {
   const [name, setName] = useState('BarberPro')
   const [instagram, setInstagram] = useState('@barberpro')
   const [phone, setPhone] = useState('')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     getSettings()
@@ -15,6 +16,7 @@ export function SiteHeader() {
         setName(s.barbershopName)
         if (s.instagram) setInstagram(s.instagram)
         if (s.phone) setPhone(s.phone)
+        setLogoUrl(s.logoUrl)
       })
       .catch(() => {})
   }, [])
@@ -27,19 +29,28 @@ export function SiteHeader() {
     <header className="border-b border-white/10 bg-black/40 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2.5">
-          <div
-            aria-hidden="true"
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-gradient-to-br from-amber-400/20 to-transparent text-amber-400"
-          >
-            <svg viewBox="0 0 24 24" fill="none" className="size-5">
-              <path
-                d="M6 4h12M6 20h12M9 4c0 4-4 5-4 8s4 4 4 8M15 4c0 4 4 5 4 8s-4 4-4 8"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={name}
+              className="size-9 shrink-0 rounded-lg object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-gradient-to-br from-amber-400/20 to-transparent text-amber-400"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="size-5">
+                <path
+                  d="M6 4h12M6 20h12M9 4c0 4-4 5-4 8s4 4 4 8M15 4c0 4 4 5 4 8s-4 4-4 8"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+          )}
           <div className="leading-tight">
             <p className="text-base font-bold tracking-tight text-amber-400 sm:text-lg">
               {name}

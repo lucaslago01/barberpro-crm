@@ -42,13 +42,17 @@ export function Sidebar() {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState('')
   const [barbershopName, setBarbershopName] = useState('BarberPro')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     getSession().then((session) => {
       setUserEmail(session?.user?.email ?? '')
     })
     getSettings()
-      .then((s) => setBarbershopName(s.barbershopName))
+      .then((s) => {
+        setBarbershopName(s.barbershopName)
+        setLogoUrl(s.logoUrl)
+      })
       .catch(() => {})
   }, [])
 
@@ -62,7 +66,16 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex flex-col items-center gap-2 border-b border-sidebar-border px-6 py-6">
         <div className="flex items-center gap-2">
-          <Scissors className="size-6 -rotate-90 text-gold" />
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={barbershopName}
+              className="size-9 rounded-lg object-cover"
+            />
+          ) : (
+            <Scissors className="size-6 -rotate-90 text-gold" />
+          )}
         </div>
         <div className="text-center leading-none">
           <p className="font-serif text-xl font-bold tracking-[0.15em] text-gold">
