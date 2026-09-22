@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { Bell, CalendarDays, ChevronDown, Menu } from 'lucide-react'
-import { UserAvatar } from './user-avatar'
+import { Bell, CalendarDays, Menu } from 'lucide-react'
+
 
 function formatToday(date: Date) {
   const label = date.toLocaleDateString('pt-BR', {
@@ -75,14 +75,7 @@ export function Topbar({
           </span>
         </button>
 
-        <button className="flex items-center gap-2.5 rounded-xl border border-border bg-card py-1.5 pl-1.5 pr-3 transition-colors hover:bg-accent">
-          <UserAvatar name="Lucas Barbeiro" size="md" ring />
-          <div className="hidden text-left sm:block">
-            <p className="text-sm font-semibold leading-tight">Lucas</p>
-            <p className="text-xs text-muted-foreground">Barbeiro</p>
-          </div>
-          <ChevronDown className="size-4 text-muted-foreground" />
-        </button>
+        
 
         {action}
       </div>

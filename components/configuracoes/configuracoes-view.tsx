@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   UserRound,
   Store,
-  Lock,
   Upload,
   Plus,
   Check,
@@ -27,7 +26,6 @@ import { Panel, PanelHeader } from '@/components/dashboard/panel'
 import { ServicesSettings } from './servicos-settings'
 import { SecuritySettings } from './security-settings'
 import { GeralSettings } from './geral-settings'
-import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { cn } from '@/lib/utils'
 
 type TabKey =
@@ -143,55 +141,7 @@ function Select({
 
 /* ---------- Geral tab ---------- */
 
-function BarberProfile() {
-  return (
-    <Panel className="p-5">
-      <PanelHeader
-        className="px-0 pt-0"
-        icon={<UserRound className="size-[18px]" />}
-        title="Perfil do barbeiro"
-      />
-      <p className="-mt-2 mb-5 text-sm text-muted-foreground">
-        Seus dados de acesso e informações pessoais.
-      </p>
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <div className="flex shrink-0 flex-col items-center gap-3">
-          <div className="relative">
-            <UserAvatar name="Lucas Lago" size="lg" ring />
-            <button
-              type="button"
-              className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border border-gold/40 bg-card text-gold transition-colors hover:bg-gold hover:text-primary-foreground"
-              aria-label="Alterar foto"
-            >
-              <Upload className="size-3.5" />
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 space-y-3.5">
-          <Field label="Nome">
-            <TextInput defaultValue="Lucas Lago" />
-          </Field>
-          <Field label="E-mail">
-            <TextInput defaultValue="lucas@email.com" />
-          </Field>
-          <Field label="Telefone / WhatsApp">
-            <TextInput defaultValue="(41) 99999-9999" />
-          </Field>
-          <div className="sm:grid sm:grid-cols-[140px_1fr] sm:gap-4">
-            <span className="hidden sm:block" />
-            <button
-              type="button"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background/40 px-4 text-sm font-medium text-foreground transition-colors hover:border-gold/40"
-            >
-              <Lock className="size-4 text-gold" />
-              Alterar senha
-            </button>
-          </div>
-        </div>
-      </div>
-    </Panel>
-  )
-}
+
 
 function BarbershopInfo() {
   return (
