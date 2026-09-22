@@ -132,6 +132,8 @@ export async function createClient(client: {
   name: string
   phone?: string
   email?: string
+  club_plan?: string
+  club_due_date?: string
 }): Promise<Client> {
   const { data, error } = await supabase
     .from('barberpro_clients')
@@ -229,5 +231,45 @@ export async function createPublicAppointment(params: {
 
   if (error) {
     throw new Error(error.message)
+  }
+}
+export interface ClientAppointmentHistoryItem {
+  id: string
+  time: string
+  status: string
+  serviceName: string
+  price: number
+}
+
+export async function getClientAppointments(
+  clientId: string,
+): Promise<ClientAppointmentHistoryItem[]> {
+  const { data, error } = await supabase
+    .from('barberpro_appointments')
+    .select('id, time, status, barberpro_services (name, price)')
+    .eq('client_id', clientId)
+    .order('time', { ascending: false })
+
+  if (error) {
+    throw new Error(`Erro ao buscar histórico do cliente: ${error.message}`)
+  }
+
+  return (data || []).map((a: any) => ({
+    id: a.id,
+    time: a.time,
+    status: a.status,
+    serviceName: a.barberpro_services?.name || '-',
+    price: Number(a.barberpro_services?.price) || 0,
+  }))
+}
+
+export async function deleteClient(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('barberpro_clients')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    throw new Error(`Erro ao excluir cliente: ${error.message}`)
   }
 }

@@ -12,6 +12,7 @@ export interface ClientStats {
   avgTicket: number
   lastVisit: string
   lastVisitAgo: string
+  lastVisitTimestamp: number
   frequency: string
   status: ClientStatusValue
 }
@@ -77,10 +78,11 @@ export async function getClientStats(): Promise<Record<string, ClientStats>> {
     else if (visits >= VIP_VISITS) status = 'vip'
 
     result[clientId] = {
-      visits,
+          visits,
       avgTicket: total / visits,
       lastVisit: new Date(last).toLocaleDateString('pt-BR'),
       lastVisitAgo: agoLabel(daysSince),
+      lastVisitTimestamp: last,
       frequency,
       status,
     }

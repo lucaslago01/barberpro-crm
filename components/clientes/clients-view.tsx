@@ -30,7 +30,14 @@ import {
   type ClientStatus,
   type FeaturedTab,
 } from '@/lib/data'
-import { getClients, createClient, updateClient } from '@/lib/supabase-data'
+import {
+  getClients,
+  createClient,
+  updateClient,
+  getClientAppointments,
+  deleteClient,
+  type ClientAppointmentHistoryItem,
+} from '@/lib/supabase-data'
 import { getClientStats, type ClientStats } from '@/lib/supabase-client-stats'
 import {
   CLUB_PLANS,
@@ -65,10 +72,12 @@ function mapToRow(c: SupabaseClient, stats?: ClientStats): Client {
     whatsapp: c.phone || '-',
     lastVisit: stats?.lastVisit || '-',
     lastVisitAgo: stats?.lastVisitAgo || '-',
+    lastVisitTimestamp: stats?.lastVisitTimestamp || 0,
     frequency: stats?.frequency || '-',
     visits: stats?.visits || 0,
     avgTicket: stats?.avgTicket || 0,
     status: stats?.status || 'ativo',
+    isClubMember: Boolean(c.club_plan),
   }
 }
 
@@ -155,14 +164,6 @@ function StatCards() {
   )
 }
 
-function FakeSelect({ label }: { label: string }) {
-  return (
-    <button className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border bg-background/40 px-3 text-sm text-muted-foreground transition-colors hover:text-foreground">
-      <span className="whitespace-nowrap">{label}</span>
-      <ChevronDown className="size-4" />
-    </button>
-  )
-}
 
 function RowAction({
   label,
@@ -190,8 +191,18 @@ function ClientRow({
   checked,
   onToggle,
   onEdit,
+  onView,
+  onViewHistory,
+  onDelete,
+  menuOpen,
+  onToggleMenu,
 }: {
   client: Client
+  onView: () => void
+  onViewHistory: () => void
+  onDelete: () => void
+  menuOpen: boolean
+  onToggleMenu: () => void
   checked: boolean
   onToggle: () => void
   onEdit: () => void
@@ -241,14 +252,31 @@ function ClientRow({
         <ClientStatusBadge status={client.status} />
       </td>
       <td className="py-3 pr-4">
-        <div className="flex items-center gap-0.5">
-          <RowAction label="Ver perfil" icon={Eye} />
+        <div className="relative flex items-center gap-0.5">
+          <RowAction label="Ver perfil" icon={Eye} onClick={onView} />
           <RowAction label="Editar" icon={Pencil} onClick={onEdit} />
           <WhatsappIconButton
             label={`Enviar WhatsApp para ${client.name}`}
             phone={client.whatsapp === '-' ? null : client.whatsapp}
           />
-          <RowAction label="Mais opções" icon={MoreHorizontal} />
+          <RowAction label="Mais opções" icon={MoreHorizontal} onClick={onToggleMenu} />
+
+          {menuOpen && (
+            <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
+              <button
+                onClick={onViewHistory}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-white/5"
+              >
+                Ver histórico
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-white/5"
+              >
+                Excluir cliente
+              </button>
+            </div>
+          )}
         </div>
       </td>
     </tr>
@@ -267,10 +295,18 @@ function NewClientModal({
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isClub, setIsClub] = useState(false)
+  const [clubPlan, setClubPlan] = useState(CLUB_PLANS[0])
+  const [alreadyPaid, setAlreadyPaid] = useState(true)
+  const [dueDate, setDueDate] = useState('')
 
   async function handleSave() {
     if (!name.trim()) {
       setError('Nome é obrigatório')
+      return
+    }
+    if (isClub && !alreadyPaid && !dueDate) {
+      setError('Informe a data de vencimento')
       return
     }
     try {
@@ -280,7 +316,12 @@ function NewClientModal({
         name: name.trim(),
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
+        club_plan: isClub && !alreadyPaid ? clubPlan : undefined,
+        club_due_date: isClub && !alreadyPaid ? dueDate : undefined,
       })
+      if (isClub && alreadyPaid) {
+        await markClubPaymentAndRecord(created.id, clubPlan, null, PLAN_PRICES[clubPlan] ?? 0)
+      }
       onCreated(created)
       onClose()
     } catch (err) {
@@ -328,6 +369,59 @@ function NewClientModal({
               placeholder="email@exemplo.com"
             />
           </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isClub}
+              onChange={(e) => setIsClub(e.target.checked)}
+              className="size-4 rounded border-border accent-gold"
+            />
+            Cliente do clube
+          </label>
+
+          {isClub && (
+            <div className="space-y-3 rounded-xl border border-border bg-background/30 p-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Plano</label>
+                <select
+                  value={clubPlan}
+                  onChange={(e) => setClubPlan(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                >
+                  {CLUB_PLANS.map((p) => (
+                    <option key={p} value={p} className="bg-card text-foreground">
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={alreadyPaid}
+                  onChange={(e) => setAlreadyPaid(e.target.checked)}
+                  className="size-4 rounded border-border accent-gold"
+                />
+                Já pagou a mensalidade
+              </label>
+
+              {!alreadyPaid && (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Data de vencimento
+                  </label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {error && <p className="mt-3 text-xs text-danger">{error}</p>}
@@ -700,9 +794,114 @@ function EditClientModal({
   )
 }
 
+function ClientProfileModal({
+  client,
+  initialTab = 'info',
+  onClose,
+}: {
+  client: SupabaseClient
+  initialTab?: 'info' | 'historico'
+  onClose: () => void
+}) {
+  const [tab, setTab] = useState<'info' | 'historico'>(initialTab)
+  const [history, setHistory] = useState<ClientAppointmentHistoryItem[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getClientAppointments(client.id)
+      .then((data) => {
+        if (!cancelled) setHistory(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar histórico')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [client.id])
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold">{client.name}</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="mb-4 flex gap-1 rounded-lg border border-border bg-background/30 p-1">
+          <button
+            onClick={() => setTab('info')}
+            className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+              tab === 'info' ? 'bg-gold text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Informações
+          </button>
+          <button
+            onClick={() => setTab('historico')}
+            className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+              tab === 'historico' ? 'bg-gold text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Histórico
+          </button>
+        </div>
+
+        {tab === 'info' && (
+          <div className="space-y-2 text-sm">
+            <p><span className="text-muted-foreground">Nome:</span> {client.name}</p>
+            <p><span className="text-muted-foreground">WhatsApp:</span> {client.phone || '-'}</p>
+            <p><span className="text-muted-foreground">Email:</span> {client.email || '-'}</p>
+            <p><span className="text-muted-foreground">Plano do clube:</span> {client.club_plan || 'Não é assinante'}</p>
+            {client.club_due_date && (
+              <p><span className="text-muted-foreground">Vencimento do clube:</span> {new Date(`${client.club_due_date}T00:00:00`).toLocaleDateString('pt-BR')}</p>
+            )}
+          </div>
+        )}
+
+        {tab === 'historico' && (
+          <div className="max-h-80 space-y-2 overflow-y-auto">
+            {loading && <p className="text-sm text-muted-foreground">Carregando...</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
+            {!loading && !error && history?.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhum atendimento registrado.</p>
+            )}
+            {!loading && history?.map((h) => (
+              <div key={h.id} className="rounded-lg border border-border bg-background/30 p-2.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{h.serviceName}</span>
+                  <span className="font-semibold">{currency.format(h.price)}</span>
+                </div>
+                <div className="mt-0.5 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{new Date(h.time).toLocaleDateString('pt-BR')}</span>
+                  <span className="capitalize">{h.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ClientsTable() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ClientStatus | 'todos'>('todos')
+  const [period, setPeriod] = useState<'todos' | '3m'>('todos')
+  const [sortBy, setSortBy] = useState<'recentes' | 'nome'>('recentes')
+  const [onlyClub, setOnlyClub] = useState(false)
+  const [viewingClient, setViewingClient] = useState<SupabaseClient | null>(null)
+  const [viewingTab, setViewingTab] = useState<'info' | 'historico'>('info')
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [deletingClient, setDeletingClient] = useState<SupabaseClient | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -737,15 +936,28 @@ function ClientsTable() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return clients.filter((c) => {
+    const threeMonthsAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
+
+    const result = clients.filter((c) => {
       const matchesStatus = status === 'todos' || c.status === status
       const matchesSearch =
         q === '' ||
         c.name.toLowerCase().includes(q) ||
         c.whatsapp.toLowerCase().includes(q)
-      return matchesStatus && matchesSearch
+      const matchesPeriod =
+        period === 'todos' ||
+        (c.lastVisitTimestamp !== undefined && c.lastVisitTimestamp >= threeMonthsAgo)
+      const matchesClub = !onlyClub || c.isClubMember
+      return matchesStatus && matchesSearch && matchesPeriod && matchesClub
     })
-  }, [clients, search, status])
+
+    result.sort((a, b) => {
+      if (sortBy === 'nome') return a.name.localeCompare(b.name)
+      return (b.lastVisitTimestamp || 0) - (a.lastVisitTimestamp || 0)
+    })
+
+    return result
+  }, [clients, search, status, period, sortBy, onlyClub])
 
   const allChecked = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
 
@@ -788,6 +1000,43 @@ function ClientsTable() {
         />
       )}
 
+      {viewingClient && (
+        <ClientProfileModal
+          client={viewingClient}
+          initialTab={viewingTab}
+          onClose={() => setViewingClient(null)}
+        />
+      )}
+
+      {deletingClient && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <h3 className="mb-2 text-base font-semibold">Excluir cliente</h3>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Tem certeza que deseja excluir <strong>{deletingClient.name}</strong>? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingClient(null)}
+                className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await deleteClient(deletingClient.id)
+                  setDeletingClient(null)
+                  loadClients()
+                }}
+                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white hover:brightness-105"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 p-4">
         <div className="relative min-w-[220px] flex-1">
@@ -815,8 +1064,42 @@ function ClientsTable() {
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         </div>
 
-        <FakeSelect label="Últimos 3 meses" />
-        <FakeSelect label="Mais recentes" />
+        <div className="relative">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as 'todos' | '3m')}
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+          >
+            <option value="todos" className="bg-card text-foreground">Todos os períodos</option>
+            <option value="3m" className="bg-card text-foreground">Últimos 3 meses</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </div>
+
+        <div className="relative">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'recentes' | 'nome')}
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+          >
+            <option value="recentes" className="bg-card text-foreground">Mais recentes</option>
+            <option value="nome" className="bg-card text-foreground">Nome (A-Z)</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </div>
+        
+        <button
+          type="button"
+          onClick={() => setOnlyClub((v) => !v)}
+          aria-pressed={onlyClub}
+          className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${
+            onlyClub
+              ? 'border-gold/40 bg-gold/10 text-gold'
+              : 'border-border bg-background/40 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Clube
+        </button>
 
         <button
           aria-label="Mais filtros"
@@ -889,6 +1172,21 @@ function ClientsTable() {
                   onEdit={() =>
                     setEditingClient(rawClients.find((c) => c.id === client.id) || null)
                   }
+                  onView={() => {
+                    setViewingClient(rawClients.find((c) => c.id === client.id) || null)
+                    setViewingTab('info')
+                  }}
+                  onViewHistory={() => {
+                    setViewingClient(rawClients.find((c) => c.id === client.id) || null)
+                    setViewingTab('historico')
+                    setOpenMenuId(null)
+                  }}
+                  onDelete={() => {
+                    setDeletingClient(rawClients.find((c) => c.id === client.id) || null)
+                    setOpenMenuId(null)
+                  }}
+                  menuOpen={openMenuId === client.id}
+                  onToggleMenu={() => setOpenMenuId(openMenuId === client.id ? null : client.id)}
                 />
               ))}
             </tbody>

@@ -13,6 +13,8 @@ export interface Client {
   email?: string
   preferred_barber?: string
   last_visit?: string
+  club_plan?: string
+  club_due_date?: string
 }
 
 export interface Service {

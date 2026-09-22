@@ -405,10 +405,12 @@ export type Client = {
   whatsapp: string
   lastVisit: string
   lastVisitAgo: string
+  lastVisitTimestamp?: number
   frequency: string
   visits: number
   avgTicket: number
   status: ClientStatus
+  isClubMember?: boolean
 }
 
 export const clientStats: {
