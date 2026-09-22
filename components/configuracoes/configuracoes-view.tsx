@@ -26,6 +26,7 @@ import {
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
 import { ServicesSettings } from './servicos-settings'
 import { SecuritySettings } from './security-settings'
+import { GeralSettings } from './geral-settings'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { cn } from '@/lib/utils'
 
@@ -507,13 +508,8 @@ const sessions = [
 
 function TabContent({ tab }: { tab: TabKey }) {
   switch (tab) {
-    case 'geral':
-      return (
-        <div className="grid gap-5 xl:grid-cols-2">
-          <BarberProfile />
-          <BarbershopInfo />
-        </div>
-      )
+        case 'geral':
+      return <GeralSettings />
     case 'servicos':
       return <ServicesSettings />
     case 'horario':
