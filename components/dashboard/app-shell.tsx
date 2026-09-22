@@ -25,16 +25,20 @@ export function AppShell({
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
   const [barbershopName, setBarbershopName] = useState('BarberPro')
+  const [userFirstName, setUserFirstName] = useState('')
 
   // Confere a sessão ao abrir a tela
   useEffect(() => {
     let cancelled = false
 
-    getSession().then((session) => {
+            getSession().then((session) => {
       if (cancelled) return
       if (session) {
         setLoggedIn(true)
         setChecking(false)
+        const email = session.user?.email ?? ''
+        const namePart = email.split('@')[0]?.split('.')[0] ?? ''
+        setUserFirstName(namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : '')
       } else {
         router.replace('/login')
       }
@@ -99,9 +103,9 @@ export function AppShell({
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8">
-          <Topbar
+                    <Topbar
             onMenuClick={() => setOpen(true)}
-            title={title}
+            title={title ?? (userFirstName ? `Olá, ${userFirstName}!` : 'Olá!')}
             subtitle={subtitle}
             action={headerAction}
           />
