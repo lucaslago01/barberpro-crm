@@ -22,6 +22,7 @@ import {
 import { navItems } from '@/lib/data'
 import { UserAvatar } from './user-avatar'
 import { getSession, signOut } from '@/lib/auth'
+import { getSettings } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, LucideIcon> = {
@@ -40,11 +41,15 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [userEmail, setUserEmail] = useState('')
+  const [barbershopName, setBarbershopName] = useState('BarberPro')
 
   useEffect(() => {
     getSession().then((session) => {
       setUserEmail(session?.user?.email ?? '')
     })
+    getSettings()
+      .then((s) => setBarbershopName(s.barbershopName))
+      .catch(() => {})
   }, [])
 
   async function handleSignOut() {
@@ -60,8 +65,8 @@ export function Sidebar() {
           <Scissors className="size-6 -rotate-90 text-gold" />
         </div>
         <div className="text-center leading-none">
-          <p className="font-serif text-xl font-bold tracking-[0.15em]">
-            BARBER<span className="text-gold">PRO</span>
+          <p className="font-serif text-xl font-bold tracking-[0.15em] text-gold">
+            {barbershopName.toUpperCase()}
           </p>
           <p className="mt-2 text-[9px] font-medium tracking-[0.25em] text-muted-foreground">
             MAIS QUE UM CORTE
@@ -116,7 +121,7 @@ export function Sidebar() {
       </p>
 
       {/* Profile */}
-            <div className="border-t border-sidebar-border p-3">
+      <div className="border-t border-sidebar-border p-3">
         <div className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left">
           <UserAvatar name={userEmail || 'Usuário'} size="md" ring />
           <div className="min-w-0 flex-1">
