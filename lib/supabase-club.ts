@@ -138,3 +138,28 @@ export async function markClubPaymentAndRecord(
     amount,
   })
 }
+export interface ClubLookupResult {
+  found: boolean
+  plan: string | null
+  status: ClubStatus
+}
+
+// Usado pelo /agendar (sem login) para conferir se um WhatsApp é de assinante em dia
+export async function lookupClubByPhone(phone: string): Promise<ClubLookupResult> {
+  const { data, error } = await supabase.rpc('barberpro_club_lookup', {
+    p_phone: phone,
+  })
+
+  if (error) throw new Error(`Erro ao consultar o plano: ${error.message}`)
+
+  const row = (data && data[0]) || null
+  if (!row) {
+    return { found: false, plan: null, status: 'sem_plano' }
+  }
+
+  return {
+    found: true,
+    plan: row.plan,
+    status: row.status as ClubStatus,
+  }
+}

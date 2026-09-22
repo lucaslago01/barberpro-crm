@@ -1,6 +1,6 @@
 "use client"
 
-import { Scissors, ShieldCheck, ArrowRight } from "lucide-react"
+import { Scissors, ShieldCheck, ArrowRight, Crown } from "lucide-react"
 import { services } from "@/lib/agendar/services"
 import { ServiceCard } from "@/components/agendar/service-card"
 import { InfoStrip } from "@/components/agendar/info-strip"
@@ -9,9 +9,17 @@ interface ServiceSelectionProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onContinue: () => void
+  freeServiceIds?: string[]
+  clubPlan?: string | null
 }
 
-export function ServiceSelection({ selectedId, onSelect, onContinue }: ServiceSelectionProps) {
+export function ServiceSelection({
+  selectedId,
+  onSelect,
+  onContinue,
+  freeServiceIds = [],
+  clubPlan = null,
+}: ServiceSelectionProps) {
   const selectedService = services.find((s) => s.id === selectedId)
 
   return (
@@ -37,6 +45,16 @@ export function ServiceSelection({ selectedId, onSelect, onContinue }: ServiceSe
           </div>
         </div>
 
+        {freeServiceIds.length > 0 && (
+          <div className="mx-4 mt-4 flex items-center gap-2.5 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3 sm:mx-5">
+            <Crown className="size-4 shrink-0 text-emerald-400" />
+            <p className="text-[13px] text-emerald-300">
+              Assinante do plano <span className="font-semibold">{clubPlan}</span>: os serviços marcados
+              como &quot;Clube&quot; são grátis. Outros serviços são cobrados normalmente.
+            </p>
+          </div>
+        )}
+
         <ul className="flex flex-col gap-3 p-4 sm:gap-3 sm:p-5">
           {services.map((service) => (
             <ServiceCard
@@ -44,6 +62,7 @@ export function ServiceSelection({ selectedId, onSelect, onContinue }: ServiceSe
               service={service}
               selected={service.id === selectedId}
               onSelect={onSelect}
+              freeLabel={freeServiceIds.includes(service.id)}
             />
           ))}
         </ul>

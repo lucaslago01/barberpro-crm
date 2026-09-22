@@ -653,8 +653,10 @@ export function FinanceiroMes() {
                 value={String(data.completed)}
                 detail={
                   data.completed > 0
-                    ? `Ticket médio ${currency.format(data.walkIn / data.completed)}`
-                    : 'Nenhum atendimento concluído'
+                    ? `Ticket médio ${currency.format(data.walkIn / data.completed)}${data.clubVisits > 0 ? ` · +${data.clubVisits} do clube` : ''}`
+                    : data.clubVisits > 0
+                      ? `${data.clubVisits} atendimento(s) do clube`
+                      : 'Nenhum atendimento concluído'
                 }
                 icon={CalendarCheck}
                 tone="bg-info/12 text-info"

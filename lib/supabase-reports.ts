@@ -62,22 +62,23 @@ export function getPreviousPeriod(p: Period, preset: PeriodPreset): Period {
 
 export interface DailyRevenue {
   label: string // "21/09"
-  revenue: number // avulso + clube do dia
-  sessions: number // atendimentos concluídos do dia
+  revenue: number // avulso (sem clube) + clube do dia
+  sessions: number // atendimentos concluídos do dia (avulso + clube)
 }
 
 export interface PeriodStats {
-  completed: number
+  completed: number // atendimentos concluídos avulsos (sem clube)
+  clubVisits: number // atendimentos concluídos que eram do clube
   noShows: number
   cancelled: number
   total: number // agendamentos do período (todos os status)
   walkIn: number
   club: number
-  revenue: number // avulso + clube
+  revenue: number // avulso (sem clube) + clube
   avgTicket: number
   newClients: number
   byService: { name: string; count: number; total: number }[]
-  byWeekday: number[] // 0 = domingo ... 6 = sábado (atendimentos concluídos)
+  byWeekday: number[] // 0 = domingo ... 6 = sábado (atendimentos concluídos, avulso + clube)
   byHour: { hour: string; count: number }[]
   topClients: { name: string; count: number; total: number }[]
   noShowRate: number // 0 a 100
@@ -92,7 +93,9 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   const [appts, club, clients] = await Promise.all([
     supabase
       .from('barberpro_appointments')
-      .select('id, time, status, client_id, barberpro_clients (name), barberpro_services (name, price)')
+      .select(
+        'id, time, status, client_id, is_club_visit, barberpro_clients (name), barberpro_services (name, price)',
+      )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`),
     supabase
@@ -112,13 +115,15 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   if (clients.error) throw new Error(`Erro ao buscar clientes: ${clients.error.message}`)
 
   const rows: any[] = appts.data || []
-  const done = rows.filter((a) => a.status === 'concluido')
+  const doneAll = rows.filter((a) => a.status === 'concluido')
+  const done = doneAll.filter((a) => !a.is_club_visit) // avulsos, para a receita
+  const clubVisits = doneAll.filter((a) => a.is_club_visit)
   const noShows = rows.filter((a) => a.status === 'faltou').length
   const cancelled = rows.filter((a) => a.status === 'cancelado').length
 
   const walkIn = done.reduce((s, a) => s + Number(a.barberpro_services?.price || 0), 0)
   const clubRows: any[] = club.data || []
-  const clubTotal = clubRows.reduce((s, c) => s + Number(c.amount || 0), 0)
+  const clubTotal = clubRows.reduce((s: number, c: any) => s + Number(c.amount || 0), 0)
 
   // Série por dia (todos os dias do período, mesmo os vazios)
   const dailyMap = new Map<string, DailyRevenue>()
@@ -137,8 +142,9 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   const hours = new Map<string, number>()
   const cli = new Map<string, { name: string; count: number; total: number }>()
 
-  for (const a of done) {
-    const price = Number(a.barberpro_services?.price || 0)
+  // Serviço, dia da semana, horário e melhores clientes contam avulso + clube (é atendimento de verdade)
+  for (const a of doneAll) {
+    const price = a.is_club_visit ? 0 : Number(a.barberpro_services?.price || 0)
     const sName = a.barberpro_services?.name || 'Serviço desconhecido'
     const s = svc.get(sName) || { count: 0, total: 0 }
     s.count += 1
@@ -175,11 +181,12 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     if (point) point.revenue += Number(c.amount || 0)
   }
 
-  const scheduledForRate = done.length + noShows
+  const scheduledForRate = doneAll.length + noShows
   const revenue = walkIn + clubTotal
 
   return {
     completed: done.length,
+    clubVisits: clubVisits.length,
     noShows,
     cancelled,
     total: rows.length,
@@ -190,7 +197,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     newClients: (clients.data || []).length,
     byService: Array.from(svc.entries())
       .map(([name, v]) => ({ name, count: v.count, total: v.total }))
-      .sort((a, b) => b.total - a.total || b.count - a.count),
+      .sort((a, b) => b.count - a.count || b.total - a.total),
     byWeekday: weekday,
     byHour: Array.from(hours.entries())
       .map(([hour, count]) => ({ hour, count }))

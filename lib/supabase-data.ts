@@ -215,6 +215,7 @@ export async function createPublicAppointment(params: {
   serviceName: string
   dateTime: string
   notes?: string
+  asClub?: boolean
 }): Promise<void> {
   const { error } = await supabase.rpc('barberpro_create_public_appointment', {
     p_client_name: params.clientName,
@@ -223,6 +224,7 @@ export async function createPublicAppointment(params: {
     p_time: toLocalWallClock(new Date(params.dateTime)),
     p_client_email: params.clientEmail ?? null,
     p_notes: params.notes ?? null,
+    p_as_club: params.asClub ?? false,
   })
 
   if (error) {

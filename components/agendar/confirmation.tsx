@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, Scissors, User, Wallet } from "lucide-react"
+import { ArrowLeft, Calendar, CheckCircle2, Clock, Crown, Loader2, Scissors, User, Wallet } from "lucide-react"
 import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
@@ -13,10 +13,18 @@ interface ConfirmationProps {
   selectedDate: Date | null
   selectedTime: string | null
   data: AgendarFormData
+  isClub?: boolean
   onBack: () => void
 }
 
-export function Confirmation({ service, selectedDate, selectedTime, data, onBack }: ConfirmationProps) {
+export function Confirmation({
+  service,
+  selectedDate,
+  selectedTime,
+  data,
+  isClub = false,
+  onBack,
+}: ConfirmationProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -52,6 +60,7 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
         serviceName: service.nome.replace(" Masculino", ""),
         dateTime: dateTime.toISOString(),
         notes: data.observacoes || undefined,
+        asClub: isClub,
       })
 
       setSuccess(true)
@@ -85,6 +94,12 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
             <p className="text-sm text-zinc-300">
               <span className="text-zinc-500">Nome:</span> {data.nome}
             </p>
+            {isClub && (
+              <p className="flex items-center gap-1.5 text-sm text-emerald-400">
+                <Crown className="size-4" />
+                Atendimento do plano (grátis)
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -103,7 +118,15 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
               <Scissors className="mt-0.5 size-4 shrink-0 text-amber-400" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Serviço</dt>
-                <dd className="text-sm font-medium text-white">{service.nome}</dd>
+                <dd className="text-sm font-medium text-white">
+                  {service.nome}
+                  {isClub && (
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                      <Crown className="size-3" />
+                      Clube
+                    </span>
+                  )}
+                </dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -134,7 +157,13 @@ export function Confirmation({ service, selectedDate, selectedTime, data, onBack
               <Wallet className="mt-0.5 size-4 shrink-0 text-amber-400" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Valor</dt>
-                <dd className="text-sm font-semibold text-white">{formatPreco(service.precoCentavos)}</dd>
+                <dd className="text-sm font-semibold text-white">
+                  {isClub ? (
+                    <span className="text-emerald-400">Grátis (plano do clube)</span>
+                  ) : (
+                    formatPreco(service.precoCentavos)
+                  )}
+                </dd>
               </div>
             </div>
           </dl>

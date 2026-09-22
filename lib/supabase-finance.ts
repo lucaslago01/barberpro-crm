@@ -39,6 +39,7 @@ export interface WalkInItem {
   client: string
   service: string
   price: number
+  isClubVisit: boolean
 }
 
 export interface DailyPoint {
@@ -59,11 +60,12 @@ export interface ServiceTotal {
 }
 
 export interface MonthFinance {
-  walkIn: number // entradas dos atendimentos concluídos (avulso)
+  walkIn: number // entradas dos atendimentos concluídos avulsos (sem clube)
   club: number // mensalidades lançadas
   expenses: number // despesas lançadas
   profit: number
-  completed: number // quantidade de atendimentos concluídos
+  completed: number // atendimentos concluídos avulsos
+  clubVisits: number // atendimentos concluídos que eram do clube (não geram receita aqui)
   expenseList: Expense[]
   clubList: ClubPayment[]
   walkInList: WalkInItem[]
@@ -102,7 +104,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     supabase
       .from('barberpro_appointments')
       .select(
-        'id, time, status, barberpro_clients (name), barberpro_services (name, price)',
+        'id, time, status, is_club_visit, barberpro_clients (name), barberpro_services (name, price)',
       )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`)
@@ -126,7 +128,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
   if (exp.error) throw new Error(`Erro ao buscar despesas: ${exp.error.message}`)
   if (club.error) throw new Error(`Erro ao buscar mensalidades: ${club.error.message}`)
 
-  const walkInList: WalkInItem[] = (appts.data || []).map((a: any) => {
+  const allWalkIn: WalkInItem[] = (appts.data || []).map((a: any) => {
     const timeStr: string = String(a.time)
     return {
       id: a.id,
@@ -135,8 +137,14 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
       client: a.barberpro_clients?.name || 'Cliente desconhecido',
       service: a.barberpro_services?.name || 'Serviço desconhecido',
       price: Number(a.barberpro_services?.price || 0),
+      isClubVisit: !!a.is_club_visit,
     }
   })
+
+  // Visitas do clube contam como atendimento, mas não geram receita aqui
+  // (a receita delas já entrou quando a mensalidade foi paga)
+  const walkInList = allWalkIn.filter((w) => !w.isClubVisit)
+  const clubVisitsCount = allWalkIn.length - walkInList.length
 
   const expenseList: Expense[] = (exp.data || []).map((e: any) => ({
     id: e.id,
@@ -160,7 +168,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
   const clubTotal = clubList.reduce((sum, c) => sum + c.amount, 0)
   const expenseTotal = expenseList.reduce((sum, e) => sum + e.amount, 0)
 
-  // Valores dia a dia (entradas = avulso + clube; saídas = despesas)
+  // Valores dia a dia (entradas = avulso sem clube + mensalidades; saídas = despesas)
   const daily: DailyPoint[] = Array.from({ length: daysInMonth }, (_, i) => ({
     day: i + 1,
     revenue: 0,
@@ -188,7 +196,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     .map(([category, total]) => ({ category, total }))
     .sort((a, b) => b.total - a.total)
 
-  // Entradas avulsas por serviço (maior primeiro)
+  // Entradas avulsas por serviço (sem clube), maior primeiro
   const svcMap = new Map<string, { count: number; total: number }>()
   for (const w of walkInList) {
     const cur = svcMap.get(w.service) || { count: 0, total: 0 }
@@ -206,6 +214,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     expenses: expenseTotal,
     profit: walkIn + clubTotal - expenseTotal,
     completed: walkInList.length,
+    clubVisits: clubVisitsCount,
     expenseList,
     clubList,
     walkInList,
