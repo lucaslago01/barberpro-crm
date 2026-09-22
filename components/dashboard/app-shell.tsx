@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
 import { getSession, onAuthChange } from '@/lib/auth'
+import { getSettings } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
 export function AppShell({
@@ -23,6 +24,7 @@ export function AppShell({
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
+  const [barbershopName, setBarbershopName] = useState('BarberPro')
 
   // Confere a sessão ao abrir a tela
   useEffect(() => {
@@ -42,6 +44,10 @@ export function AppShell({
     const stop = onAuthChange((isLogged) => {
       if (!isLogged) router.replace('/login')
     })
+
+    getSettings()
+      .then((s) => setBarbershopName(s.barbershopName))
+      .catch(() => {})
 
     return () => {
       cancelled = true
@@ -101,7 +107,7 @@ export function AppShell({
           />
           <main className="mt-6">{children}</main>
           <footer className="mt-8 flex items-center justify-between border-t border-border py-4 text-[11px] tracking-[0.2em] text-muted-foreground/60">
-            <span className="font-serif font-semibold">BARBERPRO</span>
+            <span className="font-serif font-semibold">{barbershopName.toUpperCase()}</span>
             <span>MAIS QUE UM CORTE, UMA EXPERIÊNCIA.</span>
           </footer>
         </div>
