@@ -22,7 +22,7 @@ import {
 import { navItems } from '@/lib/data'
 import { UserAvatar } from './user-avatar'
 import { getSession, signOut } from '@/lib/auth'
-import { getSettings } from '@/lib/supabase-settings'
+import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, LucideIcon> = {
@@ -41,19 +41,27 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [userEmail, setUserEmail] = useState('')
-  const [barbershopName, setBarbershopName] = useState('BarberPro')
+  const [barbershopName, setBarbershopName] = useState('')
+  const [ready, setReady] = useState(false)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     getSession().then((session) => {
       setUserEmail(session?.user?.email ?? '')
     })
+    const cached = getCachedSettings()
+    if (cached) {
+      setBarbershopName(cached.barbershopName)
+      setLogoUrl(cached.logoUrl)
+      setReady(true)
+    }
     getSettings()
       .then((s) => {
         setBarbershopName(s.barbershopName)
         setLogoUrl(s.logoUrl)
       })
       .catch(() => {})
+      .finally(() => setReady(true))
   }, [])
 
   async function handleSignOut() {
@@ -64,7 +72,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
-      <div className="flex flex-col items-center gap-2 border-b border-sidebar-border px-6 py-6">
+      <div className={cn('flex flex-col items-center gap-2 border-b border-sidebar-border px-6 py-6', !ready && 'opacity-0')}>
         <div className="flex items-center gap-2">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -78,7 +86,7 @@ export function Sidebar() {
           )}
         </div>
         <div className="text-center leading-none">
-          <p className="font-serif text-xl font-bold tracking-[0.15em] text-gold">
+          <p className="min-h-[1.25rem] font-serif text-xl font-bold tracking-[0.15em] text-gold">
             {barbershopName.toUpperCase()}
           </p>
           <p className="mt-2 text-[9px] font-medium tracking-[0.25em] text-muted-foreground">
