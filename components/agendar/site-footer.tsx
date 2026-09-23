@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getSettings } from '@/lib/supabase-settings'
+import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
 export function SiteFooter() {
-  const [name, setName] = useState('BarberPro')
+  const [name, setName] = useState('')
 
   useEffect(() => {
+    const cached = getCachedSettings()
+    if (cached) setName(cached.barbershopName)
     getSettings()
       .then((s) => setName(s.barbershopName))
-      .catch(() => {})
+      .catch(() => setName((n) => n || 'BarberPro'))
   }, [])
 
   return (

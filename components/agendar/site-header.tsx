@@ -2,23 +2,36 @@
 
 import { useEffect, useState } from 'react'
 import { AtSign, Phone } from 'lucide-react'
-import { getSettings } from '@/lib/supabase-settings'
+import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
 export function SiteHeader() {
-  const [name, setName] = useState('BarberPro')
-  const [instagram, setInstagram] = useState('@barberpro')
+  const [name, setName] = useState('')
+  const [instagram, setInstagram] = useState('')
+  const [ready, setReady] = useState(false)
   const [phone, setPhone] = useState('')
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
+    const cached = getCachedSettings()
+    if (cached) {
+      setName(cached.barbershopName)
+      setInstagram(cached.instagram || '@barberpro')
+      setPhone(cached.phone || '')
+      setLogoUrl(cached.logoUrl)
+      setReady(true)
+    }
     getSettings()
       .then((s) => {
         setName(s.barbershopName)
-        if (s.instagram) setInstagram(s.instagram)
-        if (s.phone) setPhone(s.phone)
+        setInstagram(s.instagram || '@barberpro')
+        setPhone(s.phone || '')
         setLogoUrl(s.logoUrl)
       })
-      .catch(() => {})
+      .catch(() => {
+        setName((n) => n || 'BarberPro')
+        setInstagram((i) => i || '@barberpro')
+      })
+      .finally(() => setReady(true))
   }, [])
 
   const instagramHandle = instagram
@@ -26,7 +39,7 @@ export function SiteHeader() {
     .replace(/^@?/, '@')
 
   return (
-    <header className="border-b border-white/10 bg-black/40 backdrop-blur-sm">
+    <header className={`border-b border-white/10 bg-black/40 backdrop-blur-sm ${ready ? '' : 'opacity-0'}`}>
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (

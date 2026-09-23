@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
 import { getSession, onAuthChange } from '@/lib/auth'
-import { getSettings } from '@/lib/supabase-settings'
+import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
 export function AppShell({
@@ -24,7 +24,7 @@ export function AppShell({
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
-  const [barbershopName, setBarbershopName] = useState('BarberPro')
+  const [barbershopName, setBarbershopName] = useState('')
   const [userFirstName, setUserFirstName] = useState('')
 
   // Confere a sessão ao abrir a tela
@@ -49,9 +49,11 @@ export function AppShell({
       if (!isLogged) router.replace('/login')
     })
 
+    const cached = getCachedSettings()
+    if (cached) setBarbershopName(cached.barbershopName)
     getSettings()
       .then((s) => setBarbershopName(s.barbershopName))
-      .catch(() => {})
+      .catch(() => setBarbershopName((n) => n || 'BarberPro'))
 
     return () => {
       cancelled = true

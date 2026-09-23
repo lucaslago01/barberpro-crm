@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Scissors } from 'lucide-react'
 import { getSession, signIn } from '@/lib/auth'
-import { getSettings } from '@/lib/supabase-settings'
+import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,15 +12,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [barbershopName, setBarbershopName] = useState('BarberPro')
+  const [barbershopName, setBarbershopName] = useState('')
 
   useEffect(() => {
     getSession().then((session) => {
       if (session) router.replace('/')
     })
+    const cached = getCachedSettings()
+    if (cached) setBarbershopName(cached.barbershopName)
     getSettings()
       .then((s) => setBarbershopName(s.barbershopName))
-      .catch(() => {})
+      .catch(() => setBarbershopName((n) => n || 'BarberPro'))
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,7 +53,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6">
         <div className="mb-6 text-center">
           <Scissors className="mx-auto size-8 text-gold" />
-          <h1 className="mt-3 font-serif text-2xl font-semibold tracking-[0.2em]">
+          <h1 className="mt-3 min-h-[2rem] font-serif text-2xl font-semibold tracking-[0.2em]">
             {barbershopName.toUpperCase()}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
