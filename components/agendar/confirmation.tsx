@@ -6,14 +6,13 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
 import type { AgendarFormData } from "@/components/agendar/data-form"
-import { createPublicAppointment } from "@/lib/supabase-data"
+import { createAppointmentV2 } from "@/lib/supabase-data"
 
 interface ConfirmationProps {
   service: AgendarService
   selectedDate: Date | null
   selectedTime: string | null
   data: AgendarFormData
-  isClub?: boolean
   onBack: () => void
 }
 
@@ -22,9 +21,9 @@ export function Confirmation({
   selectedDate,
   selectedTime,
   data,
-  isClub = false,
   onBack,
 }: ConfirmationProps) {
+  const isClub = Boolean(service.isClube)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -53,15 +52,16 @@ export function Confirmation({
         minutes,
       )
 
-      await createPublicAppointment({
-        clientName: data.nome,
-        clientPhone: data.whatsapp,
-        clientEmail: data.email || undefined,
-        serviceName: service.nome.replace(" Masculino", ""),
-        dateTime: dateTime.toISOString(),
-        notes: data.observacoes || undefined,
-        asClub: isClub,
-      })
+            await createAppointmentV2({
+          clientName: data.nome,
+          clientPhone: data.whatsapp,
+          clientEmail: data.email || undefined,
+          serviceName: service.baseServiceName || service.nome.replace(" Masculino", ""),
+          dateTime: dateTime.toISOString(),
+          notes: data.observacoes || undefined,
+          birthDate: data.birthDate || undefined,
+          clubPlan: service.clubPlanLabel,
+        })
 
       setSuccess(true)
     } catch (err) {

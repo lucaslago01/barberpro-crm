@@ -2,20 +2,18 @@
 
 import { useState } from "react"
 import { CalendarDays, Clock, User, CheckCircle2 } from "lucide-react"
-import { services } from "@/lib/agendar/services"
-import { planToServiceIds, planToDefaultServiceId } from "@/lib/agendar/club-mapping"
+import { services, clubServices } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
-import { ClubCheck } from "@/components/agendar/club-check"
 import { ServiceSelection } from "@/components/agendar/service-selection"
 import { DateSelection } from "@/components/agendar/date-selection"
 import { TimeSelection } from "@/components/agendar/time-selection"
 import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
 import { Confirmation } from "@/components/agendar/confirmation"
 
+const allServices = [...services, ...clubServices]
+
 export function AgendarFlow() {
-  const [step, setStep] = useState(0)
-  const [clubActive, setClubActive] = useState(false)
-  const [clubPlan, setClubPlan] = useState<string | null>(null)
+  const [step, setStep] = useState(1)
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
@@ -25,22 +23,10 @@ export function AgendarFlow() {
     email: "",
     observacoes: "",
     lembrete: true,
+    birthDate: "",
   })
 
-  const selectedService = services.find((s) => s.id === selectedServiceId) ?? services[0]
-  const freeServiceIds = clubActive ? planToServiceIds(clubPlan) : []
-  const isClubBooking = clubActive && selectedServiceId !== null && freeServiceIds.includes(selectedServiceId)
-
-  function handleClubResult(result: { isClub: boolean; plan: string | null; phone: string }) {
-    setClubActive(result.isClub)
-    setClubPlan(result.plan)
-    setFormData((prev) => ({ ...prev, whatsapp: result.phone }))
-    if (result.isClub) {
-      const defaultId = planToDefaultServiceId(result.plan)
-      if (defaultId) setSelectedServiceId(defaultId)
-    }
-    setStep(1)
-  }
+  const selectedService = allServices.find((s) => s.id === selectedServiceId) ?? allServices[0]
 
   function handleSelectDate(date: Date) {
     if (!selectedDate || selectedDate.getTime() !== date.getTime()) {
@@ -59,15 +45,7 @@ export function AgendarFlow() {
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/40 via-black to-black" />
 
         <div className="relative flex flex-col gap-8 px-4 pt-8 pb-10 sm:gap-10 sm:px-6 sm:pt-10 sm:pb-12">
-          {step >= 1 && <StepIndicator currentStep={step} />}
-
-          {step === 0 && (
-            <div className="mx-auto max-w-xl text-center">
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Agende seu <span className="text-amber-400">horário</span>
-              </h1>
-            </div>
-          )}
+          <StepIndicator currentStep={step} />
 
           {step === 1 && (
             <div className="mx-auto max-w-xl text-center">
@@ -138,15 +116,11 @@ export function AgendarFlow() {
         </div>
       </div>
 
-      {step === 0 && <ClubCheck onResult={handleClubResult} />}
-
       {step === 1 && (
         <ServiceSelection
           selectedId={selectedServiceId}
           onSelect={setSelectedServiceId}
           onContinue={() => setStep(2)}
-          freeServiceIds={freeServiceIds}
-          clubPlan={clubPlan}
         />
       )}
 
@@ -191,7 +165,6 @@ export function AgendarFlow() {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           data={formData}
-          isClub={isClubBooking}
           onBack={() => setStep(4)}
         />
       )}

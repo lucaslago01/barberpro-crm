@@ -324,3 +324,57 @@ export async function getRecentInteractions(): Promise<RecentInteraction[]> {
     time: agoLabelShort(a.created_at),
   }))
 }
+export interface ClientLookupResult {
+  name: string | null
+  email: string | null
+  birthDate: string | null
+  clubPlan: string | null
+}
+
+export async function lookupClientByPhone(phone: string): Promise<ClientLookupResult | null> {
+  const { data, error } = await supabase.rpc('barberpro_client_lookup_by_phone', {
+    p_phone: phone,
+  })
+
+  if (error) {
+    throw new Error(`Erro ao consultar cliente: ${error.message}`)
+  }
+
+  const row = data && data[0]
+  if (!row) return null
+
+  return {
+    name: row.name || null,
+    email: row.email || null,
+    birthDate: row.birth_date || null,
+    clubPlan: row.club_plan || null,
+  }
+}
+
+export async function createAppointmentV2(params: {
+  clientName: string
+  clientPhone: string
+  serviceName: string
+  dateTime: string
+  clientEmail?: string
+  notes?: string
+  birthDate?: string
+  clubPlan?: string
+}): Promise<void> {
+  const { error } = await supabase.rpc('barberpro_create_appointment_v2', {
+    p_client_name: params.clientName,
+    p_client_phone: params.clientPhone,
+    p_service_name: params.serviceName,
+    p_time: toLocalWallClock(new Date(params.dateTime)),
+    p_client_email: params.clientEmail || null,
+    p_notes: params.notes || null,
+    p_birth_date: params.birthDate || null,
+    p_club_plan: params.clubPlan || null,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  notifyDataChanged()
+}

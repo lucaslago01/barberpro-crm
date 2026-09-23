@@ -1,11 +1,13 @@
 "use client"
 
 import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
 import {
   ArrowLeft,
   ArrowRight,
   Bell,
   Calendar,
+  Cake,
   Clock,
   Mail,
   MessageCircle,
@@ -19,6 +21,7 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
 import { InfoStrip } from "@/components/agendar/info-strip"
+import { lookupClientByPhone } from "@/lib/supabase-data"
 
 export interface AgendarFormData {
   nome: string
@@ -26,6 +29,7 @@ export interface AgendarFormData {
   email: string
   observacoes: string
   lembrete: boolean
+  birthDate: string
 }
 
 interface DataFormProps {
@@ -72,13 +76,37 @@ export function DataForm({
   onChangeService,
   onContinue,
 }: DataFormProps) {
+  const [autoFilled, setAutoFilled] = useState(false)
+  const lookedUpFor = useRef<string | null>(null)
+
   const nomeOk = data.nome.trim().length >= 2
   const whatsappOk = isWhatsappValid(data.whatsapp)
   const emailOk = isEmailValid(data.email)
-  const canContinue = nomeOk && whatsappOk && emailOk
+  const birthDateOk = data.birthDate.trim() !== ""
+  const canContinue = nomeOk && whatsappOk && emailOk && birthDateOk
 
   const whatsappError = data.whatsapp.length > 0 && !whatsappOk
   const emailError = data.email.length > 0 && !emailOk
+
+  // Assim que o WhatsApp ficar válido, busca se já é um cliente conhecido e preenche os dados.
+  useEffect(() => {
+    if (!whatsappOk) return
+    if (lookedUpFor.current === data.whatsapp) return
+    lookedUpFor.current = data.whatsapp
+
+    lookupClientByPhone(data.whatsapp)
+      .then((result) => {
+        if (!result) return
+        setAutoFilled(true)
+        onChange({
+          nome: result.name || data.nome,
+          email: result.email || data.email,
+          birthDate: result.birthDate || data.birthDate,
+        })
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [whatsappOk, data.whatsapp])
 
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6">
@@ -96,8 +124,44 @@ export function DataForm({
               </div>
             </div>
 
-            {/* Nome completo */}
+            {/* WhatsApp primeiro, para poder autopreencher o resto */}
             <div className="mt-6">
+              <label htmlFor="whatsapp" className="text-sm font-medium text-white">
+                WhatsApp <span className="text-amber-400">*</span>
+              </label>
+              <div className="relative mt-2">
+                <Phone className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  id="whatsapp"
+                  type="tel"
+                  inputMode="tel"
+                  value={data.whatsapp}
+                  onChange={(e) => {
+                    setAutoFilled(false)
+                    onChange({ whatsapp: maskWhatsapp(e.target.value) })
+                  }}
+                  placeholder="(41) 99999-9999"
+                  autoComplete="tel"
+                  aria-invalid={whatsappError}
+                  className={`h-12 w-full rounded-xl border bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:bg-white/[0.05] ${
+                    whatsappError
+                      ? "border-red-500/60 focus:border-red-500/60"
+                      : "border-white/10 focus:border-amber-400/50"
+                  }`}
+                />
+              </div>
+              {whatsappError && (
+                <p className="mt-1.5 text-xs text-red-400">Informe um WhatsApp válido com DDD.</p>
+              )}
+              {autoFilled && (
+                <p className="mt-1.5 text-xs text-emerald-400">
+                  Encontramos seu cadastro e preenchemos seus dados automaticamente.
+                </p>
+              )}
+            </div>
+
+            {/* Nome completo */}
+            <div className="mt-4">
               <label htmlFor="nome" className="text-sm font-medium text-white">
                 Nome completo <span className="text-amber-400">*</span>
               </label>
@@ -115,35 +179,8 @@ export function DataForm({
               </div>
             </div>
 
-            {/* WhatsApp + E-mail */}
+            {/* E-mail + Aniversário */}
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="whatsapp" className="text-sm font-medium text-white">
-                  WhatsApp <span className="text-amber-400">*</span>
-                </label>
-                <div className="relative mt-2">
-                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
-                  <input
-                    id="whatsapp"
-                    type="tel"
-                    inputMode="tel"
-                    value={data.whatsapp}
-                    onChange={(e) => onChange({ whatsapp: maskWhatsapp(e.target.value) })}
-                    placeholder="(41) 99999-9999"
-                    autoComplete="tel"
-                    aria-invalid={whatsappError}
-                    className={`h-12 w-full rounded-xl border bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:bg-white/[0.05] ${
-                      whatsappError
-                        ? "border-red-500/60 focus:border-red-500/60"
-                        : "border-white/10 focus:border-amber-400/50"
-                    }`}
-                  />
-                </div>
-                {whatsappError && (
-                  <p className="mt-1.5 text-xs text-red-400">Informe um WhatsApp válido com DDD.</p>
-                )}
-              </div>
-
               <div>
                 <label htmlFor="email" className="text-sm font-medium text-white">
                   E-mail <span className="text-zinc-500">(opcional)</span>
@@ -166,6 +203,22 @@ export function DataForm({
                   />
                 </div>
                 {emailError && <p className="mt-1.5 text-xs text-red-400">Informe um e-mail válido.</p>}
+              </div>
+
+              <div>
+                <label htmlFor="birthDate" className="text-sm font-medium text-white">
+                  Aniversário <span className="text-amber-400">*</span>
+                </label>
+                <div className="relative mt-2">
+                  <Cake className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    id="birthDate"
+                    type="date"
+                    value={data.birthDate}
+                    onChange={(e) => onChange({ birthDate: e.target.value })}
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white outline-none transition-colors focus:border-amber-400/50 focus:bg-white/[0.05]"
+                  />
+                </div>
               </div>
             </div>
 
@@ -259,7 +312,9 @@ export function DataForm({
               </div>
               <div className="flex items-center gap-2 text-zinc-300">
                 <Wallet className="size-4 text-amber-400" />
-                <span className="text-sm font-semibold text-white">{formatPreco(service.precoCentavos)}</span>
+                <span className="text-sm font-semibold text-white">
+                  {service.isClube ? "Grátis (Clube)" : formatPreco(service.precoCentavos)}
+                </span>
               </div>
             </div>
 
