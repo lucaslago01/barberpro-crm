@@ -27,7 +27,6 @@ export const navItems: NavItem[] = [
   { label: 'Agenda', icon: 'CalendarDays', href: '/agenda' },
   { label: 'Clientes', icon: 'Users', href: '/clientes' },
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
-  { label: 'WhatsApp', icon: 'MessageCircle', href: '/whatsapp', badge: 3 },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
   { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
   { label: 'Relatórios', icon: 'LineChart', href: '/relatorios' },
@@ -152,21 +151,6 @@ export const birthdays = [
   { name: 'Lucas Mendes', date: '18 de Setembro' },
   { name: 'Gabriel Souza', date: '22 de Setembro' },
   { name: 'André Lima', date: '27 de Setembro' },
-]
-
-export type WhatsappInteraction = {
-  name: string
-  message: string
-  time: string
-  unknown?: boolean
-}
-
-export const whatsappInteractions: WhatsappInteraction[] = [
-  { name: 'João Silva', message: 'Valeu pelo corte, ficou top!', time: '10:24' },
-  { name: 'Pedro Santos', message: 'Consegue me encaixar amanhã?', time: '09:18' },
-  { name: 'Cliente novo', message: 'Quais são os valores?', time: '08:47', unknown: true },
-  { name: 'Matheus Lima', message: 'Vou chegar 10 min atrasado', time: 'Ontem' },
-  { name: 'Ricardo Nunes', message: 'Tem horário no sábado?', time: 'Ontem' },
 ]
 
 export type ClientTag = 'vip' | 'ativo' | 'em risco'
@@ -1135,14 +1119,6 @@ export const conversations: Conversation[] = [
     history: [{ service: 'Corte', date: '28/07/2026', price: 40 }],
     appointments: [],
   },
-]
-
-export const whatsappQuickActions: { label: string; icon: string }[] = [
-  { label: 'Agendar horário', icon: 'CalendarPlus' },
-  { label: 'Enviar localização', icon: 'MapPin' },
-  { label: 'Tabela de preços', icon: 'ReceiptText' },
-  { label: 'Horários disponíveis', icon: 'Clock' },
-  { label: 'Agradecimento', icon: 'Heart' },
 ]
 
 // ----- Financeiro page -----

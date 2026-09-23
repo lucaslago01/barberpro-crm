@@ -6,7 +6,6 @@ import { KpiCards } from "@/components/dashboard/kpi-cards"
 import { Agenda } from "@/components/dashboard/agenda"
 import { MiniCalendar } from "@/components/dashboard/mini-calendar"
 import { Birthdays } from "@/components/dashboard/birthdays"
-import { WhatsappInteractions } from "@/components/dashboard/whatsapp-interactions"
 import { RecoverClients } from "@/components/dashboard/recover-clients"
 import { Performance } from "@/components/dashboard/performance"
 import { FeaturedClients } from "@/components/dashboard/featured-clients"
@@ -37,7 +36,6 @@ export default function Page() {
               onSelectDate={setSelectedDate}
             />
             <Birthdays />
-            <WhatsappInteractions />
             <RecoverClients />
           </div>
         </div>
