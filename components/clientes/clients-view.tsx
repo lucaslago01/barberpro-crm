@@ -36,6 +36,7 @@ import {
   type ClientAppointmentHistoryItem,
   type RecentInteraction,
 } from '@/lib/supabase-data'
+import { supabase } from '@/lib/supabase'
 import {
   getClientStats,
   type ClientStats,
@@ -1436,14 +1437,14 @@ const featuredTabs: { key: FeaturedTab; label: string }[] = [
 
 function FeaturedPanel() {
   const [tab, setTab] = useState<FeaturedTab>('vip')
-  const [allClients, setAllClients] = useState<Client[]>([])
+  const [allClients, setAllClients] = useState<SupabaseClient[]>([])
   const [stats, setStats] = useState<Record<string, ClientStats>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     Promise.all([getClients(), getClientStats()])
-      .then(([c, s]) => { if (!cancelled) { setAllClients(c); setStats(s) } })
+      .then(([c, s]) => { if (!cancelled) { setAllClients(c as SupabaseClient[]); setStats(s) } })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -1616,11 +1617,12 @@ function BirthdaysPanel() {
 
   useEffect(() => {
     let cancelled = false
-    supabase
-      .from('barberpro_clients')
-      .select('id, name, phone, birth_date')
-      .not('birth_date', 'is', null)
-      .then(({ data, error }) => {
+    async function load() {
+      try {
+        const { data, error } = await supabase
+          .from('barberpro_clients')
+          .select('id, name, phone, birth_date')
+          .not('birth_date', 'is', null)
         if (cancelled || error || !data) return
         const today = new Date()
         const todayMD = today.getMonth() * 100 + today.getDate()
@@ -1641,8 +1643,11 @@ function BirthdaysPanel() {
         }
         result.sort((a, b) => a.diff - b.diff)
         if (!cancelled) setClients(result)
-      })
-      .finally(() => { if (!cancelled) setLoading(false) })
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
     return () => { cancelled = true }
   }, [])
 
