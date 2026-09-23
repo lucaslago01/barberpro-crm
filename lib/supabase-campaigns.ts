@@ -30,7 +30,8 @@ function mapRow(row: any): Campaign {
     name: row.name,
     message: row.message,
     audience: row.audience,
-    sendAt: row.send_at,
+    // a coluna não guarda fuso: o valor é sempre UTC, então marcamos com Z
+    sendAt: row.send_at && !/(Z|[+-]\d\d:?\d\d)$/i.test(row.send_at) ? row.send_at + 'Z' : row.send_at,
     status: row.status,
     sentCount: row.sent_count,
     createdAt: row.created_at,
