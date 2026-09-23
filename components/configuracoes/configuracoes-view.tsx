@@ -32,7 +32,6 @@ type TabKey =
   | 'geral'
   | 'servicos'
   | 'horario'
-  | 'whatsapp'
   | 'agendamento'
   | 'notificacoes'
   | 'seguranca'
@@ -41,7 +40,6 @@ const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'geral', label: 'Geral', icon: Settings2 },
   { key: 'servicos', label: 'Serviços', icon: Scissors },
   { key: 'horario', label: 'Horário', icon: Clock },
-  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { key: 'agendamento', label: 'Agendamento', icon: CalendarCog },
   { key: 'notificacoes', label: 'Notificações', icon: Bell },
   { key: 'seguranca', label: 'Segurança', icon: ShieldCheck },
@@ -438,8 +436,6 @@ function TabContent({ tab }: { tab: TabKey }) {
       return <ServicesSettings />
     case 'horario':
       return <WorkingHours />
-    case 'whatsapp':
-      return <WhatsappConnection />
     case 'agendamento':
       return <BookingSettings />
     case 'notificacoes':
