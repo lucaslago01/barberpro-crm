@@ -26,6 +26,11 @@ import { Panel, PanelHeader } from '@/components/dashboard/panel'
 import { ServicesSettings } from './servicos-settings'
 import { SecuritySettings } from './security-settings'
 import { GeralSettings } from './geral-settings'
+import {
+  getNotificationPrefs,
+  setNotificationPrefs,
+  type NotificationPrefs,
+} from '@/lib/notifications'
 import { cn } from '@/lib/utils'
 
 type TabKey =
@@ -374,13 +379,7 @@ const notificationItems: { key: string; label: string; icon: LucideIcon }[] = [
 ]
 
 function NotificationSettings() {
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({
-    confirmacao: true,
-    lembrete: true,
-    cancelamento: true,
-    aniversarios: true,
-    recuperar: true,
-  })
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(() => getNotificationPrefs())
 
   return (
     <Panel className="p-5">
@@ -406,7 +405,11 @@ function NotificationSettings() {
               <span className="flex-1 text-sm font-medium">{item.label}</span>
               <Switch
                 checked={prefs[item.key]}
-                onChange={(v) => setPrefs((p) => ({ ...p, [item.key]: v }))}
+                onChange={(v) => {
+                  const next = { ...prefs, [item.key]: v }
+                  setPrefs(next)
+                  setNotificationPrefs(next as NotificationPrefs)
+                }}
                 label={item.label}
               />
             </li>

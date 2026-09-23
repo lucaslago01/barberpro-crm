@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { Bell, CalendarDays, Menu } from 'lucide-react'
+import { CalendarDays, Menu } from 'lucide-react'
+import { NotificationBell } from './notification-bell'
 
 
 function formatToday(date: Date) {
@@ -65,15 +66,7 @@ export function Topbar({
           <TodayLabel />
         </div>
 
-        <button
-          aria-label="Notificações"
-          className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <Bell className="size-5" />
-          <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-gold text-[10px] font-bold text-primary-foreground">
-            2
-          </span>
-        </button>
+        <NotificationBell />
 
         
 
