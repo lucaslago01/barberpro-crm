@@ -1386,7 +1386,7 @@ function ClubMembersPanel() {
         icon={<Crown className="size-[18px]" />}
         title="Assinantes do clube"
         action={
-          members !== null && members.length > 3 ? (
+          members !== null && members.length > 0 ? (
             <SeeAll onClick={() => setShowAll(true)} />
           ) : undefined
         }
