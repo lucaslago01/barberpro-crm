@@ -1385,11 +1385,7 @@ function ClubMembersPanel() {
       <PanelHeader
         icon={<Crown className="size-[18px]" />}
         title="Assinantes do clube"
-        action={
-          members !== null && members.length > 0 ? (
-            <SeeAll onClick={() => setShowAll(true)} />
-          ) : undefined
-        }
+        action={<SeeAll onClick={() => setShowAll(true)} />}
       />
       <div className="px-3 pb-3">
         {error && <p className="px-2 py-3 text-xs text-danger">{error}</p>}
