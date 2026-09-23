@@ -1,5 +1,7 @@
 'use client'
 
+import { Download } from 'lucide-react'
+
 import { useEffect, useRef, useState } from 'react'
 import {
   CalendarCheck,
@@ -931,6 +933,85 @@ export function RelatoriosMes() {
   }
 
   const periodLabel = `${period.from.toLocaleDateString('pt-BR')} a ${period.to.toLocaleDateString('pt-BR')}`
+
+  function exportCsv() {
+    if (!stats) return
+    const sep = ';'
+    const num = (n: number) => n.toFixed(2).replace('.', ',')
+    const esc = (v: string | number) => {
+      const s = String(v)
+      return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const line = (...cells: (string | number)[]) => cells.map(esc).join(sep)
+    const ymd = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+    const out: string[] = []
+    out.push(line('Relatório', periodLabel))
+    out.push('')
+
+    out.push(line('RESUMO'))
+    out.push(line('Atendimentos concluídos', stats.completed))
+    out.push(line('Faturamento (R$)', num(stats.revenue)))
+    out.push(line('Faturamento avulso (R$)', num(stats.walkIn)))
+    out.push(line('Faturamento clube (R$)', num(stats.club)))
+    out.push(line('Ticket médio (R$)', num(stats.avgTicket)))
+    out.push(line('Faltas', stats.noShows))
+    out.push(line('Taxa de faltas (%)', num(stats.noShowRate)))
+    out.push(line('Cancelamentos', stats.cancelled))
+    out.push(line('Clientes novos', stats.newClients))
+    out.push('')
+
+    if (showGoals && (goal.revenue_goal != null || goal.appointments_goal != null)) {
+      out.push(line('METAS DO MÊS'))
+      if (goal.revenue_goal != null) {
+        out.push(line('Meta de faturamento (R$)', num(goal.revenue_goal)))
+      }
+      if (goal.appointments_goal != null) {
+        out.push(line('Meta de atendimentos', goal.appointments_goal))
+      }
+      out.push('')
+    }
+
+    out.push(line('SERVIÇOS MAIS REALIZADOS'))
+    out.push(line('Serviço', 'Quantidade'))
+    stats.byService.forEach((s) => out.push(line(s.name, s.count)))
+    out.push('')
+
+    out.push(line('TOP CLIENTES POR RECEITA'))
+    out.push(line('Cliente', 'Atendimentos', 'Valor gasto (R$)'))
+    stats.topClients.forEach((cl) => out.push(line(cl.name, cl.count, num(cl.total))))
+    out.push('')
+
+    out.push(line('DIA A DIA'))
+    out.push(line('Dia', 'Receita (R$)', 'Atendimentos'))
+    stats.daily.forEach((d) => out.push(line(d.label, num(d.revenue), d.sessions)))
+    out.push('')
+
+    out.push(line('DESEMPENHO POR DIA DA SEMANA'))
+    out.push(line('Dia', 'Atendimentos'))
+    WEEKDAYS.forEach((name, i) => out.push(line(name, stats.byWeekday[i])))
+
+    if (types) {
+      out.push('')
+      out.push(line('CLIENTES POR TIPO'))
+      out.push(line('Tipo', 'Quantidade'))
+      types.types.forEach((t) => out.push(line(t.name, t.count)))
+      out.push(line('Total', types.total))
+    }
+
+    const blob = new Blob(['\uFEFF' + out.join('\r\n')], {
+      type: 'text/csv;charset=utf-8;',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `relatorio-${ymd(period.from)}_a_${ymd(period.to)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
   const customInvalid =
     preset === 'custom' && customFrom !== '' && customTo !== '' && customTo < customFrom
 
@@ -996,7 +1077,17 @@ export function RelatoriosMes() {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground">Período: {periodLabel}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">Período: {periodLabel}</p>
+          <button
+            onClick={exportCsv}
+            disabled={!stats || loading}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="size-4" />
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       {error && (
