@@ -280,3 +280,47 @@ export async function deleteClient(id: string): Promise<void> {
 
   notifyDataChanged()
 }
+export interface RecentInteraction {
+  id: string
+  name: string
+  action: string
+  time: string
+}
+
+function agoLabelShort(dateStr: string) {
+  const diffMs = Date.now() - new Date(dateStr).getTime()
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'agora'
+  if (minutes < 60) return `há ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `há ${hours} ${hours === 1 ? 'hora' : 'horas'}`
+  const days = Math.floor(hours / 24)
+  return `há ${days} ${days === 1 ? 'dia' : 'dias'}`
+}
+
+const interactionActionLabels: Record<string, string> = {
+  agendado: 'Agendamento realizado',
+  confirmado: 'Confirmou o horário',
+  concluido: 'Atendimento concluído',
+  cancelado: 'Cancelou o agendamento',
+  faltou: 'Faltou ao horário',
+}
+
+export async function getRecentInteractions(): Promise<RecentInteraction[]> {
+  const { data, error } = await supabase
+    .from('barberpro_appointments')
+    .select('id, status, created_at, barberpro_clients (name)')
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  if (error) {
+    throw new Error(`Erro ao buscar interações recentes: ${error.message}`)
+  }
+
+  return (data || []).map((a: any) => ({
+    id: a.id,
+    name: a.barberpro_clients?.name || 'Cliente',
+    action: interactionActionLabels[a.status] || a.status,
+    time: agoLabelShort(a.created_at),
+  }))
+}

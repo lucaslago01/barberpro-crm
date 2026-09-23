@@ -24,7 +24,6 @@ import {
   clientFeatured,
   clientStatusFilters,
   clientBirthdays,
-  clientInteractions,
   type Client,
   type ClientStatus,
   type FeaturedTab,
@@ -35,7 +34,9 @@ import {
   updateClient,
   getClientAppointments,
   deleteClient,
+  getRecentInteractions,
   type ClientAppointmentHistoryItem,
+  type RecentInteraction,
 } from '@/lib/supabase-data'
 import {
   getClientStats,
@@ -1601,30 +1602,88 @@ function BirthdaysPanel() {
 }
 
 function InteractionsPanel() {
+  const [interactions, setInteractions] = useState<RecentInteraction[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getRecentInteractions()
+      .then((data) => {
+        if (!cancelled) setInteractions(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar interações')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function renderRow(c: RecentInteraction) {
+    return (
+      <li
+        key={c.id}
+        className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+      >
+        <UserAvatar name={c.name} size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{c.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{c.action}</p>
+        </div>
+        <span className="shrink-0 text-[11px] text-muted-foreground">
+          {c.time}
+        </span>
+      </li>
+    )
+  }
+
+  const visibleInteractions = interactions?.slice(0, 3) || []
+
   return (
     <Panel>
       <PanelHeader
         icon={<Zap className="size-[18px]" />}
         title="Últimas interações"
-        action={<SeeAll />}
+        action={
+          interactions !== null && interactions.length > 3 ? (
+            <SeeAll onClick={() => setShowAll(true)} />
+          ) : undefined
+        }
       />
-      <ul className="space-y-0.5 px-3 pb-3">
-        {clientInteractions.map((c, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
-          >
-            <UserAvatar name={c.name} size="md" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{c.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{c.action}</p>
+      <div className="px-3 pb-3">
+        {error && <p className="px-2 py-3 text-xs text-danger">{error}</p>}
+        {!error && interactions === null && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">Carregando...</p>
+        )}
+        {interactions !== null && interactions.length === 0 && (
+          <p className="px-2 py-3 text-xs text-muted-foreground">
+            Nenhuma interação recente.
+          </p>
+        )}
+        {interactions !== null && interactions.length > 0 && (
+          <ul className="space-y-0.5">{visibleInteractions.map(renderRow)}</ul>
+        )}
+      </div>
+
+      {showAll && interactions && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Últimas interações</h3>
+              <button
+                onClick={() => setShowAll(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
             </div>
-            <span className="shrink-0 text-[11px] text-muted-foreground">
-              {c.time}
-            </span>
-          </li>
-        ))}
-      </ul>
+            <ul className="max-h-96 space-y-0.5 overflow-y-auto">
+              {interactions.map(renderRow)}
+            </ul>
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }
