@@ -10,6 +10,7 @@ import {
   CalendarClock,
   Clock,
   Ban,
+  Trash2,
 } from 'lucide-react'
 import {
   getAgendaSlotsByDate,
@@ -25,6 +26,7 @@ import { EditAppointmentModal } from './edit-appointment-modal'
 import { NewAppointmentModal } from './new-appointment-modal'
 import { RescheduleModal } from './reschedule-modal'
 import { BlocksModal } from './blocks-modal'
+import { deleteBlock, getBlocksByDay, type Block } from '@/lib/supabase-blocks'
 import { RowActionsMenu } from './row-actions-menu'
 import { cn } from '@/lib/utils'
 
@@ -57,6 +59,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [creating, setCreating] = useState(false)
   const [blocking, setBlocking] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+  const [blocks, setBlocks] = useState<Block[]>([])
 
   const date = dateProp ?? internalDate
   const dateKey = date.getTime()
@@ -68,8 +71,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
       try {
         setLoading(true)
         setError(null)
-        const data = await getAgendaSlotsByDate(new Date(dateKey))
-        if (!cancelled) setSlots(data)
+        const [data, dayBlocks] = await Promise.all([
+          getAgendaSlotsByDate(new Date(dateKey)),
+          getBlocksByDay(new Date(dateKey)).catch(() => [] as Block[]),
+        ])
+        if (!cancelled) {
+          setSlots(data)
+          setBlocks(dayBlocks)
+        }
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -119,6 +128,16 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
     }
   }
 
+  async function handleDeleteBlock(id: string) {
+    try {
+      await deleteBlock(id)
+      setReloadKey((k) => k + 1)
+    } catch (err) {
+      console.error('Erro ao remover bloqueio:', err)
+      alert('Não foi possível remover o bloqueio. Tente de novo.')
+    }
+  }
+
   const dateLabel = date.toLocaleDateString('pt-BR', {
     day: 'numeric',
     month: 'long',
@@ -136,6 +155,21 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const visibleSlots = activeTab?.status
     ? slots.filter((s) => s.status === activeTab.status)
     : slots
+
+  type Row =
+    | { kind: 'slot'; time: string; slot: AgendaSlot }
+    | { kind: 'block'; time: string; block: Block }
+
+  const rows: Row[] = [
+    ...visibleSlots.map((s) => ({ kind: 'slot' as const, time: s.time, slot: s })),
+    ...(activeTab?.status
+      ? []
+      : blocks.map((b) => ({
+          kind: 'block' as const,
+          time: b.start_time.slice(0, 5),
+          block: b,
+        }))),
+  ].sort((a, b) => a.time.localeCompare(b.time))
 
   return (
     <Panel className="flex flex-col">
@@ -271,7 +305,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                   Erro: {error}
                 </td>
               </tr>
-            ) : visibleSlots.length === 0 ? (
+            ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-5 py-8 text-center">
                   <span className="inline-flex items-center gap-2 text-sm italic text-muted-foreground">
@@ -281,7 +315,45 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                 </td>
               </tr>
             ) : (
-              visibleSlots.map((a) => {
+              rows.map((row) => {
+                if (row.kind === 'block') {
+                  const b = row.block
+                  return (
+                    <tr
+                      key={`block-${b.id}`}
+                      className="border-b border-border/60 bg-white/[0.02]"
+                    >
+                      <td className="px-5 py-3 font-medium tabular-nums">
+                        {b.start_time.slice(0, 5)}
+                      </td>
+                      <td colSpan={5} className="py-3 pr-6">
+                        <div className="flex flex-wrap items-center gap-2.5 text-muted-foreground">
+                          <span className="grid size-7 place-items-center rounded-full bg-white/5">
+                            <Ban className="size-4" />
+                          </span>
+                          <span className="font-medium">Horário bloqueado</span>
+                          <span className="tabular-nums">
+                            {b.start_time.slice(0, 5)} às {b.end_time.slice(0, 5)}
+                          </span>
+                          {b.reason && <span className="italic">· {b.reason}</span>}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex justify-end text-muted-foreground">
+                          <button
+                            aria-label="Remover bloqueio"
+                            title="Remover bloqueio"
+                            onClick={() => handleDeleteBlock(b.id)}
+                            className="grid size-7 place-items-center rounded-md hover:bg-white/5 hover:text-danger"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }
+                const a = row.slot
                 const canReschedule = a.status === 'agendado' || a.status === 'confirmado'
                 return (
                   <tr
