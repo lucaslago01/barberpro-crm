@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AtSign, Phone } from 'lucide-react'
+import { buildWhatsappUrl } from '@/components/dashboard/whatsapp-button'
 import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
 export function SiteHeader() {
@@ -36,7 +37,14 @@ export function SiteHeader() {
 
   const instagramHandle = instagram
     .replace(/^https?:\/\/(www\.)?instagram\.com\//, '')
+    .replace(/[?#].*$/, '')
+    .replace(/\/+$/, '')
     .replace(/^@?/, '@')
+
+  const instagramUrl =
+    'https://instagram.com/' +
+    instagramHandle.replace('@', '').replace(/\s+/g, '').replace(/\/$/, '')
+  const whatsappUrl = buildWhatsappUrl(phone)
 
   return (
     <header className={`border-b border-white/10 bg-black/40 backdrop-blur-sm ${ready ? '' : 'opacity-0'}`}>
@@ -75,7 +83,7 @@ export function SiteHeader() {
         <div className="hidden items-center gap-6 sm:flex">
           {phone && (
             <>
-              <div className="flex items-center gap-2.5 text-right">
+              <a href={whatsappUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-right transition-opacity hover:opacity-80">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400">
                   <Phone className="size-3.5" />
                 </div>
@@ -83,13 +91,13 @@ export function SiteHeader() {
                   <p className="text-xs font-medium text-white">Atendimento</p>
                   <p className="text-[11px] text-zinc-500">{phone}</p>
                 </div>
-              </div>
+              </a>
 
               <div className="h-8 w-px bg-white/10" aria-hidden="true" />
             </>
           )}
 
-          <div className="flex items-center gap-2.5">
+          <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400">
               <AtSign className="size-3.5" />
             </div>
@@ -97,11 +105,13 @@ export function SiteHeader() {
               <p className="text-xs font-medium text-white">Nos siga</p>
               <p className="text-[11px] text-zinc-500">{instagramHandle}</p>
             </div>
-          </div>
+          </a>
         </div>
 
         <a
-          href={"https://instagram.com/" + instagramHandle.replace('@', '')}
+          href={instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 sm:hidden"
           aria-label={"Instagram de " + name}
         >
