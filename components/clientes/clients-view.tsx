@@ -1436,6 +1436,7 @@ function FeaturedPanel() {
   const [allClients, setAllClients] = useState<SupabaseClient[]>([])
   const [stats, setStats] = useState<Record<string, ClientStats>>({})
   const [loading, setLoading] = useState(true)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -1451,20 +1452,17 @@ function FeaturedPanel() {
       return allClients
         .filter((c) => stats[c.id]?.status === 'vip')
         .map((c) => ({ name: c.name, detail: `${stats[c.id]?.visits ?? 0} visitas` }))
-        .slice(0, 3)
     }
     if (tab === 'frequencia') {
       return [...allClients]
         .filter((c) => stats[c.id])
         .sort((a, b) => (stats[b.id]?.visits ?? 0) - (stats[a.id]?.visits ?? 0))
-        .slice(0, 3)
         .map((c) => ({ name: c.name, detail: `${stats[c.id]?.visits ?? 0} visitas · ${stats[c.id]?.frequency ?? '-'}` }))
     }
     if (tab === 'ticket') {
       return [...allClients]
         .filter((c) => stats[c.id])
         .sort((a, b) => (stats[b.id]?.avgTicket ?? 0) - (stats[a.id]?.avgTicket ?? 0))
-        .slice(0, 3)
         .map((c) => ({ name: c.name, detail: `${stats[c.id]?.visits ?? 0} visitas · R$ ${(stats[c.id]?.avgTicket ?? 0).toFixed(2)}` }))
     }
     return []
@@ -1475,7 +1473,7 @@ function FeaturedPanel() {
       <PanelHeader
         icon={<Crown className="size-[18px]" />}
         title="Clientes em destaque"
-        action={<SeeAll onClick={() => { window.location.href = '/clientes' }} />}
+        action={<SeeAll onClick={() => setShowAll(true)} />}
       />
       <div className="flex gap-1 px-3 pb-1">
         {featuredTabs.map((t) => (
@@ -1496,7 +1494,7 @@ function FeaturedPanel() {
       <ul className="space-y-0.5 px-3 pb-3">
         {loading && <li className="px-2 py-3 text-xs text-muted-foreground">Carregando...</li>}
         {!loading && rows.length === 0 && <li className="px-2 py-3 text-xs text-muted-foreground">Nenhum cliente nesta categoria ainda.</li>}
-        {!loading && rows.map((c, i) => (
+        {!loading && rows.slice(0, 3).map((c, i) => (
           <li
             key={i}
             className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
@@ -1510,6 +1508,32 @@ function FeaturedPanel() {
           </li>
         ))}
       </ul>
+      {showAll && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Clientes em destaque</h3>
+              <button onClick={() => setShowAll(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="size-4" />
+              </button>
+            </div>
+            <ul className="max-h-96 space-y-0.5 overflow-y-auto">
+              {rows.length === 0 && (
+                <li className="px-2 py-3 text-xs text-muted-foreground">Nenhum cliente nesta categoria ainda.</li>
+              )}
+              {rows.map((c, i) => (
+                <li key={i} className="flex items-center gap-3 rounded-xl px-2 py-2">
+                  <UserAvatar name={c.name} size="md" ring={tab === 'vip'} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{c.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{c.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </Panel>
   )
 }
@@ -1671,11 +1695,7 @@ function BirthdaysPanel() {
         <PanelHeader
           icon={<Cake className="size-[18px]" />}
           title="Próximos aniversários"
-          action={
-            clients.length > 3
-              ? <SeeAll onClick={() => setShowAll(true)} />
-              : <SeeAll onClick={() => { window.location.href = '/clientes' }} />
-          }
+          action={<SeeAll onClick={() => setShowAll(true)} />}
         />
         <ul className="space-y-0.5 px-3 pb-3">
           {loading && <li className="px-2 py-3 text-xs text-muted-foreground">Carregando...</li>}
