@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CalendarDays, Clock, User, CheckCircle2 } from "lucide-react"
 import { services, clubServices } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
@@ -25,6 +25,16 @@ export function AgendarFlow() {
     lembrete: true,
     birthDate: "",
   })
+
+  // Ao trocar de etapa, volta para o topo da página
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [step])
 
   const selectedService = allServices.find((s) => s.id === selectedServiceId) ?? allServices[0]
 
