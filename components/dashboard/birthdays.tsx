@@ -72,7 +72,7 @@ export function Birthdays() {
       <PanelHeader
         icon={<Cake className="size-[18px]" />}
         title="Próximos aniversários"
-        action={<SeeAll onClick={() => window.location.href = '/clientes'} />}
+        action={<SeeAll onClick={() => { window.location.href = '/clientes' }} />}
       />
       <ul className="space-y-1 px-3 pb-3">
         {loading && (

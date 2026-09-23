@@ -54,7 +54,7 @@ async function getFeaturedClients(): Promise<FeaturedClient[]> {
     list.sort((a, b) => a.time - b.time)
     const visits = list.length
     const last = list[visits - 1].time
-    const daysSince = Math.floor((now - last) / DAY_MS)
+    const daysSince = Math.floor(((now - last) / DAY_MS))
 
     let frequency = '-'
     if (visits >= 2) {
@@ -105,7 +105,7 @@ export function FeaturedClients() {
       <PanelHeader
         icon={<Crown className="size-[18px]" />}
         title="Clientes em destaque"
-        action={<SeeAll onClick={() => window.location.href = '/clientes'} />}
+        action={<SeeAll onClick={() => { window.location.href = '/clientes' }} />}
       />
       <ul className="space-y-1 px-3 pb-3">
         {loading && (

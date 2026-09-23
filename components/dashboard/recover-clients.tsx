@@ -59,7 +59,7 @@ export function RecoverClients() {
           action={
             clients.length > 3
               ? <SeeAll onClick={() => setShowAll(true)} />
-              : <SeeAll onClick={() => window.location.href = '/clientes'} />
+              : <SeeAll onClick={() => { window.location.href = '/clientes' }} />
           }
         />
         <ul className="grid grid-cols-1 gap-x-4 px-3 pb-3 sm:grid-cols-2">
