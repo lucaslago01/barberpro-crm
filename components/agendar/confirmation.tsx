@@ -6,10 +6,11 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
 import type { AgendarFormData } from "@/components/agendar/data-form"
-import { createAppointmentV2 } from "@/lib/supabase-data"
+import { createAppointmentV3 } from "@/lib/supabase-data"
 
 interface ConfirmationProps {
   service: AgendarService
+  addonService?: AgendarService | null
   selectedDate: Date | null
   selectedTime: string | null
   data: AgendarFormData
@@ -18,12 +19,15 @@ interface ConfirmationProps {
 
 export function Confirmation({
   service,
+  addonService,
   selectedDate,
   selectedTime,
   data,
   onBack,
 }: ConfirmationProps) {
   const isClub = Boolean(service.isClube)
+  const addonPriceCentavos = addonService ? addonService.precoCentavos : 0
+  const totalCentavos = isClub ? addonPriceCentavos : service.precoCentavos + addonPriceCentavos
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -52,7 +56,7 @@ export function Confirmation({
         minutes,
       )
 
-            await createAppointmentV2({
+            await createAppointmentV3({
           clientName: data.nome,
           clientPhone: data.whatsapp,
           clientEmail: data.email || undefined,
@@ -61,6 +65,7 @@ export function Confirmation({
           notes: data.observacoes || undefined,
           birthDate: data.birthDate || undefined,
           clubPlan: service.clubPlanLabel,
+          addonServiceName: addonService?.nome || undefined,
         })
 
       setSuccess(true)
@@ -126,6 +131,9 @@ export function Confirmation({
                       Clube
                     </span>
                   )}
+                  {addonService && (
+                    <span className="ml-1 text-zinc-400"> + {addonService.nome}</span>
+                  )}
                 </dd>
               </div>
             </div>
@@ -159,9 +167,23 @@ export function Confirmation({
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Valor</dt>
                 <dd className="text-sm font-semibold text-white">
                   {isClub ? (
-                    <span className="text-emerald-400">Grátis (plano do clube)</span>
+                    addonService ? (
+                      <span>
+                        <span className="text-emerald-400">Grátis (clube)</span>
+                        <span className="ml-2 text-amber-400">+ {formatPreco(addonPriceCentavos)} sobrancelha</span>
+                      </span>
+                    ) : (
+                      <span className="text-emerald-400">Grátis (plano do clube)</span>
+                    )
                   ) : (
-                    formatPreco(service.precoCentavos)
+                    <span>
+                      {formatPreco(totalCentavos)}
+                      {addonService && (
+                        <span className="ml-2 text-xs text-zinc-400">
+                          ({formatPreco(service.precoCentavos)} + {formatPreco(addonPriceCentavos)} sobrancelha)
+                        </span>
+                      )}
+                    </span>
                   )}
                 </dd>
               </div>

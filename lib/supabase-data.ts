@@ -25,7 +25,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
         notes,
         is_club_visit,
         barberpro_clients (name, phone),
-        barberpro_services (name, duration, price, price_from)
+        barberpro_services!service_id (name, duration, price, price_from)
       `)
       .order('time', { ascending: true })
 
@@ -69,7 +69,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       notes,
       is_club_visit,
       barberpro_clients (name, phone),
-      barberpro_services (name, duration, price, price_from)
+      barberpro_services!service_id (name, duration, price, price_from)
     `)
     .gte('time', toLocalWallClock(start))
     .lt('time', toLocalWallClock(end))
@@ -187,7 +187,7 @@ export async function getDashboardKpis() {
 
   const { data: appointments, error: apptError } = await supabase
     .from('barberpro_appointments')
-    .select('status, is_club_visit, barberpro_services (price)')
+    .select('status, is_club_visit, barberpro_services!service_id (price)')
     .gte('time', toLocalWallClock(monthStart))
     .lt('time', toLocalWallClock(nextMonthStart))
 
@@ -253,7 +253,7 @@ export async function getClientAppointments(
 ): Promise<ClientAppointmentHistoryItem[]> {
   const { data, error } = await supabase
     .from('barberpro_appointments')
-    .select('id, time, status, is_club_visit, barberpro_services (name, price)')
+    .select('id, time, status, is_club_visit, barberpro_services!service_id (name, price)')
     .eq('client_id', clientId)
     .order('time', { ascending: false })
 
@@ -372,6 +372,36 @@ export async function createAppointmentV2(params: {
     p_notes: params.notes || null,
     p_birth_date: params.birthDate || null,
     p_club_plan: params.clubPlan || null,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  notifyDataChanged()
+}
+
+export async function createAppointmentV3(params: {
+  clientName: string
+  clientPhone: string
+  serviceName: string
+  dateTime: string
+  clientEmail?: string
+  notes?: string
+  birthDate?: string
+  clubPlan?: string
+  addonServiceName?: string
+}): Promise<void> {
+  const { error } = await supabase.rpc('barberpro_create_appointment_v3', {
+    p_client_name: params.clientName,
+    p_client_phone: params.clientPhone,
+    p_service_name: params.serviceName,
+    p_time: toLocalWallClock(new Date(params.dateTime)),
+    p_client_email: params.clientEmail || null,
+    p_notes: params.notes || null,
+    p_birth_date: params.birthDate || null,
+    p_club_plan: params.clubPlan || null,
+    p_addon_service_name: params.addonServiceName || null,
   })
 
   if (error) {

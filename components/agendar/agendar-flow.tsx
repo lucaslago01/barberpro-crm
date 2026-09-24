@@ -1,14 +1,109 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { CalendarDays, Clock, User, CheckCircle2 } from "lucide-react"
-import { services, clubServices, getServicesFromDB, type AgendarService } from "@/lib/agendar/services"
+import { CalendarDays, Clock, User, CheckCircle2, Scissors } from "lucide-react"
+import { services, clubServices, getServicesFromDB, formatPreco, type AgendarService } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
 import { ServiceSelection } from "@/components/agendar/service-selection"
 import { DateSelection } from "@/components/agendar/date-selection"
 import { TimeSelection } from "@/components/agendar/time-selection"
 import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
 import { Confirmation } from "@/components/agendar/confirmation"
+
+
+function AddonSelection({
+  dbServices,
+  selectedService,
+  addonService,
+  onSelect,
+  onBack,
+  onContinue,
+}: {
+  dbServices: AgendarService[]
+  selectedService: AgendarService
+  addonService: AgendarService | null
+  onSelect: (s: AgendarService | null) => void
+  onBack: () => void
+  onContinue: () => void
+}) {
+  const sobrancelhaOptions = dbServices.filter((s) =>
+    s.nome.toLowerCase().includes('sobrancelha')
+  )
+
+  if (sobrancelhaOptions.length === 0) {
+    onContinue()
+    return null
+  }
+
+  const isClub = Boolean(selectedService.isClube)
+
+  return (
+    <section className="mx-auto w-full max-w-3xl px-4 pb-10 sm:px-6">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl shadow-black/40">
+        <div className="p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-white sm:text-xl">Deseja adicionar sobrancelha?</h2>
+          <p className="text-sm text-zinc-400">Aproveite seu atendimento e cuide também das sobrancelhas.</p>
+
+          <div className="mt-4 space-y-3">
+            {sobrancelhaOptions.map((s) => {
+              const selected = addonService?.id === s.id
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => onSelect(selected ? null : s)}
+                  className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-colors ${
+                    selected
+                      ? 'border-amber-400/60 bg-amber-400/[0.06]'
+                      : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-white">{s.nome}</p>
+                    <p className="text-xs text-zinc-400">{s.duracaoMin} min</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-amber-400">
+                      {isClub ? formatPreco(s.precoCentavos) : formatPreco(s.precoCentavos)}
+                    </p>
+                    <p className="text-[10px] text-zinc-500">sempre avulso</p>
+                  </div>
+                </button>
+              )
+            })}
+
+            <button
+              type="button"
+              onClick={() => { onSelect(null); onContinue() }}
+              className="flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              Não, obrigado
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-3 border-t border-white/10 p-4 sm:p-5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 px-4 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/5"
+          >
+            Voltar
+          </button>
+          {addonService && (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-4 text-sm font-semibold text-black transition-all hover:brightness-110"
+            >
+              Continuar
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export function AgendarFlow() {
   const [dbServices, setDbServices] = useState<AgendarService[]>(services)
@@ -23,6 +118,7 @@ export function AgendarFlow() {
 
   const allServices = [...dbServices, ...dbClubServices]
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
+  const [addonService, setAddonService] = useState<AgendarService | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [formData, setFormData] = useState<AgendarFormData>({
@@ -79,6 +175,20 @@ export function AgendarFlow() {
           {step === 2 && (
             <div className="mx-auto max-w-xl text-center">
               <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+                <Scissors className="size-6" />
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+                Deseja adicionar <span className="text-amber-400">sobrancelha</span>?
+              </h1>
+              <p className="mt-3 text-sm text-zinc-400 sm:text-base">
+                Aproveite e adicione a sobrancelha ao seu atendimento.
+              </p>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="mx-auto max-w-xl text-center">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
                 <CalendarDays className="size-6" />
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
@@ -90,7 +200,7 @@ export function AgendarFlow() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="mx-auto max-w-xl text-center">
               <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
                 <Clock className="size-6" />
@@ -104,7 +214,7 @@ export function AgendarFlow() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="mx-auto max-w-xl text-center">
               <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
                 <User className="size-6" />
@@ -118,7 +228,7 @@ export function AgendarFlow() {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="mx-auto max-w-xl text-center">
               <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
                 <CheckCircle2 className="size-6" />
@@ -145,34 +255,33 @@ export function AgendarFlow() {
       )}
 
       {step === 2 && (
-        <DateSelection
-          service={selectedService}
-          selectedDate={selectedDate}
-          onSelectDate={handleSelectDate}
+        <AddonSelection
+          dbServices={dbServices}
+          selectedService={selectedService}
+          addonService={addonService}
+          onSelect={setAddonService}
           onBack={() => setStep(1)}
           onContinue={() => setStep(3)}
         />
       )}
 
       {step === 3 && (
-        <TimeSelection
+        <DateSelection
           service={selectedService}
           selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          onSelectTime={setSelectedTime}
+          onSelectDate={handleSelectDate}
           onBack={() => setStep(2)}
-          onChangeService={() => setStep(1)}
           onContinue={() => setStep(4)}
         />
       )}
 
       {step === 4 && (
-        <DataForm
+        <TimeSelection
           service={selectedService}
+          addonService={addonService}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
-          data={formData}
-          onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+          onSelectTime={setSelectedTime}
           onBack={() => setStep(3)}
           onChangeService={() => setStep(1)}
           onContinue={() => setStep(5)}
@@ -180,12 +289,26 @@ export function AgendarFlow() {
       )}
 
       {step === 5 && (
-        <Confirmation
+        <DataForm
           service={selectedService}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           data={formData}
+          onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
           onBack={() => setStep(4)}
+          onChangeService={() => setStep(1)}
+          onContinue={() => setStep(6)}
+        />
+      )}
+
+      {step === 6 && (
+        <Confirmation
+          service={selectedService}
+          addonService={addonService}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          data={formData}
+          onBack={() => setStep(5)}
         />
       )}
     </>

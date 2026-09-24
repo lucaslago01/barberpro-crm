@@ -121,7 +121,7 @@ export async function fetchNotifications(
     const since = new Date(now.getTime() - 2 * DAY_MS).toISOString()
     const { data } = await supabase
       .from('barberpro_appointments')
-      .select('id, time, status, created_at, barberpro_clients (name), barberpro_services (name)')
+      .select('id, time, status, created_at, barberpro_clients (name), barberpro_services!service_id (name)')
       .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -143,7 +143,7 @@ export async function fetchNotifications(
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
     const { data } = await supabase
       .from('barberpro_appointments')
-      .select('id, time, status, barberpro_clients (name), barberpro_services (name)')
+      .select('id, time, status, barberpro_clients (name), barberpro_services!service_id (name)')
       .gte('time', wallClock(now))
       .lt('time', wallClock(endOfDay))
       .order('time', { ascending: true })
@@ -166,7 +166,7 @@ export async function fetchNotifications(
     const from = new Date(now.getTime() - DAY_MS)
     const { data } = await supabase
       .from('barberpro_appointments')
-      .select('id, time, status, barberpro_clients (name), barberpro_services (name)')
+      .select('id, time, status, barberpro_clients (name), barberpro_services!service_id (name)')
       .eq('status', 'cancelado')
       .gte('time', wallClock(from))
       .order('time', { ascending: true })

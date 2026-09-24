@@ -30,7 +30,7 @@ function agoLabel(days: number) {
 export async function getClientStats(): Promise<Record<string, ClientStats>> {
   const { data, error } = await supabase
     .from('barberpro_appointments')
-    .select('client_id, time, status, barberpro_services (price)')
+    .select('client_id, time, status, barberpro_services!service_id (price)')
 
   if (error) {
     throw new Error(`Erro ao buscar atendimentos dos clientes: ${error.message}`)

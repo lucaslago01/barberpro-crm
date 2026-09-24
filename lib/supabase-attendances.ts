@@ -31,7 +31,7 @@ export async function getAttendances(
   let query = supabase
     .from('barberpro_appointments')
     .select(
-      'id, time, status, is_club_visit, notes, barberpro_clients (name, phone), barberpro_services (name, duration, price)',
+      'id, time, status, is_club_visit, notes, barberpro_clients (name, phone), barberpro_services!service_id (name, duration, price)',
     )
     .gte('time', `${startDay}T00:00:00`)
     .lt('time', `${endDay}T00:00:00`)

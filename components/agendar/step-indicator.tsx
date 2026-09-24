@@ -2,10 +2,11 @@ import { Check } from "lucide-react"
 
 const steps = [
   { number: 1, label: "Serviço" },
-  { number: 2, label: "Data" },
-  { number: 3, label: "Horário" },
-  { number: 4, label: "Seus dados" },
-  { number: 5, label: "Confirmação" },
+  { number: 2, label: "Adicional" },
+  { number: 3, label: "Data" },
+  { number: 4, label: "Horário" },
+  { number: 5, label: "Seus dados" },
+  { number: 6, label: "Confirmação" },
 ]
 
 export function StepIndicator({ currentStep }: { currentStep: number }) {

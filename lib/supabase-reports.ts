@@ -94,7 +94,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     supabase
       .from('barberpro_appointments')
       .select(
-        'id, time, status, client_id, is_club_visit, barberpro_clients (name), barberpro_services (name, price)',
+        'id, time, status, client_id, is_club_visit, barberpro_clients (name), barberpro_services!service_id (name, price)',
       )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`),

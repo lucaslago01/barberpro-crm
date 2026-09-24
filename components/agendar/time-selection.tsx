@@ -19,6 +19,7 @@ import { InfoStrip } from "@/components/agendar/info-strip"
 
 interface TimeSelectionProps {
   service: AgendarService
+  addonService?: AgendarService | null
   selectedDate: Date | null
   selectedTime: string | null
   onSelectTime: (time: string) => void
@@ -40,6 +41,7 @@ function formatWeekdayDate(date: Date | null) {
 
 export function TimeSelection({
   service,
+  addonService,
   selectedDate,
   selectedTime,
   onSelectTime,
