@@ -7,6 +7,10 @@ export interface BarbershopSettings {
   instagram: string
   description: string
   logoUrl: string | null
+  msgBoasVindas?: string
+  msgAniversario?: string
+  msgLembrete?: string
+  msgOptOut?: string
 }
 
 const CACHE_KEY = 'crm:settings-cache'
@@ -36,7 +40,7 @@ function mergeCache(patch: Partial<BarbershopSettings>) {
 export async function getSettings(): Promise<BarbershopSettings> {
   const { data, error } = await supabase
     .from('barberpro_settings')
-    .select('barbershop_name, phone, address, instagram, description, logo_url')
+    .select('barbershop_name, phone, address, instagram, description, logo_url, msg_boas_vindas, msg_aniversario, msg_lembrete, msg_opt_out')
     .eq('id', 1)
     .single()
 
@@ -51,6 +55,10 @@ export async function getSettings(): Promise<BarbershopSettings> {
     instagram: data.instagram || '',
     description: data.description || '',
     logoUrl: data.logo_url || null,
+    msgBoasVindas: data.msg_boas_vindas || '',
+    msgAniversario: data.msg_aniversario || '',
+    msgLembrete: data.msg_lembrete || '',
+    msgOptOut: data.msg_opt_out || '',
   }
   saveCache(result)
   return result
@@ -67,6 +75,10 @@ export async function updateSettings(
       address: settings.address,
       instagram: settings.instagram,
       description: settings.description,
+      ...(settings.msgBoasVindas !== undefined && { msg_boas_vindas: settings.msgBoasVindas }),
+      ...(settings.msgAniversario !== undefined && { msg_aniversario: settings.msgAniversario }),
+      ...(settings.msgLembrete !== undefined && { msg_lembrete: settings.msgLembrete }),
+      ...(settings.msgOptOut !== undefined && { msg_opt_out: settings.msgOptOut }),
     })
     .eq('id', 1)
 

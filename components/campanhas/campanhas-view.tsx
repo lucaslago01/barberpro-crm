@@ -273,7 +273,7 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
               placeholder="Texto que será enviado no WhatsApp"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Use <span className="font-mono text-gold">{nome}</span> para personalizar com o nome do cliente. Ex: <em>Oi, {'{nome}'}! Temos uma oferta pra você.</em>
+              Use <span className="font-mono text-gold">{'{nome}'}</span> para personalizar com o nome do cliente. Ex: <em>Oi, {'{nome}'}! Temos uma oferta pra você.</em>
             </p>
           </div>
 

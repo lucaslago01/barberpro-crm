@@ -26,6 +26,7 @@ import { Panel, PanelHeader } from '@/components/dashboard/panel'
 import { ServicesSettings } from './servicos-settings'
 import { SecuritySettings } from './security-settings'
 import { GeralSettings } from './geral-settings'
+import { MensagensSettings } from './mensagens-settings'
 import {
   getNotificationPrefs,
   setNotificationPrefs,
@@ -40,6 +41,7 @@ type TabKey =
   | 'agendamento'
   | 'notificacoes'
   | 'seguranca'
+  | 'mensagens'
 
 const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'geral', label: 'Geral', icon: Settings2 },
@@ -48,6 +50,7 @@ const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'agendamento', label: 'Agendamento', icon: CalendarCog },
   { key: 'notificacoes', label: 'Notificações', icon: Bell },
   { key: 'seguranca', label: 'Segurança', icon: ShieldCheck },
+  { key: 'mensagens', label: 'Mensagens', icon: MessageCircle },
 ]
 
 /* ---------- Reusable primitives ---------- */
@@ -445,6 +448,8 @@ function TabContent({ tab }: { tab: TabKey }) {
       return <NotificationSettings />
     case 'seguranca':
       return <SecuritySettings />
+    case 'mensagens':
+      return <MensagensSettings />
     default:
       return null
   }
