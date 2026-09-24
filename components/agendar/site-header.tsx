@@ -78,6 +78,15 @@ export function SiteHeader() {
             </p>
             <p className="text-[10px] font-medium tracking-[0.2em] text-zinc-500">BARBEARIA</p>
           </div>
+
+          <a
+            href="/agendar"
+            className="ml-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-400"
+            aria-label="Voltar ao menu inicial"
+          >
+            <Home className="size-3.5" />
+            <span>Início</span>
+          </a>
         </div>
 
         <div className="hidden items-center gap-6 sm:flex">
@@ -108,7 +117,7 @@ export function SiteHeader() {
           </a>
         </div>
 
-        
+        <a
           href={whatsappUrl ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
@@ -118,7 +127,7 @@ export function SiteHeader() {
           <MessageCircle className="size-4" />
         </a>
 
-        
+        <a
           href="/"
           className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 transition-opacity hover:opacity-80 sm:hidden"
           aria-label="Voltar para home"
@@ -126,7 +135,7 @@ export function SiteHeader() {
           <Home className="size-4" />
         </a>
 
-        
+        <a
           href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
