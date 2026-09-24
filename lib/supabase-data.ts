@@ -23,6 +23,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
         time,
         status,
         notes,
+        is_club_visit,
         barberpro_clients (name, phone),
         barberpro_services (name, duration, price)
       `)
@@ -42,7 +43,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
       client: apt.barberpro_clients?.name || 'Cliente desconhecido',
       service: apt.barberpro_services?.name || 'Serviço desconhecido',
       duration: `${apt.barberpro_services?.duration || 0} min`,
-      price: apt.barberpro_services?.price || 0,
+      price: apt.is_club_visit ? 0 : (apt.barberpro_services?.price || 0),
       status: apt.status,
       available: false,
       notes: apt.notes || '',
@@ -66,6 +67,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       time,
       status,
       notes,
+      is_club_visit,
       barberpro_clients (name, phone),
       barberpro_services (name, duration, price)
     `)
@@ -87,7 +89,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
     client: apt.barberpro_clients?.name || 'Cliente desconhecido',
     service: apt.barberpro_services?.name || 'Serviço desconhecido',
     duration: `${apt.barberpro_services?.duration || 0} min`,
-    price: apt.barberpro_services?.price || 0,
+    price: apt.is_club_visit ? 0 : (apt.barberpro_services?.price || 0),
     status: apt.status,
     available: false,
     notes: apt.notes || '',
