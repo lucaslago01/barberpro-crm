@@ -395,3 +395,4 @@ export async function setClientOptOut(id: string, optOut: boolean): Promise<void
 
   notifyDataChanged()
 }
+
