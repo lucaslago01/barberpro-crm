@@ -195,6 +195,7 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
   const [audienceCount, setAudienceCount] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [appendOptOut, setAppendOptOut] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -225,6 +226,7 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
         message: message.trim(),
         audience,
         sendAt,
+        appendOptOut,
       })
       onCreated()
       onClose()
@@ -308,6 +310,24 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
         </div>
 
         {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+
+        <button
+          type="button"
+          onClick={() => setAppendOptOut((v) => !v)}
+          className={`mt-3 flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+            appendOptOut
+              ? 'border-gold/40 bg-gold/10 text-gold'
+              : 'border-border bg-background/30 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <span>Adicionar aviso de descadastro</span>
+          <span className="text-xs font-semibold">{appendOptOut ? 'Ativado' : 'Desativado'}</span>
+        </button>
+        {appendOptOut && (
+          <p className="mt-1 text-xs text-muted-foreground px-1">
+            Será adicionado ao final: "Responda PARAR para não receber mais mensagens."
+          </p>
+        )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button

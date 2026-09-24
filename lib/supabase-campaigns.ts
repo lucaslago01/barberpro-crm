@@ -53,12 +53,18 @@ export async function createCampaign(input: {
   message: string
   audience: CampaignAudience
   sendAt: string
+  appendOptOut?: boolean
 }): Promise<Campaign> {
+  const finalMessage = input.appendOptOut
+    ? `${input.message}
+
+Responda PARAR para não receber mais mensagens.`
+    : input.message
   const { data, error } = await supabase
     .from('barberpro_campaigns')
     .insert({
       name: input.name,
-      message: input.message,
+      message: finalMessage,
       audience: input.audience,
       send_at: input.sendAt,
       status: 'agendada',
