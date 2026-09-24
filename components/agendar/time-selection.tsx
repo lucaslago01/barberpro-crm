@@ -14,6 +14,7 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate } from "@/lib/agendar/date-utils"
 import { getBookedTimes } from "@/lib/supabase-appointments"
+import { supabase } from "@/lib/supabase"
 import { getDaySlots } from "@/lib/business-hours"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
@@ -50,6 +51,7 @@ export function TimeSelection({
   onContinue,
 }: TimeSelectionProps) {
   const [booked, setBooked] = useState<string[]>([])
+  const [reloadKey, setReloadKey] = useState(0)
   const dateKey = selectedDate ? selectedDate.getTime() : null
 
   // Horários do dia escolhido (vazio se a barbearia estiver fechada)
@@ -72,7 +74,28 @@ export function TimeSelection({
     return () => {
       cancelled = true
     }
-  }, [dateKey])
+  }, [dateKey, reloadKey])
+
+  // Realtime: qualquer agendamento ou bloqueio novo recarrega os horários ocupados
+  useEffect(() => {
+    const channel = supabase
+      .channel("agendar-time-selection-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "barberpro_appointments" },
+        () => setReloadKey((k) => k + 1)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "barberpro_blocks" },
+        () => setReloadKey((k) => k + 1)
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   function isPast(time: string) {
     if (!selectedDate) return false

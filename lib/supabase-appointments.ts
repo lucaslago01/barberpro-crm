@@ -53,7 +53,7 @@ export async function getBookedTimes(date: Date): Promise<string[]> {
     throw new Error(`Erro ao buscar horários ocupados: ${error.message}`)
   }
 
-  return (data as string[]) || []
+  return ((data as { slot: string }[]) || []).map((row) => row.slot)
 }
 
 export async function createAppointment(params: {

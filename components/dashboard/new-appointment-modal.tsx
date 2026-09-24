@@ -12,6 +12,7 @@ import {
 import type { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { getDaySlots, isOpenDay } from '@/lib/business-hours'
+import { supabase } from '@/lib/supabase'
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -54,6 +55,7 @@ export function NewAppointmentModal({
   const [clubTouched, setClubTouched] = useState(false)
 
   const [booked, setBooked] = useState<string[]>([])
+  const [bookedReloadKey, setBookedReloadKey] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -83,7 +85,7 @@ export function NewAppointmentModal({
     }
   }, [])
 
-  // Busca horários ocupados sempre que a data muda
+  // Busca horários ocupados sempre que a data muda ou algo é atualizado em tempo real
   useEffect(() => {
     if (!dateStr) return
     let cancelled = false
@@ -105,7 +107,28 @@ export function NewAppointmentModal({
     return () => {
       cancelled = true
     }
-  }, [dateStr])
+  }, [dateStr, bookedReloadKey])
+
+  // Realtime: qualquer agendamento ou bloqueio novo recarrega os horários ocupados
+  useEffect(() => {
+    const channel = supabase
+      .channel('new-appointment-modal-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_appointments' },
+        () => setBookedReloadKey((k) => k + 1)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_blocks' },
+        () => setBookedReloadKey((k) => k + 1)
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const selectedService = services.find((s) => s.id === serviceId)
   const selectedClient = clients.find((c) => c.id === clientId)
