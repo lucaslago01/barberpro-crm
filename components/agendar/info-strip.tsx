@@ -3,8 +3,8 @@ import { CalendarDays, MapPin, ShieldCheck } from "lucide-react"
 const items = [
   {
     icon: CalendarDays,
-    title: "Seg à Sáb",
-    subtitle: "9h às 19h",
+    title: "Horários",
+    subtitle: "Ter–Sex: 9h às 20h • Sáb: 9h às 18h",
   },
   {
     icon: MapPin,
