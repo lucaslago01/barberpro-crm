@@ -15,6 +15,8 @@ export interface Client {
   last_visit?: string
   club_plan?: string
   club_due_date?: string
+  campaign_opt_out?: boolean
+  campaign_opt_out_at?: string
 }
 
 export interface Service {

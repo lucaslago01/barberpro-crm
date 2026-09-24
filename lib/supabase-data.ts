@@ -378,3 +378,18 @@ export async function createAppointmentV2(params: {
 
   notifyDataChanged()
 }
+export async function setClientOptOut(id: string, optOut: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('barberpro_clients')
+    .update({
+      campaign_opt_out: optOut,
+      campaign_opt_out_at: optOut ? new Date().toISOString() : null,
+    })
+    .eq('id', id)
+
+  if (error) {
+    throw new Error(`Erro ao atualizar preferência de campanha: ${error.message}`)
+  }
+
+  notifyDataChanged()
+}

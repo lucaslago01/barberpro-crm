@@ -32,6 +32,7 @@ import {
   updateClient,
   getClientAppointments,
   deleteClient,
+  setClientOptOut,
   getRecentInteractions,
   type ClientAppointmentHistoryItem,
   type RecentInteraction,
@@ -710,6 +711,8 @@ function EditClientModal({
   const [email, setEmail] = useState(client.email || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [optOut, setOptOut] = useState(client.campaign_opt_out ?? false)
+  const [savingOptOut, setSavingOptOut] = useState(false)
 
   async function handleSave() {
     if (!name.trim()) {
@@ -774,6 +777,39 @@ function EditClientModal({
         </div>
 
         {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+
+        <div className="my-4 h-px bg-border" />
+
+        <div className="flex items-center justify-between rounded-lg border border-border bg-background/30 px-3 py-2.5">
+          <div>
+            <p className="text-sm font-medium">Campanhas por WhatsApp</p>
+            <p className="text-xs text-muted-foreground">
+              {optOut ? 'Cliente optou por não receber campanhas' : 'Recebendo campanhas normalmente'}
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !optOut
+              setSavingOptOut(true)
+              try {
+                await setClientOptOut(client.id, next)
+                setOptOut(next)
+              } catch {
+                // silencioso
+              } finally {
+                setSavingOptOut(false)
+              }
+            }}
+            disabled={savingOptOut}
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
+              optOut
+                ? 'bg-success/15 text-success hover:bg-success/25'
+                : 'bg-danger/15 text-danger hover:bg-danger/25'
+            }`}
+          >
+            {savingOptOut ? '...' : optOut ? 'Reativar' : 'Não receber'}
+          </button>
+        </div>
 
         <div className="my-4 h-px bg-border" />
 
