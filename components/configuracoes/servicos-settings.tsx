@@ -36,6 +36,7 @@ function ServiceModal({
   const [name, setName] = useState(service?.name ?? '')
   const [duration, setDuration] = useState(service ? String(service.duration) : '')
   const [price, setPrice] = useState(service ? String(service.price) : '')
+  const [priceFrom, setPriceFrom] = useState(service?.price_from ?? false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const savingRef = useRef(false)
@@ -54,9 +55,9 @@ function ServiceModal({
     setSaving(true)
     try {
       if (service) {
-        await updateService(service.id, { name: name.trim(), duration: dur, price: val })
+        await updateService(service.id, { name: name.trim(), duration: dur, price: val, price_from: priceFrom })
       } else {
-        await createService({ name: name.trim(), duration: dur, price: val })
+        await createService({ name: name.trim(), duration: dur, price: val, price_from: priceFrom })
       }
       onSaved()
       onClose()
@@ -109,6 +110,25 @@ function ServiceModal({
               className={fieldClass}
               placeholder="Ex.: 80,00"
             />
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => setPriceFrom((v) => !v)}
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                priceFrom
+                  ? 'border-gold/40 bg-gold/10 text-gold'
+                  : 'border-border bg-background/30 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>Exibir como "A partir de"</span>
+              <span className="text-xs font-semibold">{priceFrom ? 'Ativado' : 'Desativado'}</span>
+            </button>
+            {priceFrom && (
+              <p className="mt-1 px-1 text-xs text-muted-foreground">
+                Será exibido como <span className="text-gold font-medium">A partir de {price ? `R$ ${price}` : 'R$ 0,00'}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -227,8 +247,8 @@ export function ServicesSettings() {
               </span>
               <span className="flex-1 text-sm font-medium">{s.name}</span>
               <span className="text-sm text-muted-foreground">{s.duration} min</span>
-              <span className="w-20 text-right text-sm font-semibold tabular-nums text-gold">
-                {currency.format(s.price)}
+              <span className="w-28 text-right text-sm font-semibold tabular-nums text-gold">
+                {s.price_from ? `A partir de ${currency.format(s.price)}` : currency.format(s.price)}
               </span>
               <div className="flex items-center gap-0.5">
                 <button

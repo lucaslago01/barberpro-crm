@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { CalendarDays, Clock, User, CheckCircle2 } from "lucide-react"
-import { services, clubServices } from "@/lib/agendar/services"
+import { services, clubServices, getServicesFromDB, type AgendarService } from "@/lib/agendar/services"
 import { StepIndicator } from "@/components/agendar/step-indicator"
 import { ServiceSelection } from "@/components/agendar/service-selection"
 import { DateSelection } from "@/components/agendar/date-selection"
@@ -10,10 +10,18 @@ import { TimeSelection } from "@/components/agendar/time-selection"
 import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
 import { Confirmation } from "@/components/agendar/confirmation"
 
-const allServices = [...services, ...clubServices]
-
 export function AgendarFlow() {
+  const [dbServices, setDbServices] = useState<AgendarService[]>(services)
+  const [dbClubServices] = useState<AgendarService[]>(clubServices)
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    getServicesFromDB().then(({ services: s }) => {
+      if (s.length > 0) setDbServices(s)
+    }).catch(() => {})
+  }, [])
+
+  const allServices = [...dbServices, ...dbClubServices]
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
@@ -128,6 +136,8 @@ export function AgendarFlow() {
 
       {step === 1 && (
         <ServiceSelection
+          services={dbServices}
+          clubServices={dbClubServices}
           selectedId={selectedServiceId}
           onSelect={setSelectedServiceId}
           onContinue={() => setStep(2)}

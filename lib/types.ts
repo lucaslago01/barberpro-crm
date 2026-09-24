@@ -24,6 +24,7 @@ export interface Service {
   name: string
   duration: number
   price: number
+  price_from: boolean
 }
 
 export interface Appointment {

@@ -6,6 +6,7 @@ export interface ServiceOption {
   name: string
   duration: number
   price: number
+  price_from: boolean
 }
 
 function pad(n: number) {
@@ -23,7 +24,7 @@ function toLocalWallClock(date: Date) {
 export async function getServices(): Promise<ServiceOption[]> {
   const { data, error } = await supabase
     .from('barberpro_services')
-    .select('id, name, duration, price')
+    .select('id, name, duration, price, price_from')
     .order('name', { ascending: true })
 
   if (error) {
@@ -33,6 +34,7 @@ export async function getServices(): Promise<ServiceOption[]> {
   return (data || []).map((s: any) => ({
     id: s.id,
     name: s.name,
+    price_from: s.price_from ?? false,
     duration: Number(s.duration),
     price: Number(s.price),
   }))
@@ -94,6 +96,7 @@ export interface ServiceInput {
   name: string
   duration: number
   price: number
+  price_from: boolean
 }
 
 export async function createService(input: ServiceInput): Promise<void> {

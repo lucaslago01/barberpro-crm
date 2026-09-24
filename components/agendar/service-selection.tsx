@@ -1,17 +1,21 @@
 "use client"
 
 import { Scissors, ShieldCheck, ArrowRight } from "lucide-react"
-import { services, clubServices } from "@/lib/agendar/services"
+import { type AgendarService } from "@/lib/agendar/services"
 import { ServiceCard } from "@/components/agendar/service-card"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 interface ServiceSelectionProps {
+  services: AgendarService[]
+  clubServices: AgendarService[]
   selectedId: string | null
   onSelect: (id: string) => void
   onContinue: () => void
 }
 
 export function ServiceSelection({
+  services,
+  clubServices,
   selectedId,
   onSelect,
   onContinue,

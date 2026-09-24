@@ -25,7 +25,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
         notes,
         is_club_visit,
         barberpro_clients (name, phone),
-        barberpro_services (name, duration, price)
+        barberpro_services (name, duration, price, price_from)
       `)
       .order('time', { ascending: true })
 
@@ -69,7 +69,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       notes,
       is_club_visit,
       barberpro_clients (name, phone),
-      barberpro_services (name, duration, price)
+      barberpro_services (name, duration, price, price_from)
     `)
     .gte('time', toLocalWallClock(start))
     .lt('time', toLocalWallClock(end))

@@ -60,9 +60,14 @@ export function ServiceCard({ service, selected, onSelect, freeLabel }: ServiceC
           {freeLabel ? (
             <p className="text-[15px] font-bold whitespace-nowrap text-emerald-400">Grátis</p>
           ) : (
-            <p className="text-[15px] font-bold whitespace-nowrap text-white">
-              {formatPreco(service.precoCentavos)}
-            </p>
+            <div className="text-right">
+              {service.priceFrom && (
+                <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">A partir de</p>
+              )}
+              <p className="text-[15px] font-bold whitespace-nowrap text-white">
+                {formatPreco(service.precoCentavos)}
+              </p>
+            </div>
           )}
 
           <button

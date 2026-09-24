@@ -4,10 +4,49 @@ export interface AgendarService {
   descricao: string
   duracaoMin: number
   precoCentavos: number
+  priceFrom?: boolean
   imagem: string
   isClube?: boolean
   clubPlanLabel?: string
   baseServiceName?: string
+}
+
+function resolveImagem(nome: string): string {
+  const n = nome.toLowerCase()
+  if (n.includes('corte') && n.includes('barba')) return '/agendar/corte-barba.png'
+  if (n.includes('corte') && n.includes('infantil')) return '/agendar/corte-infantil.png'
+  if (n.includes('corte')) return '/agendar/corte-masculino.png'
+  if (n.includes('barba') || n.includes('camuflagem')) return '/agendar/barba.png'
+  if (n.includes('sobrancelha')) return '/agendar/sobrancelha.png'
+  if (n.includes('selagem') || n.includes('hidratação') || n.includes('tratamento') || n.includes('platinado')) return '/agendar/tratamento-capilar.png'
+  if (n.includes('limpeza') || n.includes('pele')) return '/agendar/tratamento-capilar.png'
+  return '/agendar/corte-masculino.png'
+}
+
+export async function getServicesFromDB(): Promise<{ services: AgendarService[]; clubServices: AgendarService[] }> {
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data, error } = await supabase
+    .from('barberpro_services')
+    .select('id, name, duration, price, price_from')
+    .order('name', { ascending: true })
+
+  if (error || !data) return { services, clubServices }
+
+  const dbServices: AgendarService[] = data.map((s: any) => ({
+    id: s.id,
+    nome: s.name,
+    descricao: '',
+    duracaoMin: s.duration,
+    precoCentavos: Math.round(s.price * 100),
+    priceFrom: s.price_from ?? false,
+    imagem: resolveImagem(s.name),
+  }))
+
+  return { services: dbServices, clubServices }
 }
 
 export const services: AgendarService[] = [
