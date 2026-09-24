@@ -109,14 +109,22 @@ export function NewAppointmentModal({
 
   const selectedService = services.find((s) => s.id === serviceId)
   const selectedClient = clients.find((c) => c.id === clientId)
-  const addonOptions = services.filter((s) => s.name.toLowerCase().includes('sobrancelha'))
+  const addonOptions = services.filter((s) => s.name.toLowerCase().includes('sobrancelha') && s.id !== serviceId)
   const selectedAddon = addonOptions.find((s) => s.id === addonServiceId)
+
+  const isAddonOnlyService = Boolean(selectedService?.name.toLowerCase().includes('sobrancelha'))
 
   useEffect(() => {
     if (!clubTouched) {
-      setIsClubVisit(Boolean(selectedClient?.club_plan))
+      setIsClubVisit(Boolean(selectedClient?.club_plan) && !isAddonOnlyService)
     }
-  }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clientId, serviceId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isAddonOnlyService && isClubVisit) {
+      setIsClubVisit(false)
+    }
+  }, [isAddonOnlyService]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Horários do dia escolhido (vazio se a barbearia estiver fechada)
   const daySlots = (() => {
@@ -238,7 +246,10 @@ export function NewAppointmentModal({
               <label className="mb-1 block text-xs text-muted-foreground">Serviço</label>
               <select
                 value={serviceId}
-                onChange={(e) => setServiceId(e.target.value)}
+                onChange={(e) => {
+                  setServiceId(e.target.value)
+                  if (e.target.value === addonServiceId) setAddonServiceId('')
+                }}
                 className={fieldClass}
               >
                 <option value="">Selecione o serviço</option>
@@ -269,19 +280,22 @@ export function NewAppointmentModal({
                   Atendimento do clube
                 </label>
                 <p className="text-[11px] text-muted-foreground">
-                  Não cobra o serviço base (já incluso na mensalidade), só os extras.
-                  {selectedClient?.club_plan ? ' Cliente é assinante do clube.' : ''}
+                  {isAddonOnlyService
+                    ? 'Sobrancelha é sempre cobrada avulsa, mesmo para clientes do clube.'
+                    : 'Não cobra o serviço base (já incluso na mensalidade), só os extras.'}
+                  {selectedClient?.club_plan && !isAddonOnlyService ? ' Cliente é assinante do clube.' : ''}
                 </p>
               </div>
               <input
                 id="club-visit-checkbox"
                 type="checkbox"
                 checked={isClubVisit}
+                disabled={isAddonOnlyService}
                 onChange={(e) => {
                   setClubTouched(true)
                   setIsClubVisit(e.target.checked)
                 }}
-                className="size-4 shrink-0 accent-gold"
+                className="size-4 shrink-0 accent-gold disabled:cursor-not-allowed disabled:opacity-40"
               />
             </div>
 
