@@ -168,7 +168,12 @@ function CampaignRow({ campaign, onDelete }: { campaign: Campaign; onDelete: () 
         </div>
       </td>
       <td className="py-3 pr-4 text-sm font-medium tabular-nums">
-        {campaign.sentCount.toLocaleString('pt-BR')}
+        <span className="text-foreground">{campaign.sentCount.toLocaleString('pt-BR')}</span>
+        {campaign.failedCount > 0 && (
+          <span className="ml-1.5 text-xs font-medium text-danger">
+            · {campaign.failedCount} falha{campaign.failedCount > 1 ? 's' : ''}
+          </span>
+        )}
       </td>
       <td className="py-3 pr-4">
         <StatusBadge status={campaign.status} />

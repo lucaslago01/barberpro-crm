@@ -13,6 +13,7 @@ export interface Campaign {
   sendAt: string
   status: CampaignStatus
   sentCount: number
+  failedCount: number
   createdAt: string
 }
 
@@ -34,6 +35,7 @@ function mapRow(row: any): Campaign {
     sendAt: row.send_at && !/(Z|[+-]\d\d:?\d\d)$/i.test(row.send_at) ? row.send_at + 'Z' : row.send_at,
     status: row.status,
     sentCount: row.sent_count,
+    failedCount: row.failed_count || 0,
     createdAt: row.created_at,
   }
 }
