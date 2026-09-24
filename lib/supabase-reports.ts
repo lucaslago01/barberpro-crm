@@ -94,7 +94,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     supabase
       .from('barberpro_appointments')
       .select(
-        'id, time, status, client_id, is_club_visit, barberpro_clients (name), barberpro_services!service_id (name, price)',
+        'id, time, status, client_id, is_club_visit, addon_price, barberpro_clients (name), barberpro_services!service_id (name, price), addon_service:barberpro_services!addon_service_id (name)',
       )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`),
@@ -121,7 +121,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   const noShows = rows.filter((a) => a.status === 'faltou').length
   const cancelled = rows.filter((a) => a.status === 'cancelado').length
 
-  const walkIn = done.reduce((s, a) => s + Number(a.barberpro_services?.price || 0), 0)
+  const walkIn = done.reduce((s, a) => s + (a.is_club_visit ? Number((a as any).addon_price || 0) : (Number(a.barberpro_services?.price || 0) + Number((a as any).addon_price || 0))), 0)
   const clubRows: any[] = club.data || []
   const clubTotal = clubRows.reduce((s: number, c: any) => s + Number(c.amount || 0), 0)
 
@@ -144,12 +144,22 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
 
   // Serviço, dia da semana, horário e melhores clientes contam avulso + clube (é atendimento de verdade)
   for (const a of doneAll) {
-    const price = a.is_club_visit ? 0 : Number(a.barberpro_services?.price || 0)
+    const addonPrice = Number((a as any).addon_price || 0)
+    const basePrice = a.is_club_visit ? 0 : Number(a.barberpro_services?.price || 0)
+    const price = basePrice + addonPrice
     const sName = a.barberpro_services?.name || 'Serviço desconhecido'
     const s = svc.get(sName) || { count: 0, total: 0 }
     s.count += 1
-    s.total += price
+    s.total += basePrice
     svc.set(sName, s)
+
+    if (addonPrice > 0) {
+      const addonName = (a as any).addon_service?.name || 'Extra'
+      const sa = svc.get(addonName) || { count: 0, total: 0 }
+      sa.count += 1
+      sa.total += addonPrice
+      svc.set(addonName, sa)
+    }
 
     const t = String(a.time)
     const dayKey = t.slice(0, 10)
