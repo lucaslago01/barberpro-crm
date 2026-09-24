@@ -11,6 +11,24 @@ export interface AgendarService {
   baseServiceName?: string
 }
 
+function resolveDescricao(nome: string): string {
+  const n = nome.toLowerCase()
+  if (n.includes('corte') && n.includes('barba')) return 'O combo completo para você.'
+  if (n.includes('corte') && n.includes('infantil')) return 'Corte especial para os pequenos.'
+  if (n.includes('corte')) return 'Corte tradicional ou moderno, do seu jeito.'
+  if (n.includes('camuflagem') && n.includes('barba')) return 'Disfarce os fios brancos da barba.'
+  if (n.includes('camuflagem')) return 'Disfarce os fios brancos com naturalidade.'
+  if (n.includes('barba')) return 'Aparação e desenho da barba.'
+  if (n.includes('sobrancelha')) return 'Design e alinhamento da sobrancelha.'
+  if (n.includes('selagem')) return 'Selagem capilar para fios lisos e brilhosos.'
+  if (n.includes('hidratação')) return 'Hidratação profunda para cabelos ressecados.'
+  if (n.includes('platinado')) return 'Descoloração e platinado com técnica profissional.'
+  if (n.includes('limpeza') && n.includes('pele')) return 'Limpeza facial profunda.'
+  if (n.includes('tratamento')) return 'Tratamento capilar especializado.'
+  if (n.includes('depilação') || n.includes('nariz')) return 'Remoção de pelos do nariz com cera.'
+  return 'Serviço profissional de barbearia.'
+}
+
 function resolveImagem(nome: string): string {
   const n = nome.toLowerCase()
   if (n.includes('corte') && n.includes('barba')) return '/agendar/corte-barba.png'
@@ -39,7 +57,7 @@ export async function getServicesFromDB(): Promise<{ services: AgendarService[];
   const dbServices: AgendarService[] = data.map((s: any) => ({
     id: s.id,
     nome: s.name,
-    descricao: '',
+    descricao: resolveDescricao(s.name),
     duracaoMin: s.duration,
     precoCentavos: Math.round(s.price * 100),
     priceFrom: s.price_from ?? false,
