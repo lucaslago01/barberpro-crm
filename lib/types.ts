@@ -43,6 +43,7 @@ export interface AgendaSlot {
   time: string
   client: string
   service: string
+  addonService?: string | null
   duration: string
   price: number
   status: AppointmentStatus

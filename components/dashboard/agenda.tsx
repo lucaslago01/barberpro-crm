@@ -371,6 +371,9 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                     </td>
                     <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
                       {a.service}
+                      {a.addonService && (
+                        <span className="text-gold"> + {a.addonService}</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">
                       {a.duration}

@@ -25,7 +25,8 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
         notes,
         is_club_visit,
         barberpro_clients (name, phone),
-        barberpro_services!service_id (name, duration, price, price_from)
+        barberpro_services!service_id (name, duration, price, price_from),
+        addon_price
       `)
       .order('time', { ascending: true })
 
@@ -43,7 +44,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
       client: apt.barberpro_clients?.name || 'Cliente desconhecido',
       service: apt.barberpro_services?.name || 'Serviço desconhecido',
       duration: `${apt.barberpro_services?.duration || 0} min`,
-      price: apt.is_club_visit ? 0 : (apt.barberpro_services?.price || 0),
+      price: apt.is_club_visit ? (apt.addon_price || 0) : ((apt.barberpro_services?.price || 0) + (apt.addon_price || 0)),
       status: apt.status,
       available: false,
       notes: apt.notes || '',
@@ -69,7 +70,9 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       notes,
       is_club_visit,
       barberpro_clients (name, phone),
-      barberpro_services!service_id (name, duration, price, price_from)
+      barberpro_services!service_id (name, duration, price, price_from),
+      addon_price,
+      addon_service:barberpro_services!addon_service_id (name)
     `)
     .gte('time', toLocalWallClock(start))
     .lt('time', toLocalWallClock(end))
@@ -88,8 +91,9 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
     time: new Date(apt.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     client: apt.barberpro_clients?.name || 'Cliente desconhecido',
     service: apt.barberpro_services?.name || 'Serviço desconhecido',
+    addonService: apt.addon_service?.name || null,
     duration: `${apt.barberpro_services?.duration || 0} min`,
-    price: apt.is_club_visit ? 0 : (apt.barberpro_services?.price || 0),
+    price: apt.is_club_visit ? (apt.addon_price || 0) : ((apt.barberpro_services?.price || 0) + (apt.addon_price || 0)),
     status: apt.status,
     available: false,
     notes: apt.notes || '',
@@ -187,7 +191,7 @@ export async function getDashboardKpis() {
 
   const { data: appointments, error: apptError } = await supabase
     .from('barberpro_appointments')
-    .select('status, is_club_visit, barberpro_services!service_id (price)')
+    .select('status, is_club_visit, addon_price, barberpro_services!service_id (price)')
     .gte('time', toLocalWallClock(monthStart))
     .lt('time', toLocalWallClock(nextMonthStart))
 
@@ -208,7 +212,7 @@ export async function getDashboardKpis() {
   const totalAppointments = active.length
   const revenue = active
     .filter((a: any) => a.status === 'concluido')
-    .reduce((sum: number, a: any) => sum + (a.is_club_visit ? 0 : (a.barberpro_services?.price || 0)), 0)
+    .reduce((sum: number, a: any) => sum + (a.is_club_visit ? Number(a.addon_price || 0) : ((a.barberpro_services?.price || 0) + Number(a.addon_price || 0))), 0)
 
   return {
     totalAppointments,
@@ -253,7 +257,7 @@ export async function getClientAppointments(
 ): Promise<ClientAppointmentHistoryItem[]> {
   const { data, error } = await supabase
     .from('barberpro_appointments')
-    .select('id, time, status, is_club_visit, barberpro_services!service_id (name, price)')
+    .select('id, time, status, is_club_visit, addon_price, barberpro_services!service_id (name, price)')
     .eq('client_id', clientId)
     .order('time', { ascending: false })
 
@@ -266,7 +270,7 @@ export async function getClientAppointments(
     time: a.time,
     status: a.status,
     serviceName: a.barberpro_services?.name || '-',
-    price: a.is_club_visit ? 0 : (Number(a.barberpro_services?.price) || 0),
+    price: a.is_club_visit ? Number(a.addon_price || 0) : ((Number(a.barberpro_services?.price) || 0) + Number(a.addon_price || 0)),
   }))
 }
 
