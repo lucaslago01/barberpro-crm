@@ -187,7 +187,7 @@ export async function getDashboardKpis() {
 
   const { data: appointments, error: apptError } = await supabase
     .from('barberpro_appointments')
-    .select('status, barberpro_services (price)')
+    .select('status, is_club_visit, barberpro_services (price)')
     .gte('time', toLocalWallClock(monthStart))
     .lt('time', toLocalWallClock(nextMonthStart))
 
@@ -208,7 +208,7 @@ export async function getDashboardKpis() {
   const totalAppointments = active.length
   const revenue = active
     .filter((a: any) => a.status === 'concluido')
-    .reduce((sum: number, a: any) => sum + (a.barberpro_services?.price || 0), 0)
+    .reduce((sum: number, a: any) => sum + (a.is_club_visit ? 0 : (a.barberpro_services?.price || 0)), 0)
 
   return {
     totalAppointments,
@@ -253,7 +253,7 @@ export async function getClientAppointments(
 ): Promise<ClientAppointmentHistoryItem[]> {
   const { data, error } = await supabase
     .from('barberpro_appointments')
-    .select('id, time, status, barberpro_services (name, price)')
+    .select('id, time, status, is_club_visit, barberpro_services (name, price)')
     .eq('client_id', clientId)
     .order('time', { ascending: false })
 
@@ -266,7 +266,7 @@ export async function getClientAppointments(
     time: a.time,
     status: a.status,
     serviceName: a.barberpro_services?.name || '-',
-    price: Number(a.barberpro_services?.price) || 0,
+    price: a.is_club_visit ? 0 : (Number(a.barberpro_services?.price) || 0),
   }))
 }
 
