@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import {
   CalendarDays,
   ChevronLeft,
@@ -96,6 +97,23 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
     }
   }, [dateKey, reloadKey])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-agenda-appointments-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_appointments' },
+        () => {
+          setReloadKey((k) => k + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   function changeDay(amount: number) {
     const next = new Date(date)
     next.setDate(next.getDate() + amount)
@@ -119,11 +137,16 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   }
 
   async function handleChangeStatus(id: string, status: AppointmentStatus) {
+    // Atualização otimista: muda a tela na hora, sincroniza com o banco em seguida
+    const previousSlots = slots
+    setSlots((current) =>
+      current.map((s) => (s.id === id ? { ...s, status } : s))
+    )
     try {
       await updateAppointmentStatus(id, status)
-      setReloadKey((k) => k + 1)
     } catch (err) {
       console.error('Erro ao atualizar status:', err)
+      setSlots(previousSlots)
       alert('Não foi possível atualizar o status. Tente de novo.')
     }
   }

@@ -6,6 +6,7 @@ import {
   updateAppointmentStatus,
   updateAppointmentNotes,
 } from '@/lib/supabase-data'
+import { supabase } from '@/lib/supabase'
 import { AgendaView } from './agenda-view'
 import type { AgendaSlot } from '@/lib/types'
 import type { AgendaStatus } from '@/lib/data'
@@ -42,12 +43,34 @@ export function AgendaWithSupabase() {
     }
   }, [dateKey, reloadKey])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('agenda-appointments-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_appointments' },
+        () => {
+          setReloadKey((k) => k + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   async function handleUpdateStatus(id: string, status: AgendaStatus) {
+    // Atualização otimista: muda a tela na hora, sincroniza com o banco em seguida
+    const previousSlots = slots
+    setSlots((current) =>
+      current.map((s) => (s.id === id ? { ...s, status } : s))
+    )
     try {
       await updateAppointmentStatus(id, status)
-      setReloadKey((k) => k + 1)
     } catch (err) {
       console.error('Erro ao atualizar status:', err)
+      setSlots(previousSlots)
       alert('Não foi possível atualizar o status. Tente de novo.')
     }
   }

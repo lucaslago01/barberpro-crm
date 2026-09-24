@@ -981,6 +981,23 @@ function ClientsTable() {
     loadClients()
   }, [])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('clients-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_clients' },
+        () => {
+          loadClients()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const threeMonthsAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
