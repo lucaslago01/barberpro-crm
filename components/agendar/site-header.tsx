@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AtSign, Phone } from 'lucide-react'
+import { AtSign, Phone, Home, MessageCircle } from 'lucide-react'
 import { buildWhatsappUrl } from '@/components/dashboard/whatsapp-button'
 import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
@@ -108,7 +108,25 @@ export function SiteHeader() {
           </a>
         </div>
 
-        <a
+        
+          href={whatsappUrl ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 transition-opacity hover:opacity-80 sm:hidden"
+          aria-label="Falar no WhatsApp"
+        >
+          <MessageCircle className="size-4" />
+        </a>
+
+        
+          href="/"
+          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 transition-opacity hover:opacity-80 sm:hidden"
+          aria-label="Voltar para home"
+        >
+          <Home className="size-4" />
+        </a>
+
+        
           href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"

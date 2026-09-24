@@ -83,7 +83,7 @@ export function DataForm({
   const whatsappOk = isWhatsappValid(data.whatsapp)
   const emailOk = isEmailValid(data.email)
   const birthDateOk = data.birthDate.trim() !== ""
-  const canContinue = nomeOk && whatsappOk && emailOk && birthDateOk
+  const canContinue = selectedDate !== null && nomeOk && whatsappOk && emailOk && birthDateOk
 
   const whatsappError = data.whatsapp.length > 0 && !whatsappOk
   const emailError = data.email.length > 0 && !emailOk

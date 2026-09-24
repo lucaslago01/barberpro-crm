@@ -28,7 +28,7 @@ export function getDaySlots(date: Date): string[] {
   if (!hours) return []
 
   const slots: string[] = []
-  for (let minutes = hours.open * 60; minutes <= hours.close * 60; minutes += SLOT_MINUTES) {
+  for (let minutes = hours.open * 60; minutes < hours.close * 60; minutes += SLOT_MINUTES) {
     slots.push(`${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`)
   }
   return slots
