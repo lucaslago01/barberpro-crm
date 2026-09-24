@@ -49,6 +49,9 @@ export function NewAppointmentModal({
   const [time, setTime] = useState<string | null>(null)
   const [customTime, setCustomTime] = useState('')
   const [notes, setNotes] = useState('')
+  const [isClubVisit, setIsClubVisit] = useState(false)
+  const [addonServiceId, setAddonServiceId] = useState('')
+  const [clubTouched, setClubTouched] = useState(false)
 
   const [booked, setBooked] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -105,6 +108,15 @@ export function NewAppointmentModal({
   }, [dateStr])
 
   const selectedService = services.find((s) => s.id === serviceId)
+  const selectedClient = clients.find((c) => c.id === clientId)
+  const addonOptions = services.filter((s) => s.name.toLowerCase().includes('sobrancelha'))
+  const selectedAddon = addonOptions.find((s) => s.id === addonServiceId)
+
+  useEffect(() => {
+    if (!clubTouched) {
+      setIsClubVisit(Boolean(selectedClient?.club_plan))
+    }
+  }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Horários do dia escolhido (vazio se a barbearia estiver fechada)
   const daySlots = (() => {
@@ -238,10 +250,60 @@ export function NewAppointmentModal({
               </select>
               {selectedService && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {selectedService.duration} min · {currency.format(selectedService.price)}
+                  {selectedService.duration} min ·{' '}
+                  {isClubVisit ? (
+                    <>
+                      <span className="line-through">{currency.format(selectedService.price)}</span>{' '}
+                      <span className="font-medium text-gold">Grátis (clube)</span>
+                    </>
+                  ) : (
+                    currency.format(selectedService.price)
+                  )}
                 </p>
               )}
             </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 px-3 py-2.5">
+              <div>
+                <label htmlFor="club-visit-checkbox" className="text-sm font-medium">
+                  Atendimento do clube
+                </label>
+                <p className="text-[11px] text-muted-foreground">
+                  Não cobra o serviço base (já incluso na mensalidade), só os extras.
+                  {selectedClient?.club_plan ? ' Cliente é assinante do clube.' : ''}
+                </p>
+              </div>
+              <input
+                id="club-visit-checkbox"
+                type="checkbox"
+                checked={isClubVisit}
+                onChange={(e) => {
+                  setClubTouched(true)
+                  setIsClubVisit(e.target.checked)
+                }}
+                className="size-4 shrink-0 accent-gold"
+              />
+            </div>
+
+            {addonOptions.length > 0 && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Serviço extra (opcional)
+                </label>
+                <select
+                  value={addonServiceId}
+                  onChange={(e) => setAddonServiceId(e.target.value)}
+                  className={fieldClass}
+                >
+                  <option value="">Nenhum</option>
+                  {addonOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} · {currency.format(s.price)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Data</label>

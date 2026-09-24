@@ -61,12 +61,18 @@ export async function createAppointment(params: {
   serviceId: string
   dateTime: string
   notes?: string
+  isClubVisit?: boolean
+  addonServiceId?: string | null
+  addonPrice?: number
 }): Promise<void> {
-  const { error } = await supabase.rpc('barberpro_create_appointment', {
+  const { error } = await supabase.rpc('barberpro_create_appointment_v3', {
     p_client_id: params.clientId,
     p_service_id: params.serviceId,
     p_time: toLocalWallClock(new Date(params.dateTime)),
     p_notes: params.notes || null,
+    p_addon_service_id: params.addonServiceId || null,
+    p_addon_price: params.addonPrice || 0,
+    p_is_club_visit: params.isClubVisit || false,
   })
 
   if (error) {
