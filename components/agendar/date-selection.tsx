@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import {
   ArrowLeft,
@@ -18,6 +18,8 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate, isSameDay, startOfToday } from "@/lib/agendar/date-utils"
 import { isOpenDay } from "@/lib/business-hours"
+import { buildWhatsappUrl } from "@/components/dashboard/whatsapp-button"
+import { getCachedSettings, getSettings } from "@/lib/supabase-settings"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
@@ -38,6 +40,23 @@ export function DateSelection({
   onContinue,
 }: DateSelectionProps) {
   const today = startOfToday()
+
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const cached = getCachedSettings()
+    if (cached?.phone) {
+      setWhatsappUrl(buildWhatsappUrl(cached.phone))
+    }
+
+    getSettings()
+      .then((s) => {
+        if (s.phone) {
+          setWhatsappUrl(buildWhatsappUrl(s.phone))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const [viewDate, setViewDate] = useState(() => {
     const base = selectedDate ?? today
@@ -210,13 +229,15 @@ export function DateSelection({
                   Entre em contato pelo WhatsApp e vamos te ajudar!
                 </p>
               </div>
-              <button
-                type="button"
+              <a
+                href={whatsappUrl ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 text-sm font-semibold text-amber-300 transition-colors hover:bg-amber-400/15"
               >
                 <MessageCircle className="size-4" />
                 Falar no WhatsApp
-              </button>
+              </a>
             </div>
           </div>
 
