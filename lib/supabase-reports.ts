@@ -185,7 +185,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   const revenue = walkIn + clubTotal
 
   return {
-    completed: done.length,
+    completed: doneAll.length,
     clubVisits: clubVisits.length,
     noShows,
     cancelled,
