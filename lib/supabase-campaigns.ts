@@ -104,6 +104,7 @@ export async function getAudienceCount(audience: CampaignAudience): Promise<numb
     const { count, error } = await supabase
       .from('barberpro_clients')
       .select('*', { count: 'exact', head: true })
+      .neq('campaign_opt_out', true)
     if (error) throw new Error(error.message)
     return count || 0
   }
@@ -113,6 +114,7 @@ export async function getAudienceCount(audience: CampaignAudience): Promise<numb
       .from('barberpro_clients')
       .select('*', { count: 'exact', head: true })
       .not('club_plan', 'is', null)
+      .neq('campaign_opt_out', true)
     if (error) throw new Error(error.message)
     return count || 0
   }
@@ -120,8 +122,9 @@ export async function getAudienceCount(audience: CampaignAudience): Promise<numb
   if (audience === 'aniversariantes') {
     const { data, error } = await supabase
       .from('barberpro_clients')
-      .select('birth_date')
+      .select('birth_date, campaign_opt_out')
       .not('birth_date', 'is', null)
+      .neq('campaign_opt_out', true)
     if (error) throw new Error(error.message)
     const month = new Date().getMonth() + 1
     return (data || []).filter((c: any) => {
@@ -133,10 +136,17 @@ export async function getAudienceCount(audience: CampaignAudience): Promise<numb
   if (audience === 'recuperar') {
     const { getRecoverableClients } = await import('./supabase-client-stats')
     const list = await getRecoverableClients()
-    return list.length
+    return list.filter((c: any) => !c.campaign_opt_out).length
   }
 
   if (audience === 'vip') {
+    const { data: optOutData, error: optOutError } = await supabase
+      .from('barberpro_clients')
+      .select('id')
+      .eq('campaign_opt_out', true)
+    if (optOutError) throw new Error(optOutError.message)
+    const optOutIds = new Set((optOutData || []).map((c: any) => c.id))
+
     const { data, error } = await supabase
       .from('barberpro_appointments')
       .select('client_id, status')
@@ -144,7 +154,9 @@ export async function getAudienceCount(audience: CampaignAudience): Promise<numb
     if (error) throw new Error(error.message)
     const counts = new Map<string, number>()
     for (const a of data || []) {
-      counts.set(a.client_id, (counts.get(a.client_id) || 0) + 1)
+      if (!optOutIds.has(a.client_id)) {
+        counts.set(a.client_id, (counts.get(a.client_id) || 0) + 1)
+      }
     }
     return Array.from(counts.values()).filter((c) => c >= VIP_VISITS).length
   }
