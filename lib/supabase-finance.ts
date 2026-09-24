@@ -62,6 +62,7 @@ export interface ServiceTotal {
 export interface MonthFinance {
   walkIn: number // entradas dos atendimentos concluídos avulsos (sem clube)
   club: number // mensalidades lançadas
+  clubAddons: number // extras vendidos durante visitas do clube (ex: sobrancelha)
   expenses: number // despesas lançadas
   profit: number
   completed: number // atendimentos concluídos avulsos
@@ -69,6 +70,7 @@ export interface MonthFinance {
   expenseList: Expense[]
   clubList: ClubPayment[]
   walkInList: WalkInItem[]
+  clubAddonsList: WalkInItem[]
   daily: DailyPoint[]
   byCategory: CategoryTotal[]
   byService: ServiceTotal[]
@@ -104,7 +106,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     supabase
       .from('barberpro_appointments')
       .select(
-        'id, time, status, is_club_visit, barberpro_clients (name), barberpro_services!service_id (name, price)',
+        'id, time, status, is_club_visit, addon_price, barberpro_clients (name), barberpro_services!service_id (name, price)',
       )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`)
@@ -136,14 +138,16 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
       time: timeStr.slice(11, 16),
       client: a.barberpro_clients?.name || 'Cliente desconhecido',
       service: a.barberpro_services?.name || 'Serviço desconhecido',
-      price: Number(a.barberpro_services?.price || 0),
+      price: a.is_club_visit ? Number(a.addon_price || 0) : (Number(a.barberpro_services?.price || 0) + Number(a.addon_price || 0)),
       isClubVisit: !!a.is_club_visit,
     }
   })
 
   // Visitas do clube contam como atendimento, mas não geram receita aqui
   // (a receita delas já entrou quando a mensalidade foi paga)
+  // Exceção: extras vendidos na visita (ex: sobrancelha) geram receita separada
   const walkInList = allWalkIn.filter((w) => !w.isClubVisit)
+  const clubAddonsList = allWalkIn.filter((w) => w.isClubVisit && w.price > 0)
   const clubVisitsCount = allWalkIn.length - walkInList.length
 
   const expenseList: Expense[] = (exp.data || []).map((e: any) => ({
@@ -166,6 +170,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
 
   const walkIn = walkInList.reduce((sum, w) => sum + w.price, 0)
   const clubTotal = clubList.reduce((sum, c) => sum + c.amount, 0)
+  const clubAddonsTotal = clubAddonsList.reduce((sum, w) => sum + w.price, 0)
   const expenseTotal = expenseList.reduce((sum, e) => sum + e.amount, 0)
 
   // Valores dia a dia (entradas = avulso sem clube + mensalidades; saídas = despesas)
@@ -181,6 +186,10 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
   for (const c of clubList) {
     const p = daily[dayNumber(c.day) - 1]
     if (p) p.revenue += c.amount
+  }
+  for (const w of clubAddonsList) {
+    const p = daily[dayNumber(w.day) - 1]
+    if (p) p.revenue += w.price
   }
   for (const e of expenseList) {
     const p = daily[dayNumber(e.day) - 1]
@@ -211,13 +220,15 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
   return {
     walkIn,
     club: clubTotal,
+    clubAddons: clubAddonsTotal,
     expenses: expenseTotal,
-    profit: walkIn + clubTotal - expenseTotal,
+    profit: walkIn + clubTotal + clubAddonsTotal - expenseTotal,
     completed: walkInList.length,
     clubVisits: clubVisitsCount,
     expenseList,
     clubList,
     walkInList,
+    clubAddonsList,
     daily,
     byCategory,
     byService,

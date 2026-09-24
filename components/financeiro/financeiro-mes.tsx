@@ -630,7 +630,7 @@ export function FinanceiroMes() {
               <StatCard
                 label="Entradas"
                 value={currency.format(income)}
-                detail={`Avulso ${currency.format(data.walkIn)} · Clube ${currency.format(data.club)}`}
+                detail={`Avulso ${currency.format(data.walkIn)} · Clube ${currency.format(data.club)}${data.clubAddons > 0 ? ` · Extras ${currency.format(data.clubAddons)}` : ''}`}
                 icon={TrendingUp}
                 tone="bg-success/12 text-success"
               />
@@ -774,6 +774,33 @@ export function FinanceiroMes() {
                 </ul>
               )}
             </Panel>
+
+            {/* Extras vendidos em visitas do clube */}
+            {data.clubAddonsList.length > 0 && (
+              <Panel className="p-5">
+                <h2 className="mb-3 text-[15px] font-semibold tracking-tight">
+                  Extras do clube (serviços adicionais)
+                </h2>
+                <ul className="space-y-2">
+                  {data.clubAddonsList.map((w) => (
+                    <li
+                      key={w.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{w.client}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {shortDay(w.day)} às {w.time} · {w.service}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-success">
+                        + {currency.format(w.price)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            )}
 
             {/* Listas de lançamentos */}
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
