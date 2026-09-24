@@ -790,7 +790,7 @@ export function FinanceiroMes() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{w.client}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {shortDay(w.day)} às {w.time} · {w.service}
+                          {shortDay(w.day)} às {w.time} · {w.addonService ?? w.service}
                         </p>
                       </div>
                       <span className="shrink-0 text-sm font-semibold tabular-nums text-success">

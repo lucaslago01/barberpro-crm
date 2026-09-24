@@ -38,6 +38,8 @@ export interface WalkInItem {
   time: string // "14:30"
   client: string
   service: string
+  addonService: string | null
+  addonPrice: number
   price: number
   isClubVisit: boolean
 }
@@ -106,7 +108,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     supabase
       .from('barberpro_appointments')
       .select(
-        'id, time, status, is_club_visit, addon_price, barberpro_clients (name), barberpro_services!service_id (name, price)',
+        'id, time, status, is_club_visit, addon_price, barberpro_clients (name), barberpro_services!service_id (name, price), addon_service:barberpro_services!addon_service_id (name)',
       )
       .gte('time', `${startDay}T00:00:00`)
       .lt('time', `${endDay}T00:00:00`)
@@ -138,6 +140,8 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
       time: timeStr.slice(11, 16),
       client: a.barberpro_clients?.name || 'Cliente desconhecido',
       service: a.barberpro_services?.name || 'Serviço desconhecido',
+      addonService: a.addon_service?.name || null,
+      addonPrice: Number(a.addon_price || 0),
       price: a.is_club_visit ? Number(a.addon_price || 0) : (Number(a.barberpro_services?.price || 0) + Number(a.addon_price || 0)),
       isClubVisit: !!a.is_club_visit,
     }
@@ -205,13 +209,30 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     .map(([category, total]) => ({ category, total }))
     .sort((a, b) => b.total - a.total)
 
-  // Entradas avulsas por serviço (sem clube), maior primeiro
+  // Entradas por serviço (avulso: base + extra; clube: só o extra), maior primeiro
   const svcMap = new Map<string, { count: number; total: number }>()
   for (const w of walkInList) {
-    const cur = svcMap.get(w.service) || { count: 0, total: 0 }
+    const basePrice = w.price - w.addonPrice
+    if (basePrice > 0) {
+      const cur = svcMap.get(w.service) || { count: 0, total: 0 }
+      cur.count += 1
+      cur.total += basePrice
+      svcMap.set(w.service, cur)
+    }
+    if (w.addonPrice > 0) {
+      const name = w.addonService || 'Extra'
+      const cur = svcMap.get(name) || { count: 0, total: 0 }
+      cur.count += 1
+      cur.total += w.addonPrice
+      svcMap.set(name, cur)
+    }
+  }
+  for (const w of clubAddonsList) {
+    const name = w.addonService || 'Extra'
+    const cur = svcMap.get(name) || { count: 0, total: 0 }
     cur.count += 1
     cur.total += w.price
-    svcMap.set(w.service, cur)
+    svcMap.set(name, cur)
   }
   const byService: ServiceTotal[] = Array.from(svcMap.entries())
     .map(([name, v]) => ({ name, count: v.count, total: v.total }))
