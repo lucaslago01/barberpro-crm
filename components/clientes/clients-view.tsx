@@ -1071,6 +1071,7 @@ function ClientsTable() {
   const [viewingTab, setViewingTab] = useState<'info' | 'historico'>('info')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [deletingClient, setDeletingClient] = useState<SupabaseClient | null>(null)
+  const [deleteError, setDeleteError] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -1216,18 +1217,31 @@ function ClientsTable() {
             <p className="mb-5 text-sm text-muted-foreground">
               Tem certeza que deseja excluir <strong>{deletingClient.name}</strong>? Essa ação não pode ser desfeita.
             </p>
+            {deleteError && (
+              <p className="mb-4 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+                {deleteError}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setDeletingClient(null)}
+                onClick={() => {
+                  setDeleteError('')
+                  setDeletingClient(null)
+                }}
                 className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Cancelar
               </button>
               <button
                 onClick={async () => {
-                  await deleteClient(deletingClient.id)
-                  setDeletingClient(null)
-                  loadClients()
+                  setDeleteError('')
+                  try {
+                    await deleteClient(deletingClient.id)
+                    setDeletingClient(null)
+                    loadClients()
+                  } catch (e) {
+                    setDeleteError(e instanceof Error ? e.message : 'Não foi possível excluir o cliente.')
+                  }
                 }}
                 className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white hover:brightness-105"
               >

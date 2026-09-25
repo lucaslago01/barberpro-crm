@@ -275,13 +275,17 @@ export async function getClientAppointments(
 }
 
 export async function deleteClient(id: string): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('barberpro_clients')
     .delete()
     .eq('id', id)
+    .select('id')
 
   if (error) {
     throw new Error(`Erro ao excluir cliente: ${error.message}`)
+  }
+  if (!data || data.length === 0) {
+    throw new Error('Erro ao excluir cliente: o banco não removeu nenhum registro (verifique as permissões).')
   }
 
   notifyDataChanged()
