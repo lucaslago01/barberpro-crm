@@ -17,6 +17,7 @@ import {
   ChevronsUpDown,
   LogOut,
   UserRound,
+  Package,
   type LucideIcon,
 } from 'lucide-react'
 import { navItems } from '@/lib/data'
@@ -35,6 +36,7 @@ const iconMap: Record<string, LucideIcon> = {
   Megaphone,
   LineChart,
   Settings,
+  Package,
 }
 
 export function Sidebar() {

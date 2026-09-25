@@ -18,9 +18,13 @@ import {
   Wallet,
   CalendarClock,
   Repeat,
+  Package,
+  ShoppingBag,
   type LucideIcon,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Panel } from '@/components/dashboard/panel'
+import { getMonthProducts, type ProductsPeriod } from '@/lib/supabase-products'
 import { getClients } from '@/lib/supabase-data'
 import { markClubPaymentAndRecord, setClubSubscription } from '@/lib/supabase-club'
 import {
@@ -875,6 +879,147 @@ function DailyChart({ daily }: { daily: DailyPoint[] }) {
   )
 }
 
+/* ---------- Produtos: vendas, custo e lucro do mês ---------- */
+
+function ProductsSection({ products }: { products: ProductsPeriod }) {
+  const maxRevenue = products.top.length > 0 ? products.top[0].revenue : 0
+  const margin = products.sales > 0 ? Math.round((products.profit / products.sales) * 100) : 0
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Package className="size-[18px] shrink-0 text-gold" />
+          <h2 className="text-[15px] font-semibold tracking-tight">Produtos</h2>
+        </div>
+        <Link
+          href="/produtos"
+          className="text-xs font-medium text-gold hover:underline"
+        >
+          Abrir estoque e vendas
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard
+          label="Vendas"
+          value={currency.format(products.sales)}
+          detail={`${products.units} unidade(s) vendida(s)`}
+          icon={ShoppingBag}
+          tone="bg-success/12 text-success"
+        />
+        <StatCard
+          label="Custo"
+          value={currency.format(products.cost)}
+          detail="Custo médio dos produtos vendidos"
+          icon={Wallet}
+          tone="bg-danger/12 text-danger"
+        />
+        <StatCard
+          label="Perdas"
+          value={currency.format(products.losses)}
+          detail="Quebras e ajustes de estoque"
+          icon={TrendingDown}
+          tone="bg-white/5 text-muted-foreground"
+        />
+        <StatCard
+          label="Lucro"
+          value={currency.format(products.profit)}
+          detail={products.sales > 0 ? `Margem ${margin}%` : 'Sem vendas neste mês'}
+          icon={CircleDollarSign}
+          tone="bg-gold/12 text-gold"
+        />
+      </div>
+
+      {products.lowStock > 0 && (
+        <p className="text-xs text-gold">
+          {products.lowStock} produto(s) com estoque baixo ou zerado.{' '}
+          <Link href="/produtos" className="underline">
+            Ver estoque
+          </Link>
+        </p>
+      )}
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <Panel className="p-5">
+          <SectionTitle icon={ShoppingBag}>Produtos mais vendidos</SectionTitle>
+          {products.top.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma venda de produtos neste mês.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {products.top.map((t) => (
+                <li key={t.name}>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate font-medium">{t.name}</span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {t.units}x ·{' '}
+                      <span className="font-semibold text-foreground">
+                        {currency.format(t.revenue)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-gold"
+                      style={{ width: `${maxRevenue > 0 ? (t.revenue / maxRevenue) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Lucro {currency.format(t.profit)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel className="p-5">
+          <SectionTitle icon={Package} hint={`${products.saleList.length} venda(s)`}>
+            Vendas de produtos do mês
+          </SectionTitle>
+          {products.saleList.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma venda neste mês.
+            </p>
+          ) : (
+            <ExpandableList
+              items={products.saleList}
+              noun="vendas"
+              renderItem={(s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.03]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {s.quantity}x {s.product}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {shortDay(s.day)}
+                      {s.client ? ` · ${s.client}` : ''} · lucro {currency.format(s.profit)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-success">
+                    + {currency.format(s.revenue)}
+                  </span>
+                </li>
+              )}
+            />
+          )}
+        </Panel>
+      </div>
+
+      <p className="text-xs leading-snug text-muted-foreground">
+        Lucro por venda: preço de venda menos o custo médio do produto. Comprar estoque não entra
+        como despesa; pesa no lucro só quando o produto é vendido. Perdas e quebras entram como
+        custo.
+      </p>
+    </div>
+  )
+}
+
 /* ---------- Pagamentos futuros: despesas a pagar e renda prevista do clube ---------- */
 
 function OverdueBadge() {
@@ -887,6 +1032,7 @@ function OverdueBadge() {
 
 function FutureBills({
   data,
+  baseProfit,
   monthKey,
   currentKey,
   busyKey,
@@ -895,6 +1041,7 @@ function FutureBills({
   onRemoveRecurring,
 }: {
   data: MonthFinance
+  baseProfit: number // lucro do mês já com produtos
   monthKey: string
   currentKey: string
   busyKey: string | null
@@ -904,7 +1051,7 @@ function FutureBills({
 }) {
   const isPastMonth = monthKey < currentKey
   const canConfirmClub = monthKey === currentKey
-  const projectedProfit = data.profit + data.clubForecastTotal - data.pendingExpensesTotal
+  const projectedProfit = baseProfit + data.clubForecastTotal - data.pendingExpensesTotal
 
   const smallButton =
     'inline-flex h-9 shrink-0 items-center rounded-lg border border-gold/40 bg-gold/10 px-3 text-xs font-semibold text-gold transition-colors hover:bg-gold/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8'
@@ -1102,6 +1249,7 @@ export function FinanceiroMes() {
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [data, setData] = useState<MonthFinance | null>(null)
+  const [products, setProducts] = useState<ProductsPeriod | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -1120,8 +1268,15 @@ export function FinanceiroMes() {
       try {
         setLoading(true)
         setError(null)
-        const result = await getMonthFinance(year, month)
-        if (!cancelled) setData(result)
+        // Produtos nunca derrubam o Financeiro: sem as tabelas, a seção só não aparece
+        const [result, prod] = await Promise.all([
+          getMonthFinance(year, month),
+          getMonthProducts(year, month).catch(() => null),
+        ])
+        if (!cancelled) {
+          setData(result)
+          setProducts(prod)
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Erro ao carregar o financeiro')
@@ -1215,7 +1370,24 @@ export function FinanceiroMes() {
   })
   const monthLabel = monthLabelRaw.charAt(0).toUpperCase() + monthLabelRaw.slice(1)
 
-  const income = data ? data.walkIn + data.club : 0
+  // Produtos entram por lucro de venda: a venda é entrada, o custo do que foi vendido (e as perdas)
+  // é saída. Comprar estoque só pesa quando o produto é vendido.
+  const productsOn = products?.available === true
+  const productSales = productsOn ? products.sales : 0
+  const productOutflow = productsOn ? products.cost + products.losses : 0
+  const profit = data ? data.profit + (productsOn ? products.profit : 0) : 0
+  const income = data ? data.walkIn + data.club + productSales : 0
+  const outflow = data ? data.expenses + productOutflow : 0
+
+  const dailyView = useMemo(() => {
+    if (!data) return []
+    if (!productsOn) return data.daily
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return data.daily.map((d) => ({
+      ...d,
+      revenue: d.revenue + (products.dailySales[`${year}-${pad(month + 1)}-${pad(d.day)}`] || 0),
+    }))
+  }, [data, products, productsOn, year, month])
   const maxCategory = data && data.byCategory.length > 0 ? data.byCategory[0].total : 0
   const maxService = data && data.byService.length > 0 ? data.byService[0].total : 0
 
@@ -1329,11 +1501,16 @@ export function FinanceiroMes() {
                     <p
                       className={cn(
                         'mt-2 text-[40px] font-bold leading-none tracking-tight tabular-nums sm:text-5xl',
-                        data.profit < 0 && 'text-danger',
+                        profit < 0 && 'text-danger',
                       )}
                     >
-                      {currency.format(data.profit)}
+                      {currency.format(profit)}
                     </p>
+                    {productsOn && products.profit !== 0 && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Inclui {currency.format(products.profit)} de lucro em produtos
+                      </p>
+                    )}
                   </div>
 
                   {income > 0 && (
@@ -1344,10 +1521,10 @@ export function FinanceiroMes() {
                       <p
                         className={cn(
                           'mt-1 text-2xl font-bold leading-none tabular-nums',
-                          data.profit >= 0 ? 'text-success' : 'text-danger',
+                          profit >= 0 ? 'text-success' : 'text-danger',
                         )}
                       >
-                        {Math.round((data.profit / income) * 100)}%
+                        {Math.round((profit / income) * 100)}%
                       </p>
                     </div>
                   )}
@@ -1360,13 +1537,13 @@ export function FinanceiroMes() {
                       <div
                         className="h-full bg-success/80"
                         style={{
-                          width: `${Math.max(0, Math.min(100, ((income - data.expenses) / income) * 100))}%`,
+                          width: `${Math.max(0, Math.min(100, ((income - outflow) / income) * 100))}%`,
                         }}
                       />
                       <div
                         className="h-full bg-danger/80"
                         style={{
-                          width: `${Math.max(0, Math.min(100, (data.expenses / income) * 100))}%`,
+                          width: `${Math.max(0, Math.min(100, (outflow / income) * 100))}%`,
                         }}
                       />
                     </div>
@@ -1382,7 +1559,7 @@ export function FinanceiroMes() {
                         <TrendingDown className="size-4 text-danger" />
                         <span className="text-muted-foreground">Saídas</span>
                         <span className="font-semibold tabular-nums">
-                          {currency.format(data.expenses)}
+                          {currency.format(outflow)}
                         </span>
                       </span>
                     </div>
@@ -1440,8 +1617,12 @@ export function FinanceiroMes() {
               clube vem das mensalidades que você lança aqui.
             </p>
 
+            {/* Produtos: vendas, custo e lucro do mês */}
+            {productsOn && <ProductsSection products={products} />}
+
             {/* Pagamentos futuros */}
             <FutureBills
+              baseProfit={profit}
               data={data}
               monthKey={monthKey}
               currentKey={currentKey}
@@ -1452,7 +1633,7 @@ export function FinanceiroMes() {
             />
 
             {/* Gráfico */}
-            <DailyChart daily={data.daily} />
+            <DailyChart daily={dailyView} />
 
             {/* Por serviço e por categoria */}
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">

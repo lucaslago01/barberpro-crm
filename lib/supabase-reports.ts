@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { getClients } from './supabase-data'
 import { getClientStats } from './supabase-client-stats'
+import { getProductsPeriod } from './supabase-products'
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -74,7 +75,8 @@ export interface PeriodStats {
   total: number // agendamentos do período (todos os status)
   walkIn: number
   club: number
-  revenue: number // avulso (sem clube) + clube
+  products: number // vendas de produtos do período (já sem estornos); 0 se ainda não usa Produtos
+  revenue: number // avulso (sem clube) + clube + produtos
   avgTicket: number
   newClients: number
   byService: { name: string; count: number; total: number }[]
@@ -113,6 +115,10 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
   if (appts.error) throw new Error(`Erro ao buscar atendimentos: ${appts.error.message}`)
   if (club.error) throw new Error(`Erro ao buscar mensalidades: ${club.error.message}`)
   if (clients.error) throw new Error(`Erro ao buscar clientes: ${clients.error.message}`)
+
+  // Vendas de produtos: mesma fonte do Financeiro. Sem as tabelas, vira 0 e nada quebra.
+  const prod = await getProductsPeriod(startDay, endDay).catch(() => null)
+  const productSales = prod?.available ? prod.sales : 0
 
   const rows: any[] = appts.data || []
   const doneAll = rows.filter((a) => a.status === 'concluido')
@@ -191,8 +197,15 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     if (point) point.revenue += Number(c.amount || 0)
   }
 
+  if (prod?.available) {
+    for (const [day, value] of Object.entries(prod.dailySales)) {
+      const point = dailyMap.get(day)
+      if (point) point.revenue += value
+    }
+  }
+
   const scheduledForRate = doneAll.length + noShows
-  const revenue = walkIn + clubTotal
+  const revenue = walkIn + clubTotal + productSales
 
   return {
     completed: doneAll.length,
@@ -202,6 +215,7 @@ export async function getPeriodStats(p: Period): Promise<PeriodStats> {
     total: rows.length,
     walkIn,
     club: clubTotal,
+    products: productSales,
     revenue,
     avgTicket: done.length > 0 ? walkIn / done.length : 0,
     newClients: (clients.data || []).length,
