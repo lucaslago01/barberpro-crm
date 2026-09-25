@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { AppShell } from "@/components/dashboard/app-shell"
 import { KpiCards } from "@/components/dashboard/kpi-cards"
+import { TodayHero } from "@/components/dashboard/today-hero"
 import { Agenda } from "@/components/dashboard/agenda"
 import { MiniCalendar } from "@/components/dashboard/mini-calendar"
 import { Birthdays } from "@/components/dashboard/birthdays"
@@ -16,6 +17,8 @@ export default function Page() {
   return (
     <AppShell>
       <div className="space-y-5">
+        <TodayHero />
+
         <KpiCards />
 
         {/* Main two-column grid */}
