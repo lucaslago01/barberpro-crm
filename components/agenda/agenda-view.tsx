@@ -46,6 +46,13 @@ const dateFmt = new Intl.DateTimeFormat('pt-BR', {
   year: 'numeric',
 })
 
+const dateShortFmt = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
 function isSameDay(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -129,7 +136,7 @@ function EditAppointmentModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">Editar agendamento</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -197,7 +204,7 @@ function TimelineRow({
       <div className="flex w-12 shrink-0 flex-col items-end pt-3 sm:w-14">
         <span className="text-sm font-semibold tabular-nums">{slot.time}</span>
         {!slot.available && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="whitespace-nowrap text-[10px] text-muted-foreground">
             {slot.duration}
           </span>
         )}
@@ -237,8 +244,8 @@ function TimelineRow({
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <UserAvatar name={slot.client} size="sm" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0 flex-1 basis-32">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span
                     className={cn(
                       'font-medium',
@@ -253,10 +260,10 @@ function TimelineRow({
                   {slot.service} · {slot.duration}
                 </p>
               </div>
-              <span className="font-semibold tabular-nums">
+              <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums">
                 {currency.format(slot.price)}
               </span>
-              <div className="flex items-center gap-0.5">
+              <div className="flex basis-full items-center justify-between border-t border-border/60 pt-2 sm:basis-auto sm:justify-start sm:gap-0.5 sm:border-0 sm:pt-0">
                 <IconAction label="Editar" icon={Pencil} onClick={() => onEdit?.(slot)} />
                 <IconAction
                   label={
@@ -378,22 +385,23 @@ export function AgendaView({
       {/* Controls */}
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border border-border bg-background/40 px-1 py-1">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <div className="flex min-w-0 flex-1 items-center justify-between gap-1 rounded-lg border border-border bg-background/40 px-1 py-1 sm:flex-none">
               <button
                 aria-label="Dia anterior"
                 onClick={() => shiftDay(-1)}
-                className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <span className="whitespace-nowrap px-2 text-xs font-medium capitalize text-foreground">
-                {dateFmt.format(currentDate)}
+              <span className="min-w-0 truncate px-1 text-center text-xs font-medium capitalize text-foreground sm:px-2">
+                <span className="hidden sm:inline">{dateFmt.format(currentDate)}</span>
+                <span className="sm:hidden">{dateShortFmt.format(currentDate)}</span>
               </span>
               <button
                 aria-label="Próximo dia"
                 onClick={() => shiftDay(1)}
-                className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -401,7 +409,7 @@ export function AgendaView({
             <button
               onClick={() => setDate(new Date())}
               className={cn(
-                'rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+                'shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
                 isToday
                   ? 'border-gold/40 bg-gold/12 text-gold'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
@@ -413,7 +421,7 @@ export function AgendaView({
 
           <button
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:w-auto sm:py-2"
           >
             <Plus className="size-4" />
             Novo agendamento

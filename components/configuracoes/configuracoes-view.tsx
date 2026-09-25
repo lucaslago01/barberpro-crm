@@ -303,7 +303,7 @@ export function ConfiguracoesView() {
   return (
     <div className="space-y-5">
       {/* Tabs */}
-      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-border bg-card p-1.5">
+      <div className="flex gap-1.5 overflow-x-auto rounded-2xl border border-border bg-card p-1.5 scrollbar-thin [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible">
         {tabs.map((t) => {
           const Icon = t.icon
           const isActive = activeTab === t.key
@@ -313,7 +313,7 @@ export function ConfiguracoesView() {
               type="button"
               onClick={() => setActiveTab(t.key)}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
+                'inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-gold text-primary-foreground shadow-[0_8px_24px_-12px_rgba(212,175,55,0.6)]'
                   : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',

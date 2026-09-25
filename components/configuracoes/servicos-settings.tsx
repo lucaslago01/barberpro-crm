@@ -71,7 +71,7 @@ function ServiceModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">
             {service ? 'Editar serviço' : 'Novo serviço'}
@@ -240,17 +240,26 @@ export function ServicesSettings() {
           {services.map((s) => (
             <li
               key={s.id}
-              className="flex items-center gap-3 rounded-xl border border-border bg-background/30 px-4 py-3"
+              className="flex items-center gap-2.5 rounded-xl border border-border bg-background/30 px-3 py-3 sm:gap-3 sm:px-4"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold/12 text-gold">
                 <Scissors className="size-4" />
               </span>
-              <span className="flex-1 text-sm font-medium">{s.name}</span>
-              <span className="text-sm text-muted-foreground">{s.duration} min</span>
-              <span className="w-28 text-right text-sm font-semibold tabular-nums text-gold">
-                {s.price_from ? `A partir de ${currency.format(s.price)}` : currency.format(s.price)}
-              </span>
-              <div className="flex items-center gap-0.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{s.name}</p>
+                <p className="text-xs text-muted-foreground">{s.duration} min</p>
+              </div>
+              <div className="shrink-0 text-right">
+                {s.price_from && (
+                  <span className="block text-[10px] leading-none text-muted-foreground">
+                    A partir de
+                  </span>
+                )}
+                <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-gold">
+                  {currency.format(s.price)}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-0.5">
                 <button
                   onClick={() => openEdit(s)}
                   aria-label={`Editar ${s.name}`}
