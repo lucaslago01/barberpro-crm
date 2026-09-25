@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     description: "Escolha o serviço e reserve seu horário na FRAMES STUDIO de forma rápida e prática.",
     images: [
       {
-        url: "/og-agendar.jpg",
+        url: "/og-frames-studio.jpg",
         width: 1200,
         height: 630,
         alt: "FRAMES STUDIO — agende seu horário online",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Agendar horário | FRAMES STUDIO",
     description: "Escolha o serviço e reserve seu horário na FRAMES STUDIO de forma rápida e prática.",
-    images: ["/og-agendar.jpg"],
+    images: ["/og-frames-studio.jpg"],
   },
 }
 
