@@ -107,6 +107,13 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
           setReloadKey((k) => k + 1)
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_blocks' },
+        () => {
+          setReloadKey((k) => k + 1)
+        }
+      )
       .subscribe()
 
     return () => {
