@@ -152,6 +152,93 @@ function EditNotesModal({
   )
 }
 
+const statusLabel: Record<string, string> = {
+  concluido: 'Concluído',
+  faltou: 'Faltou',
+  cancelado: 'Cancelado',
+}
+
+function statusClass(status: string) {
+  if (status === 'concluido') return 'bg-success/12 text-success'
+  if (status === 'faltou') return 'bg-danger/12 text-danger'
+  if (status === 'cancelado') return 'bg-white/5 text-muted-foreground'
+  return 'bg-info/12 text-info'
+}
+
+// Versão em card do AttendanceRow, usada só no celular
+function AttendanceCard({
+  record,
+  onEdit,
+}: {
+  record: AttendanceRecord
+  onEdit: () => void
+}) {
+  return (
+    <li className="rounded-xl border border-border bg-background/30 p-3.5">
+      <div className="flex items-start gap-3">
+        <UserAvatar name={record.client} size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{record.client}</p>
+          <p className="truncate text-xs text-muted-foreground">{record.whatsapp}</p>
+        </div>
+        <span
+          className={cn(
+            'shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium',
+            statusClass(record.status),
+          )}
+        >
+          {statusLabel[record.status] ?? record.status}
+        </span>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-1.5 truncate text-sm">
+            <Scissors className="size-3.5 shrink-0 text-gold/70" />
+            {record.service}
+          </p>
+          <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+            {shortDay(record.day)} às {record.time} · {record.duration} min
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          {record.isClub ? (
+            <>
+              <p className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-400">
+                <Crown className="size-3.5" />
+                Clube
+              </p>
+              {record.price > 0 && (
+                <p className="text-xs font-semibold tabular-nums">
+                  + {currency.format(record.price)}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm font-semibold tabular-nums">
+              {currency.format(record.price)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {record.notes && (
+        <p className="mt-2 line-clamp-2 rounded-lg bg-white/[0.02] px-3 py-2 text-xs text-muted-foreground">
+          {record.notes}
+        </p>
+      )}
+
+      <button
+        onClick={onEdit}
+        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium text-foreground transition-colors hover:bg-white/5"
+      >
+        <Pencil className="size-4" />
+        {record.notes ? 'Editar observações' : 'Adicionar observações'}
+      </button>
+    </li>
+  )
+}
+
 function AttendanceRow({
   record,
   onEdit,
@@ -199,23 +286,11 @@ function AttendanceRow({
       <td className="py-3 pr-6">
         <span
           className={cn(
-            'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-            record.status === 'concluido'
-              ? 'bg-success/12 text-success'
-              : record.status === 'faltou'
-                ? 'bg-danger/12 text-danger'
-                : record.status === 'cancelado'
-                  ? 'bg-white/5 text-muted-foreground'
-                  : 'bg-info/12 text-info',
+            'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium',
+            statusClass(record.status),
           )}
         >
-          {record.status === 'concluido'
-            ? 'Concluído'
-            : record.status === 'faltou'
-              ? 'Faltou'
-              : record.status === 'cancelado'
-                ? 'Cancelado'
-                : record.status}
+          {statusLabel[record.status] ?? record.status}
         </span>
       </td>
       <td className="py-3 pr-4">
@@ -409,7 +484,7 @@ export function AtendimentosMes() {
         {/* Tabela */}
         <Panel>
           <div className="flex flex-wrap items-center gap-3 p-4">
-            <div className="relative min-w-[220px] flex-1">
+            <div className="relative min-w-[220px] basis-full sm:basis-auto sm:flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
@@ -434,7 +509,8 @@ export function AtendimentosMes() {
           {loading ? (
             <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -453,16 +529,24 @@ export function AtendimentosMes() {
                   ))}
                 </tbody>
               </table>
-
-              {filtered.length === 0 && (
-                <div className="grid place-items-center gap-2 py-16 text-center">
-                  <Scissors className="size-8 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum atendimento encontrado com esses filtros.
-                  </p>
-                </div>
-              )}
             </div>
+
+            {/* Celular: lista de cards */}
+            <ul className="space-y-2.5 px-3 pb-3 md:hidden">
+              {filtered.map((r) => (
+                <AttendanceCard key={r.id} record={r} onEdit={() => setEditingRecord(r)} />
+              ))}
+            </ul>
+
+            {filtered.length === 0 && (
+              <div className="grid place-items-center gap-2 py-16 text-center">
+                <Scissors className="size-8 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhum atendimento encontrado com esses filtros.
+                </p>
+              </div>
+            )}
+            </>
           )}
 
           {!loading && (
