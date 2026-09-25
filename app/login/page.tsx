@@ -22,7 +22,7 @@ export default function LoginPage() {
     if (cached) setBarbershopName(cached.barbershopName)
     getSettings()
       .then((s) => setBarbershopName(s.barbershopName))
-      .catch(() => setBarbershopName((n) => n || 'BarberPro'))
+      .catch(() => setBarbershopName((n) => n || 'FRAMES STUDIO'))
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {

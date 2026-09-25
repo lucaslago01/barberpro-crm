@@ -220,7 +220,7 @@ export function GeralSettings() {
               value={settings.barbershopName}
               onChange={(e) => update({ barbershopName: e.target.value })}
               className={inputClass}
-              placeholder="Ex.: BarberPro"
+              placeholder="Ex.: FRAMES STUDIO"
             />
           </Field>
           <Field label="Telefone / WhatsApp">

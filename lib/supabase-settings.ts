@@ -50,7 +50,7 @@ export async function getSettings(): Promise<BarbershopSettings> {
   }
 
   const result: BarbershopSettings = {
-    barbershopName: data.barbershop_name || 'BarberPro',
+    barbershopName: data.barbershop_name || 'FRAMES STUDIO',
     phone: data.phone || '',
     address: data.address || '',
     instagram: data.instagram || '',

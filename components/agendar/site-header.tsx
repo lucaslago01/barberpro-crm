@@ -16,7 +16,7 @@ export function SiteHeader() {
     const cached = getCachedSettings()
     if (cached) {
       setName(cached.barbershopName)
-      setInstagram(cached.instagram || '@barberpro')
+      setInstagram(cached.instagram || '@framesstudio')
       setPhone(cached.phone || '')
       setLogoUrl(cached.logoUrl)
       setReady(true)
@@ -24,13 +24,13 @@ export function SiteHeader() {
     getSettings()
       .then((s) => {
         setName(s.barbershopName)
-        setInstagram(s.instagram || '@barberpro')
+        setInstagram(s.instagram || '@framesstudio')
         setPhone(s.phone || '')
         setLogoUrl(s.logoUrl)
       })
       .catch(() => {
-        setName((n) => n || 'BarberPro')
-        setInstagram((i) => i || '@barberpro')
+        setName((n) => n || 'FRAMES STUDIO')
+        setInstagram((i) => i || '@framesstudio')
       })
       .finally(() => setReady(true))
   }, [])

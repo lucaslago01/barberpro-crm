@@ -1,4 +1,4 @@
-# BarberPro CRM
+# FRAMES STUDIO CRM
 
 CRM e agendamento online para barbearia. Next.js 16, React 19, TypeScript, Tailwind e Supabase.
 

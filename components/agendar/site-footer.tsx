@@ -27,7 +27,7 @@ export function SiteFooter() {
         setInstagram(s.instagram || '')
         setPhone(s.phone || '')
       })
-      .catch(() => setName((n) => n || 'BarberPro'))
+      .catch(() => setName((n) => n || 'FRAMES STUDIO'))
   }, [])
 
   const handle = instagram

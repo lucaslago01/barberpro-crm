@@ -1,4 +1,4 @@
--- BarberPro CRM — RLS e permissões
+-- FRAMES STUDIO CRM — RLS e permissões
 -- Rode no SQL Editor do Supabase (self-hosted). É idempotente.
 -- ANTES de rodar: confirme que o login do CRM (Supabase Auth) funciona.
 -- DEPOIS de rodar: teste (1) /agendar deslogado e (2) o CRM logado.

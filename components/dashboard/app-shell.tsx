@@ -53,7 +53,7 @@ export function AppShell({
     if (cached) setBarbershopName(cached.barbershopName)
     getSettings()
       .then((s) => setBarbershopName(s.barbershopName))
-      .catch(() => setBarbershopName((n) => n || 'BarberPro'))
+      .catch(() => setBarbershopName((n) => n || 'FRAMES STUDIO'))
 
     return () => {
       cancelled = true

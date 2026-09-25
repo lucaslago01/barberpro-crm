@@ -3,7 +3,7 @@ import '@fontsource-variable/playfair-display'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'BarberPro',
+  title: 'FRAMES STUDIO',
   description: 'Agendamentos e gestão da barbearia.',
   icons: {
     icon: [

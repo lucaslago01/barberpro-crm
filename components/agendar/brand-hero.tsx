@@ -38,7 +38,7 @@ export function BrandHero() {
         setAddress(s.address || "")
         setDescription(s.description || "")
       })
-      .catch(() => setName((n) => n || "BarberPro"))
+      .catch(() => setName((n) => n || "FRAMES STUDIO"))
       .finally(() => setReady(true))
 
     // Calculado no navegador, para usar o relógio de quem está vendo
