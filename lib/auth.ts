@@ -21,8 +21,10 @@ export async function getSession() {
 
 // Avisa quando a pessoa entra ou sai. Devolve uma função para parar de escutar.
 export function onAuthChange(callback: (loggedIn: boolean) => void) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(!!session)
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    // Só sai da tela num logout de verdade; oscilações de rede na renovação não derrubam o CRM.
+    if (event === 'SIGNED_OUT') callback(false)
+    else if (session) callback(true)
   })
   return () => data.subscription.unsubscribe()
 }

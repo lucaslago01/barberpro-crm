@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase'
 export interface AgendarService {
   id: string
   nome: string
@@ -42,11 +43,6 @@ function resolveImagem(nome: string): string {
 }
 
 export async function getServicesFromDB(): Promise<{ services: AgendarService[]; clubServices: AgendarService[] }> {
-  const { createClient } = await import('@supabase/supabase-js')
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
   const { data, error } = await supabase
     .from('barberpro_services')
     .select('id, name, duration, price, price_from')
