@@ -15,8 +15,17 @@ export async function signOut() {
 }
 
 export async function getSession() {
-  const { data } = await supabase.auth.getSession()
-  return data.session
+  const { data, error } = await supabase.auth.getSession()
+  if (data.session) return data.session
+  // Falha ao renovar o login (ex.: rede ainda acordando depois de a aba ficar em
+  // segundo plano ou o celular bloquear): espera um instante e tenta de novo antes
+  // de considerar a pessoa deslogada.
+  if (error) {
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    const retry = await supabase.auth.getSession()
+    return retry.data.session
+  }
+  return null
 }
 
 // Avisa quando a pessoa entra ou sai. Devolve uma função para parar de escutar.
