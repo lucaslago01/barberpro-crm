@@ -11,11 +11,13 @@ import {
   ShieldCheck,
   UserRound,
   Plus,
+  Ban,
   X,
   ChevronDown,
   type LucideIcon,
 } from 'lucide-react'
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { BlockPeriod } from '@/components/dashboard/block-period'
 import { ServicesSettings } from './servicos-settings'
 import { SecuritySettings } from './security-settings'
 import { GeralSettings } from './geral-settings'
@@ -189,6 +191,23 @@ function WorkingHours() {
   )
 }
 
+function BlockedDates() {
+  return (
+    <Panel className="p-5">
+      <PanelHeader
+        className="px-0 pt-0"
+        icon={<Ban className="size-[18px]" />}
+        title="Bloquear datas"
+      />
+      <p className="-mt-2 mb-4 text-sm text-muted-foreground">
+        Feche a agenda por vários dias, como férias, feriados ou viagem. O bloqueio vale
+        para a agenda do CRM e para o agendamento online.
+      </p>
+      <BlockPeriod />
+    </Panel>
+  )
+}
+
 /* ---------- Agendamento tab ---------- */
 
 function BookingSettings() {
@@ -282,7 +301,12 @@ function TabContent({ tab }: { tab: TabKey }) {
     case 'servicos':
       return <ServicesSettings />
     case 'horario':
-      return <WorkingHours />
+      return (
+        <div className="space-y-5">
+          <WorkingHours />
+          <BlockedDates />
+        </div>
+      )
     case 'agendamento':
       return <BookingSettings />
     case 'notificacoes':

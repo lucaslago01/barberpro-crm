@@ -18,6 +18,7 @@ import type { AgendarService } from "@/lib/agendar/services"
 import { formatPreco } from "@/lib/agendar/services"
 import { formatFullDate, isSameDay, startOfToday } from "@/lib/agendar/date-utils"
 import { isOpenDay } from "@/lib/business-hours"
+import { getBlockedRanges, isDayFullyBlocked, toDayString } from "@/lib/supabase-blocks"
 import { buildWhatsappUrl } from "@/components/dashboard/whatsapp-button"
 import { getCachedSettings, getSettings } from "@/lib/supabase-settings"
 import { InfoStrip } from "@/components/agendar/info-strip"
@@ -78,6 +79,21 @@ export function DateSelection({
 
   const isCurrentMonth =
     today.getFullYear() === year && today.getMonth() === month
+
+  // Dias do mês visível que estão bloqueados por inteiro (férias, feriado...)
+  const [blockedByDay, setBlockedByDay] = useState<
+    Map<string, { start_time: string; end_time: string }[]>
+  >(new Map())
+
+  useEffect(() => {
+    let cancelled = false
+    getBlockedRanges(new Date(year, month, 1), new Date(year, month + 1, 0)).then((map) => {
+      if (!cancelled) setBlockedByDay(map)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [year, month])
 
   function changeMonth(amount: number) {
     setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1))
@@ -147,7 +163,9 @@ export function DateSelection({
 
                 const dayDate = new Date(year, month, day)
                 const isPastDay = dayDate.getTime() < today.getTime()
-                const isClosed = !isOpenDay(dayDate)
+                const isClosed =
+                  !isOpenDay(dayDate) ||
+                  isDayFullyBlocked(dayDate, blockedByDay.get(toDayString(dayDate)) ?? [])
                 const isUnavailable = isPastDay || isClosed
                 const isSelected = selectedDate !== null && isSameDay(dayDate, selectedDate)
                 const isToday = isSameDay(dayDate, today)

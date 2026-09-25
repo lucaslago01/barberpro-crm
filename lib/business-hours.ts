@@ -21,8 +21,16 @@ export function isOpenDay(date: Date) {
   return HOURS[date.getDay()] !== null
 }
 
-// Horários do dia, ex.: ["09:00", "09:30", ..., "20:00"]. Vazio se estiver fechado.
-// O último horário é o próprio horário de fechamento.
+// Horário de fechamento do dia, ex.: "20:00". null se estiver fechado.
+// Usado como fim de um bloqueio de dia inteiro (o último horário agendável
+// começa 30 min antes dele).
+export function getDayCloseTime(date: Date): string | null {
+  const hours = HOURS[date.getDay()]
+  return hours ? `${pad(hours.close)}:00` : null
+}
+
+// Horários agendáveis do dia, ex.: ["09:00", "09:30", ..., "19:30"]. Vazio se estiver fechado.
+// O último horário começa SLOT_MINUTES antes do fechamento.
 export function getDaySlots(date: Date): string[] {
   const hours = HOURS[date.getDay()]
   if (!hours) return []

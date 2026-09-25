@@ -6,9 +6,11 @@ import {
   createBlock,
   deleteBlock,
   getBlocksByDay,
+  isDayFullyBlocked,
   type Block,
 } from '@/lib/supabase-blocks'
-import { getDaySlots, isOpenDay, SLOT_MINUTES } from '@/lib/business-hours'
+import { getDayCloseTime, getDaySlots, isOpenDay, SLOT_MINUTES } from '@/lib/business-hours'
+import { BlockPeriod } from './block-period'
 
 function addMinutes(time: string, minutes: number) {
   const [h, m] = time.split(':').map(Number)
@@ -40,15 +42,17 @@ export function BlocksModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [mode, setMode] = useState<'day' | 'period'>('day')
   const savingRef = useRef(false)
 
   const daySlots = getDaySlots(date)
   const open = isOpenDay(date)
 
-  // Inícios possíveis: todos os horários do dia (sem o último, que é o fechamento).
-  // Finais possíveis: cada horário + 30 min.
-  const startOptions = daySlots.slice(0, -1)
-  const endOptions = daySlots.slice(1)
+  // Inícios possíveis: todos os horários do dia.
+  // Finais possíveis: cada horário + 30 min, até o fechamento.
+  const closeTime = getDayCloseTime(date)
+  const startOptions = daySlots
+  const endOptions = closeTime ? [...daySlots.slice(1), closeTime] : []
 
   const dateLabel = date.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -56,13 +60,8 @@ export function BlocksModal({
     month: 'long',
   })
 
-  // O dia inteiro já está bloqueado se existe um bloqueio cobrindo do abre ao fecha
-  const wholeDayBlocked =
-    open &&
-    daySlots.length > 0 &&
-    blocks.some(
-      (b) => shortTime(b.start_time) === daySlots[0] && shortTime(b.end_time) === daySlots[daySlots.length - 1],
-    )
+  // O dia inteiro já está bloqueado se os bloqueios cobrem todos os horários do dia
+  const wholeDayBlocked = open && isDayFullyBlocked(date, blocks)
 
   useEffect(() => {
     let cancelled = false
@@ -121,7 +120,7 @@ export function BlocksModal({
       await createBlock({
         date,
         start: daySlots[0],
-        end: daySlots[daySlots.length - 1],
+        end: closeTime!,
         reason: reason.trim() || 'Fechado o dia todo',
       })
       setReason('')
@@ -162,8 +161,47 @@ export function BlocksModal({
             <X className="size-4" />
           </button>
         </div>
-        <p className="mb-4 text-xs capitalize text-muted-foreground">{dateLabel}</p>
+        <p className="mb-3 text-xs capitalize text-muted-foreground">{dateLabel}</p>
 
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg border border-border bg-background/40 p-1">
+          {(
+            [
+              ['day', 'Este dia'],
+              ['period', 'Vários dias'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setMode(key)
+                setError(null)
+              }}
+              className={
+                mode === key
+                  ? 'rounded-md bg-gold px-3 py-1.5 text-sm font-semibold text-primary-foreground'
+                  : 'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground'
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'period' ? (
+          <>
+            <BlockPeriod initialDate={date} onChanged={onChanged} />
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Fechar
+              </button>
+            </div>
+          </>
+        ) : (
+        <>
         {/* Bloqueios do dia */}
         <div className="mb-5">
           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -289,6 +327,8 @@ export function BlocksModal({
             </button>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   )
