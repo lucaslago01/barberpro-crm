@@ -96,19 +96,26 @@ function StatCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       {cards.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-2xl border border-border bg-card p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_16px_40px_-24px_rgba(0,0,0,0.7)] transition-colors hover:border-gold/30"
+          className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25 sm:p-5"
         >
-          <div className="flex items-center gap-3">
-            <span className={cn('grid size-11 place-items-center rounded-xl', toneMap[stat.tone])}>
-              <stat.icon className="size-5" />
+          <div className="flex items-center gap-2.5">
+            <span
+              className={cn(
+                'grid size-9 shrink-0 place-items-center rounded-xl',
+                toneMap[stat.tone],
+              )}
+            >
+              <stat.icon className="size-[18px]" />
             </span>
-            <p className="text-sm text-muted-foreground">{stat.label}</p>
+            <p className="min-w-0 text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
+              {stat.label}
+            </p>
           </div>
-          <p className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.7rem]">
+          <p className="mt-3 text-xl font-bold tracking-tight tabular-nums sm:text-2xl">
             {stat.value === undefined ? '-' : stat.value.toLocaleString('pt-BR')}
           </p>
         </div>
@@ -187,14 +194,88 @@ function CampaignRow({ campaign, onDelete }: { campaign: Campaign; onDelete: () 
   )
 }
 
+
+/* ---------- Campanha em card (celular) ---------- */
+
+function CampaignCard({
+  campaign,
+  onDelete,
+}: {
+  campaign: Campaign
+  onDelete: () => void
+}) {
+  const sendDate = new Date(campaign.sendAt)
+  return (
+    <li className="rounded-xl border border-border bg-background/30 p-3.5">
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold/12 text-gold">
+          <Send className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-sm font-semibold leading-snug">{campaign.name}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{campaign.message}</p>
+        </div>
+        <StatusBadge status={campaign.status} />
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg bg-white/[0.03] px-3 py-2.5 text-xs">
+        <div className="col-span-2">
+          <dt className="text-muted-foreground">Público</dt>
+          <dd className="mt-0.5 font-medium">{AUDIENCE_LABELS[campaign.audience]}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Envio</dt>
+          <dd className="mt-0.5 font-medium tabular-nums">
+            {sendDate.toLocaleDateString('pt-BR')} ·{' '}
+            {sendDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Enviadas</dt>
+          <dd className="mt-0.5 font-medium tabular-nums">
+            {campaign.sentCount.toLocaleString('pt-BR')}
+            {campaign.failedCount > 0 && (
+              <span className="ml-1 text-danger">
+                · {campaign.failedCount} falha{campaign.failedCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </dd>
+        </div>
+      </dl>
+
+      <button
+        onClick={onDelete}
+        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium text-muted-foreground transition-colors hover:border-danger/40 hover:text-danger"
+      >
+        <Trash2 className="size-4" />
+        Excluir campanha
+      </button>
+    </li>
+  )
+}
+
 /* ---------- New campaign modal ---------- */
 
 const audienceOptions: CampaignAudience[] = ['todos', 'clube', 'recuperar', 'vip', 'aniversariantes']
 
-function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [name, setName] = useState('')
-  const [message, setMessage] = useState('')
-  const [audience, setAudience] = useState<CampaignAudience>('todos')
+type CampaignPreset = {
+  name: string
+  message: string
+  audience: CampaignAudience
+}
+
+function NewCampaignModal({
+  onClose,
+  onCreated,
+  preset,
+}: {
+  onClose: () => void
+  onCreated: () => void
+  preset?: CampaignPreset | null
+}) {
+  const [name, setName] = useState(preset?.name ?? '')
+  const [message, setMessage] = useState(preset?.message ?? '')
+  const [audience, setAudience] = useState<CampaignAudience>(preset?.audience ?? 'todos')
   const [sendDate, setSendDate] = useState('')
   const [sendTime, setSendTime] = useState('09:00')
   const [audienceCount, setAudienceCount] = useState<number | null>(null)
@@ -357,33 +438,123 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
   )
 }
 
+
+/* ---------- Próxima campanha ---------- */
+
+function daysUntil(dateIso: string) {
+  const now = new Date()
+  const target = new Date(dateIso)
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const day = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+  return Math.round((day.getTime() - base.getTime()) / 86_400_000)
+}
+
+function whenLabel(dateIso: string) {
+  const d = daysUntil(dateIso)
+  if (d < 0) return `Atrasada ${Math.abs(d)} dia(s)`
+  if (d === 0) return 'Hoje'
+  if (d === 1) return 'Amanhã'
+  return `Em ${d} dias`
+}
+
+function NextCampaign({
+  campaigns,
+  loading,
+  onCreate,
+}: {
+  campaigns: Campaign[]
+  loading: boolean
+  onCreate: () => void
+}) {
+  const next = campaigns
+    .filter((c) => c.status === 'agendada')
+    .sort((a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime())[0]
+
+  const sendDate = next ? new Date(next.sendAt) : null
+
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-card">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-28 size-64 rounded-full bg-gold/10 blur-3xl"
+      />
+      <div className="relative p-5 sm:p-6">
+        <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <Send className="size-3.5 text-gold" />
+          Próxima campanha
+        </p>
+
+        {loading ? (
+          <div className="mt-3 h-16 w-full max-w-md animate-pulse rounded-xl bg-white/5" />
+        ) : next && sendDate ? (
+          <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="min-w-0">
+              <h2 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+                {next.name}
+              </h2>
+              <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{next.message}</p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Users className="size-3.5" />
+                  {AUDIENCE_LABELS[next.audience]}
+                </span>
+                <span className="inline-flex items-center gap-1.5 tabular-nums text-muted-foreground">
+                  <CalendarCheck className="size-3.5" />
+                  {sendDate.toLocaleDateString('pt-BR')} às{' '}
+                  {sendDate.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+            </div>
+
+            <span className="w-fit shrink-0 justify-self-start rounded-full bg-gold/12 px-3 py-1.5 text-sm font-semibold text-gold lg:justify-self-end">
+              {whenLabel(next.sendAt)}
+            </span>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Nenhuma campanha agendada
+              </h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Crie uma campanha para avisar seus clientes sobre promoções e horários livres.
+              </p>
+            </div>
+            <button
+              onClick={onCreate}
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-gold px-4 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+            >
+              <Plus className="size-4" />
+              Criar campanha
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 /* ---------- Campaigns table ---------- */
 
-function CampaignsTable() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+function CampaignsTable({
+  campaigns,
+  loading,
+  error,
+  onNew,
+  onDelete,
+}: {
+  campaigns: Campaign[]
+  loading: boolean
+  error: string | null
+  onNew: () => void
+  onDelete: (campaign: Campaign) => void
+}) {
   const [filter, setFilter] = useState<CampaignStatus | 'todas'>('todas')
   const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  async function load() {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await getCampaigns()
-      setCampaigns(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    load()
-  }, [])
 
   const counts = useMemo(() => {
     const c = { todas: campaigns.length, rascunho: 0, agendada: 0, concluida: 0 }
@@ -402,19 +573,6 @@ function CampaignsTable() {
     })
   }, [campaigns, filter, search])
 
-  async function handleDelete(id: string) {
-    if (deletingId) return
-    try {
-      setDeletingId(id)
-      await deleteCampaign(id)
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir campanha')
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
   const filters: { key: CampaignStatus | 'todas'; label: string }[] = [
     { key: 'todas', label: 'Todas' },
     { key: 'rascunho', label: 'Rascunhos' },
@@ -423,11 +581,8 @@ function CampaignsTable() {
   ]
 
   return (
-    <Panel>
-      {showModal && (
-        <NewCampaignModal onClose={() => setShowModal(false)} onCreated={load} />
-      )}
-
+    // min-w-0: item de grade tem min-width auto, e a tabela larga empurrava a coluna, cortando a lateral
+    <Panel className="min-w-0">
       <div className="flex flex-col gap-3 px-4 pt-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1.5">
           {filters.map((f) => (
@@ -455,22 +610,23 @@ function CampaignsTable() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="relative hidden sm:block">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               type="text"
               placeholder="Buscar campanhas..."
-              className="h-10 w-44 rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/40 sm:w-44"
             />
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={onNew}
             className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
           >
             <Plus className="size-4" />
-            Nova campanha
+            <span className="hidden sm:inline">Nova campanha</span>
+            <span className="sm:hidden">Nova</span>
           </button>
         </div>
       </div>
@@ -482,13 +638,19 @@ function CampaignsTable() {
       {error && <div className="p-8 text-center text-sm text-danger">Erro: {error}</div>}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="p-8 text-center text-sm text-muted-foreground">
-          Nenhuma campanha encontrada.
+        <div className="grid place-items-center gap-2 px-4 py-14 text-center">
+          <Send className="size-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            {campaigns.length === 0
+              ? 'Nenhuma campanha criada ainda.'
+              : 'Nenhuma campanha encontrada com esses filtros.'}
+          </p>
         </div>
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <div className="mt-2 overflow-x-auto">
+        <>
+        <div className="mt-2 hidden overflow-x-auto md:block">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -502,11 +664,19 @@ function CampaignsTable() {
             </thead>
             <tbody>
               {filtered.map((c) => (
-                <CampaignRow key={c.id} campaign={c} onDelete={() => handleDelete(c.id)} />
+                <CampaignRow key={c.id} campaign={c} onDelete={() => onDelete(c)} />
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* Celular: lista de cards */}
+        <ul className="space-y-2.5 p-3 md:hidden">
+          {filtered.map((c) => (
+            <CampaignCard key={c.id} campaign={c} onDelete={() => onDelete(c)} />
+          ))}
+        </ul>
+        </>
       )}
     </Panel>
   )
@@ -514,10 +684,49 @@ function CampaignsTable() {
 
 /* ---------- Suggested campaigns (ideias, sem dado real) ---------- */
 
-const suggestedCampaigns = [
-  { id: 's1', title: 'Recuperar clientes que não voltam há 30 dias', icon: 'Users', tone: 'gold' as const },
-  { id: 's2', title: 'Parabenizar aniversariantes do mês', icon: 'Crown', tone: 'gold' as const },
-  { id: 's3', title: 'Lembrar clientes do próximo corte', icon: 'CalendarCheck', tone: 'info' as const },
+const suggestedCampaigns: {
+  id: string
+  title: string
+  icon: string
+  tone: 'gold' | 'success' | 'info'
+  preset: CampaignPreset
+}[] = [
+  {
+    id: 's1',
+    title: 'Recuperar clientes que não voltam há 30 dias',
+    icon: 'Users',
+    tone: 'gold',
+    preset: {
+      name: 'Recuperar clientes parados',
+      audience: 'recuperar',
+      message:
+        'Oi, {nome}! Faz um tempo que você não passa aqui na barbearia. Bora marcar um horário? Me chama que eu encaixo você.',
+    },
+  },
+  {
+    id: 's2',
+    title: 'Parabenizar aniversariantes do mês',
+    icon: 'Crown',
+    tone: 'gold',
+    preset: {
+      name: 'Aniversariantes do mês',
+      audience: 'aniversariantes',
+      message:
+        'Parabéns, {nome}! Passa aqui esse mês para comemorar seu aniversário com um corte caprichado.',
+    },
+  },
+  {
+    id: 's3',
+    title: 'Lembrar clientes do próximo corte',
+    icon: 'CalendarCheck',
+    tone: 'info',
+    preset: {
+      name: 'Lembrete de corte',
+      audience: 'todos',
+      message:
+        'Oi, {nome}! Já está na hora de dar um trato no visual. Me chama para marcar o seu horário.',
+    },
+  },
 ]
 
 const suggestToneMap: Record<string, string> = {
@@ -526,7 +735,7 @@ const suggestToneMap: Record<string, string> = {
   info: 'bg-info/12 text-info',
 }
 
-function SuggestedCampaigns() {
+function SuggestedCampaigns({ onPick }: { onPick: (preset: CampaignPreset) => void }) {
   return (
     <Panel className="p-5">
       <PanelHeader
@@ -534,17 +743,30 @@ function SuggestedCampaigns() {
         icon={<Lightbulb className="size-[18px]" />}
         title="Campanhas sugeridas"
       />
+      <p className="-mt-2 mb-3 text-xs text-muted-foreground">
+        Toque para abrir a campanha já preenchida. Dá para ajustar antes de agendar.
+      </p>
       <ul className="space-y-2">
         {suggestedCampaigns.map((s) => {
           const Icon = iconMap[s.icon] ?? Users
           return (
             <li key={s.id}>
-              <div className="flex w-full items-center gap-3 rounded-xl border border-border bg-background/40 px-3 py-3 text-left">
-                <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', suggestToneMap[s.tone])}>
+              <button
+                type="button"
+                onClick={() => onPick(s.preset)}
+                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-background/40 px-3 py-3 text-left transition-colors hover:border-gold/30 hover:bg-white/[0.03]"
+              >
+                <span
+                  className={cn(
+                    'grid size-9 shrink-0 place-items-center rounded-lg',
+                    suggestToneMap[s.tone],
+                  )}
+                >
                   <Icon className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 text-sm font-medium leading-snug">{s.title}</span>
-              </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-gold" />
+              </button>
             </li>
           )
         })}
@@ -556,14 +778,109 @@ function SuggestedCampaigns() {
 /* ---------- Page ---------- */
 
 export function CampanhasView() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [preset, setPreset] = useState<CampaignPreset | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Campaign | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function load() {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getCampaigns()
+      setCampaigns(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  function openNew(next?: CampaignPreset) {
+    setPreset(next ?? null)
+    setShowModal(true)
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete || deletingId) return
+    const id = pendingDelete.id
+    setPendingDelete(null)
+    try {
+      setDeletingId(id)
+      await deleteCampaign(id)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir campanha')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="space-y-5">
+      {showModal && (
+        <NewCampaignModal
+          preset={preset}
+          onClose={() => {
+            setShowModal(false)
+            setPreset(null)
+          }}
+          onCreated={load}
+        />
+      )}
+
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+            <h3 className="mb-2 text-base font-semibold">Excluir campanha</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              A campanha sai da lista e não será enviada. Não dá para desfazer.
+            </p>
+            <div className="mb-5 rounded-lg border border-border bg-background/40 px-3 py-2">
+              <p className="truncate text-sm font-medium">{pendingDelete.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {AUDIENCE_LABELS[pendingDelete.audience]}
+              </p>
+            </div>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="h-11 rounded-lg border border-border px-3.5 text-sm text-muted-foreground hover:text-foreground sm:h-auto sm:py-2"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="h-11 rounded-lg bg-danger px-3.5 text-sm font-semibold text-white hover:brightness-105 sm:h-auto sm:py-2"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <NextCampaign campaigns={campaigns} loading={loading} onCreate={() => openNew()} />
+
       <StatCards />
 
       <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
-        <CampaignsTable />
+        <CampaignsTable
+          campaigns={campaigns}
+          loading={loading}
+          error={error}
+          onNew={() => openNew()}
+          onDelete={(c) => setPendingDelete(c)}
+        />
         <aside className="space-y-5">
-          <SuggestedCampaigns />
+          <SuggestedCampaigns onPick={(p) => openNew(p)} />
         </aside>
       </div>
     </div>
