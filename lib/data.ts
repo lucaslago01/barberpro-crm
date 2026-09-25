@@ -34,18 +34,6 @@ export type AgendaStatus =
   | 'cancelado'
   | 'faltou'
 
-export type AgendaSlot = {
-  id: string
-  time: string
-  client: string
-  service: string
-  duration: string
-  price: number
-  status: AgendaStatus
-  available?: boolean
-    notes?: string
-}
-
 export const agendaFilters: { key: AgendaStatus | 'todos'; label: string }[] = [
   { key: 'todos', label: 'Todos' },
   { key: 'agendado', label: 'Agendados' },

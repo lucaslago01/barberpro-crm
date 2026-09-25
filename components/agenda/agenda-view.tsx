@@ -20,9 +20,9 @@ import { RescheduleModal } from '@/components/dashboard/reschedule-modal'
 import { DaySummary } from './day-summary'
 import {
   agendaFilters,
-  type AgendaSlot,
   type AgendaStatus,
 } from '@/lib/data'
+import type { AgendaSlot } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 interface AgendaViewProps {
