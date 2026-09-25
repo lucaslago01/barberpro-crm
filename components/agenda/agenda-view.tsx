@@ -312,6 +312,61 @@ function TimelineRow({
   )
 }
 
+/* ---------- Confirmação de ação destrutiva ---------- */
+
+type PendingAction = { slot: AgendaSlot; status: Extract<AgendaStatus, 'cancelado' | 'faltou'> }
+
+function ConfirmStatusModal({
+  action,
+  onClose,
+  onConfirm,
+}: {
+  action: PendingAction
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const isCancel = action.status === 'cancelado'
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
+        <h3 className="mb-2 text-base font-semibold">
+          {isCancel ? 'Cancelar agendamento' : 'Marcar como faltou'}
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {isCancel
+            ? 'O horário volta a ficar livre na agenda.'
+            : 'O atendimento fica registrado como falta do cliente.'}
+        </p>
+
+        <div className="mb-5 rounded-lg border border-border bg-background/40 px-3 py-2">
+          <p className="text-sm font-medium">{action.slot.client}</p>
+          <p className="text-xs text-muted-foreground">
+            {action.slot.service} · {action.slot.time}
+          </p>
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            onClick={onClose}
+            className="h-11 rounded-lg border border-border px-3.5 text-sm text-muted-foreground hover:text-foreground sm:h-auto sm:py-2"
+          >
+            Voltar
+          </button>
+          <button
+            onClick={onConfirm}
+            className={cn(
+              'h-11 rounded-lg px-3.5 text-sm font-semibold text-white hover:brightness-105 sm:h-auto sm:py-2',
+              isCancel ? 'bg-danger' : 'bg-rose-500',
+            )}
+          >
+            {isCancel ? 'Cancelar agendamento' : 'Marcar como faltou'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ---------- Celular: card compacto ---------- */
 
 const statusLabel: Record<AgendaStatus, string> = {
@@ -598,6 +653,7 @@ export function AgendaView({
   const [creating, setCreating] = useState(false)
   const [creatingTime, setCreatingTime] = useState<string | undefined>()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const currentDate = dateProp ?? internalDate
   const isToday = isSameDay(currentDate, new Date())
@@ -626,6 +682,16 @@ export function AgendaView({
     return map
   }, [slots])
 
+  // Cancelar e faltou passam pela confirmação; os demais aplicam direto
+  function requestStatus(slot: AgendaSlot, status: AgendaStatus) {
+    if (status === 'cancelado' || status === 'faltou') {
+      setPendingAction({ slot, status })
+      return
+    }
+    setExpandedId(null)
+    onUpdateStatus?.(slot.id, status)
+  }
+
   const conflicts = useMemo(() => findConflicts(slots), [slots])
 
   const rows = useMemo(() => {
@@ -645,6 +711,18 @@ export function AgendaView({
           onClose={() => setEditingSlot(null)}
           onSave={async (notes) => {
             await onUpdateNotes?.(editingSlot.id, notes)
+          }}
+        />
+      )}
+
+      {pendingAction && (
+        <ConfirmStatusModal
+          action={pendingAction}
+          onClose={() => setPendingAction(null)}
+          onConfirm={() => {
+            onUpdateStatus?.(pendingAction.slot.id, pendingAction.status)
+            setPendingAction(null)
+            setExpandedId(null)
           }}
         />
       )}
@@ -783,20 +861,7 @@ export function AgendaView({
                     onToggle={() =>
                       setExpandedId((cur) => (cur === item.slot.id ? null : item.slot.id))
                     }
-                    onUpdateStatus={(id, status) => {
-                      if (
-                        (status === 'cancelado' || status === 'faltou') &&
-                        !window.confirm(
-                          status === 'cancelado'
-                            ? `Cancelar o agendamento de ${item.slot.client}?`
-                            : `Marcar ${item.slot.client} como faltou?`,
-                        )
-                      ) {
-                        return
-                      }
-                      setExpandedId(null)
-                      onUpdateStatus?.(id, status)
-                    }}
+                    onUpdateStatus={(_id, status) => requestStatus(item.slot, status)}
                     onEdit={(s) => setEditingSlot(s)}
                     onReschedule={(s) => setReschedulingSlot(s)}
                   />
@@ -810,7 +875,7 @@ export function AgendaView({
                   key={slot.id}
                   slot={slot}
                   last={i === rows.length - 1}
-                  onUpdateStatus={onUpdateStatus}
+                  onUpdateStatus={(_id, status) => requestStatus(slot, status)}
                   onEdit={(s) => setEditingSlot(s)}
                   onReschedule={(s) => setReschedulingSlot(s)}
                   onSchedule={(s) => {
