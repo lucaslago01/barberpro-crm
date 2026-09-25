@@ -282,6 +282,11 @@ export async function deleteClient(id: string): Promise<void> {
     .select('id')
 
   if (error) {
+    if (error.code === '23503' || /foreign key/i.test(error.message)) {
+      throw new Error(
+        'Este cliente tem agendamentos ou atendimentos registrados. Cancele ou exclua os agendamentos dele antes de excluir o cliente.',
+      )
+    }
     throw new Error(`Erro ao excluir cliente: ${error.message}`)
   }
   if (!data || data.length === 0) {
