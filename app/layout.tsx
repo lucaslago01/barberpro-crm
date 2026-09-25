@@ -3,6 +3,7 @@ import '@fontsource-variable/playfair-display'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://framesstudio.vercel.app'),
   title: 'FRAMES STUDIO',
   description: 'Agendamentos e gestão da barbearia.',
   icons: {
