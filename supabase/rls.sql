@@ -54,7 +54,7 @@ BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated', r.sig);
     -- Públicas (fluxo do cliente em /agendar):
     IF r.proname IN ('barberpro_booked_times','barberpro_client_lookup_by_phone',
-                     'barberpro_club_lookup','barberpro_create_public_appointment') THEN
+                     'barberpro_club_lookup','barberpro_create_appointment_v3') THEN
       EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', r.sig);
     ELSE
       EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM anon', r.sig);
