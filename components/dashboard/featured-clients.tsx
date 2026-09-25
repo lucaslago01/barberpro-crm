@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Panel, PanelHeader, SeeAll } from './panel'
+import { Panel, PanelEmpty, PanelHeader, PanelRowsSkeleton, SeeAll } from './panel'
 import { UserAvatar } from './user-avatar'
 import { ClientTagBadge } from './badges'
-import { WhatsappButton } from './whatsapp-button'
+import { WhatsappIconButton } from './whatsapp-button'
+import { cn } from '@/lib/utils'
 
 interface FeaturedClient {
   id: string
@@ -70,7 +71,7 @@ async function getFeaturedClients(): Promise<FeaturedClient[]> {
       id: c.id,
       name: c.name,
       phone: c.phone || null,
-      lastCut: new Date(last).toLocaleDateString('pt-BR'),
+      lastCut: new Date(last).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       frequency,
       tag,
       visits,
@@ -107,38 +108,69 @@ export function FeaturedClients() {
         title="Clientes em destaque"
         action={<SeeAll onClick={() => { window.location.href = '/clientes' }} />}
       />
-      <ul className="space-y-1 px-3 pb-3">
-        {loading && (
-          <li className="px-2 py-3 text-xs text-muted-foreground">Carregando...</li>
-        )}
-        {error && (
-          <li className="px-2 py-3 text-xs text-danger">{error}</li>
-        )}
-        {!loading && !error && clients.length === 0 && (
-          <li className="px-2 py-3 text-xs text-muted-foreground">Nenhum cliente ainda.</li>
-        )}
-        {!loading && clients.map((c) => (
-          <li
-            key={c.id}
-            className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]"
-          >
-            <UserAvatar name={c.name} size="lg" ring={c.tag === 'vip'} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold">{c.name}</p>
-                <ClientTagBadge tag={c.tag} />
+
+      {loading && <PanelRowsSkeleton />}
+
+      {!loading && error && (
+        <PanelEmpty icon={<Crown className="size-7" />}>{error}</PanelEmpty>
+      )}
+
+      {!loading && !error && clients.length === 0 && (
+        <PanelEmpty icon={<Crown className="size-7" />}>
+          Nenhum cliente com atendimento concluído ainda.
+        </PanelEmpty>
+      )}
+
+      {!loading && !error && clients.length > 0 && (
+        <ul className="space-y-1 px-3 pb-3">
+          {clients.map((c, i) => (
+            <li
+              key={c.id}
+              className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]"
+            >
+              {/* posição no ranking: o painel é um top 3 */}
+              <span
+                className={cn(
+                  'grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular-nums',
+                  i === 0
+                    ? 'bg-gold/15 text-gold'
+                    : 'bg-white/[0.06] text-muted-foreground',
+                )}
+              >
+                {i + 1}
+              </span>
+
+              <UserAvatar name={c.name} size="md" ring={c.tag === 'vip'} />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="min-w-0 truncate text-sm font-semibold">{c.name}</p>
+                  <span className="shrink-0 whitespace-nowrap">
+                    <ClientTagBadge tag={c.tag} />
+                  </span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {c.lastCut}
+                  {c.frequency !== '-' && ` · a cada ${c.frequency}`}
+                </p>
               </div>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                Último corte: {c.lastCut}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                Frequência: {c.frequency}
-              </p>
-            </div>
-            <WhatsappButton phone={c.phone} />
-          </li>
-        ))}
-      </ul>
+
+              {/* total de visitas: era calculado mas nunca aparecia */}
+              <div className="shrink-0 text-right">
+                <p className="text-sm font-bold leading-none tabular-nums">{c.visits}</p>
+                <p className="mt-0.5 text-[10px] leading-none text-muted-foreground">
+                  {c.visits === 1 ? 'visita' : 'visitas'}
+                </p>
+              </div>
+
+              <WhatsappIconButton
+                label={`Enviar WhatsApp para ${c.name}`}
+                phone={c.phone}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   )
 }

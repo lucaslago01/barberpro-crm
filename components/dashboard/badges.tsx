@@ -69,7 +69,7 @@ export function ClientTagBadge({ tag }: { tag: ClientTag }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
         tagConfig[tag],
       )}
     >
@@ -291,7 +291,7 @@ export function RecoverBadge({ status }: { status: RecoverStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
+        'inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
         recoverConfig[status],
       )}
     >
