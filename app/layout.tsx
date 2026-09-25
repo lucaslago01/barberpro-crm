@@ -1,10 +1,9 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import '@fontsource-variable/playfair-display'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'FRAMES STUDIO',
+  title: 'BarberPro',
   description: 'Agendamentos e gestão da barbearia.',
   icons: {
     icon: [
@@ -42,7 +41,6 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className="antialiased">
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
