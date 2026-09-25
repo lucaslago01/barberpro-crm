@@ -105,7 +105,7 @@ function IconAction({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors',
+        'grid size-10 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors sm:size-8',
         tones[tone],
         disabled && 'cursor-not-allowed opacity-30 hover:bg-transparent hover:text-muted-foreground',
       )}
@@ -188,12 +188,14 @@ function TimelineRow({
   onUpdateStatus,
   onEdit,
   onReschedule,
+  onSchedule,
 }: {
   slot: AgendaSlot
   last: boolean
   onUpdateStatus?: (id: string, status: AgendaStatus) => void
   onEdit?: (slot: AgendaSlot) => void
   onReschedule?: (slot: AgendaSlot) => void
+  onSchedule?: (slot: AgendaSlot) => void
 }) {
   const muted = slot.status === 'cancelado' || slot.status === 'faltou'
   const canReschedule = slot.status === 'agendado' || slot.status === 'confirmado'
@@ -229,7 +231,10 @@ function TimelineRow({
               <Clock className="size-4" />
               Horário disponível
             </span>
-            <button className="inline-flex items-center gap-1 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-1.5 text-xs font-medium text-gold transition-colors hover:bg-gold/20">
+            <button
+              onClick={() => onSchedule?.(slot)}
+              className="inline-flex items-center gap-1 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-xs font-medium text-gold transition-colors hover:bg-gold/20"
+            >
               <Plus className="size-3.5" />
               Agendar
             </button>
@@ -318,6 +323,7 @@ export function AgendaView({
   const [editingSlot, setEditingSlot] = useState<AgendaSlot | null>(null)
   const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
+  const [creatingTime, setCreatingTime] = useState<string | undefined>()
 
   const currentDate = dateProp ?? internalDate
   const isToday = isSameDay(currentDate, new Date())
@@ -368,7 +374,11 @@ export function AgendaView({
       {creating && (
         <NewAppointmentModal
           initialDate={currentDate}
-          onClose={() => setCreating(false)}
+          initialTime={creatingTime}
+          onClose={() => {
+            setCreating(false)
+            setCreatingTime(undefined)
+          }}
           onCreated={() => onReload?.()}
         />
       )}
@@ -420,7 +430,10 @@ export function AgendaView({
           </div>
 
           <button
-            onClick={() => setCreating(true)}
+            onClick={() => {
+              setCreatingTime(undefined)
+              setCreating(true)
+            }}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:w-auto sm:py-2"
           >
             <Plus className="size-4" />
@@ -477,6 +490,10 @@ export function AgendaView({
                   onUpdateStatus={onUpdateStatus}
                   onEdit={(s) => setEditingSlot(s)}
                   onReschedule={(s) => setReschedulingSlot(s)}
+                  onSchedule={(s) => {
+                    setCreatingTime(s.time)
+                    setCreating(true)
+                  }}
                 />
               ))}
             </ol>

@@ -87,7 +87,7 @@ export function AppShell({
           />
           <div
             className={cn(
-              'absolute inset-y-0 left-0 w-64 border-r border-sidebar-border shadow-2xl',
+              'absolute inset-y-0 left-0 w-[80vw] max-w-72 border-r border-sidebar-border shadow-2xl',
             )}
           >
             <button
@@ -112,7 +112,7 @@ export function AppShell({
             action={headerAction}
           />
           <main className="mt-6">{children}</main>
-          <footer className="mt-8 flex items-center justify-between border-t border-border py-4 text-[11px] tracking-[0.2em] text-muted-foreground/60">
+          <footer className="mt-8 flex flex-col items-center gap-1 border-t border-border py-4 text-center text-[10px] tracking-[0.2em] text-muted-foreground/60 sm:flex-row sm:justify-between sm:text-[11px]">
             <span className="font-serif font-semibold">{barbershopName.toUpperCase()}</span>
             <span>MAIS QUE UM CORTE, UMA EXPERIÊNCIA.</span>
           </footer>
