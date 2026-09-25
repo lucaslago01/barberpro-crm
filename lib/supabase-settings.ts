@@ -65,16 +65,16 @@ export async function getSettings(): Promise<BarbershopSettings> {
 }
 
 export async function updateSettings(
-  settings: Omit<BarbershopSettings, 'logoUrl'>,
+  settings: Partial<Omit<BarbershopSettings, 'logoUrl'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('barberpro_settings')
     .update({
-      barbershop_name: settings.barbershopName,
-      phone: settings.phone,
-      address: settings.address,
-      instagram: settings.instagram,
-      description: settings.description,
+      ...(settings.barbershopName !== undefined && { barbershop_name: settings.barbershopName }),
+      ...(settings.phone !== undefined && { phone: settings.phone }),
+      ...(settings.address !== undefined && { address: settings.address }),
+      ...(settings.instagram !== undefined && { instagram: settings.instagram }),
+      ...(settings.description !== undefined && { description: settings.description }),
       ...(settings.msgBoasVindas !== undefined && { msg_boas_vindas: settings.msgBoasVindas }),
       ...(settings.msgAniversario !== undefined && { msg_aniversario: settings.msgAniversario }),
       ...(settings.msgLembrete !== undefined && { msg_lembrete: settings.msgLembrete }),

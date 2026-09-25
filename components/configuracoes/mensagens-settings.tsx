@@ -82,11 +82,6 @@ export function MensagensSettings() {
       setSaving(true)
       setError(null)
       await updateSettings({
-        barbershopName: '',
-        phone: '',
-        address: '',
-        instagram: '',
-        description: '',
         msgBoasVindas: values.msg_boas_vindas,
         msgAniversario: values.msg_aniversario,
         msgLembrete: values.msg_lembrete,

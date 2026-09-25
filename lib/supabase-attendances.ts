@@ -9,7 +9,7 @@ export interface AttendanceRecord {
   day: string // "2026-09-21"
   time: string // "14:30"
   duration: number
-  price: number // 0 se for atendimento do clube
+  price: number // clube: só o addon; demais: serviço + addon
   status: string
   isClub: boolean
   notes: string
@@ -31,7 +31,7 @@ export async function getAttendances(
   let query = supabase
     .from('barberpro_appointments')
     .select(
-      'id, time, status, is_club_visit, notes, barberpro_clients (name, phone), barberpro_services!service_id (name, duration, price)',
+      'id, time, status, is_club_visit, addon_price, notes, barberpro_clients (name, phone), barberpro_services!service_id (name, duration, price), addon_service:barberpro_services!addon_service_id (name)',
     )
     .gte('time', `${startDay}T00:00:00`)
     .lt('time', `${endDay}T00:00:00`)
@@ -57,7 +57,7 @@ export async function getAttendances(
       day: timeStr.slice(0, 10),
       time: timeStr.slice(11, 16),
       duration: Number(a.barberpro_services?.duration || 0),
-      price: a.is_club_visit ? 0 : Number(a.barberpro_services?.price || 0),
+      price: a.is_club_visit ? Number(a.addon_price || 0) : Number(a.barberpro_services?.price || 0) + Number(a.addon_price || 0),
       status: a.status,
       isClub: !!a.is_club_visit,
       notes: a.notes || '',

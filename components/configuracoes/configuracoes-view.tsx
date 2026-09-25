@@ -459,13 +459,6 @@ function TabContent({ tab }: { tab: TabKey }) {
 
 export function ConfiguracoesView() {
   const [activeTab, setActiveTab] = useState<TabKey>('geral')
-  const [saved, setSaved] = useState(false)
-
-  function handleSave() {
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 2500)
-  }
-
   return (
     <div className="space-y-5">
       {/* Tabs */}
@@ -493,30 +486,6 @@ export function ConfiguracoesView() {
       </div>
 
       <TabContent tab={activeTab} />
-
-      {/* Actions */}
-      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
-        {saved && (
-          <span className="mr-auto inline-flex items-center gap-1.5 rounded-full bg-success/12 px-3 py-1.5 text-sm font-medium text-success">
-            <Check className="size-4" />
-            Alterações salvas com sucesso
-          </span>
-        )}
-        <button
-          type="button"
-          className="inline-flex h-10 items-center rounded-xl border border-border bg-background/40 px-5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-gold px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
-        >
-          <Check className="size-4" />
-          Salvar alterações
-        </button>
-      </div>
     </div>
   )
 }

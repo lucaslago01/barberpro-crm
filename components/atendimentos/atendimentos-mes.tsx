@@ -188,6 +188,9 @@ function AttendanceRow({
           <span className="inline-flex items-center gap-1 text-emerald-400">
             <Crown className="size-3.5" />
             Clube
+            {record.price > 0 && (
+              <span className="ml-1 text-foreground">+ {currency.format(record.price)}</span>
+            )}
           </span>
         ) : (
           currency.format(record.price)
@@ -541,7 +544,7 @@ export function AtendimentosMes() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.client}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {r.service} · {r.isClub ? 'Clube' : currency.format(r.price)}
+                        {r.service} · {r.isClub ? (r.price > 0 ? `Clube + ${currency.format(r.price)}` : 'Clube') : currency.format(r.price)}
                       </p>
                     </div>
                     <span className="shrink-0 text-[11px] text-muted-foreground">
