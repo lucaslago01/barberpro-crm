@@ -16,6 +16,7 @@ export const navItems: NavItem[] = [
   { label: 'Agenda', icon: 'CalendarDays', href: '/agenda' },
   { label: 'Clientes', icon: 'Users', href: '/clientes' },
   { label: 'Atendimentos', icon: 'Scissors', href: '/atendimentos' },
+  { label: 'Produtos', icon: 'Package', href: '/produtos' },
   { label: 'Financeiro', icon: 'CircleDollarSign', href: '/financeiro' },
   { label: 'Campanhas', icon: 'Megaphone', href: '/campanhas' },
   { label: 'Relatórios', icon: 'LineChart', href: '/relatorios' },

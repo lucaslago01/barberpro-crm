@@ -193,6 +193,11 @@ function PeriodHero({
             <div className="mt-2.5">
               <Delta current={stats.revenue} previous={prevStats.revenue} />
             </div>
+            {stats.products > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Inclui {currency.format(stats.products)} em vendas de produtos
+              </p>
+            )}
           </div>
 
           <div className="text-left sm:text-right">
