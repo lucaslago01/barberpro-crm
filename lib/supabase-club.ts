@@ -138,6 +138,34 @@ export async function markClubPaymentAndRecord(
     amount,
   })
 }
+// Cadastra ou renova a assinatura do clube de um cliente pelo mesmo caminho do restante do CRM:
+// plano e vencimento ficam no cliente (é o que Clientes, o /agendar e a previsão do Financeiro leem)
+// e, se já foi pago, a mensalidade entra em barberpro_club_payments (é o que Financeiro e Relatórios somam).
+// Sem "payment", só agenda o vencimento: nada entra na receita até o pagamento ser confirmado.
+export async function setClubSubscription(params: {
+  clientId: string
+  plan: string
+  dueDate: string // "2026-10-21"
+  payment?: { day: string; amount: number; note?: string }
+}): Promise<void> {
+  const { error } = await supabase
+    .from('barberpro_clients')
+    .update({ club_plan: params.plan, club_due_date: params.dueDate })
+    .eq('id', params.clientId)
+
+  if (error) throw new Error(`Erro ao salvar a assinatura: ${error.message}`)
+
+  if (params.payment) {
+    await createClubPayment({
+      day: params.payment.day,
+      client_id: params.clientId,
+      plan: params.plan,
+      amount: params.payment.amount,
+      note: params.payment.note,
+    })
+  }
+}
+
 export interface ClubLookupResult {
   found: boolean
   plan: string | null
