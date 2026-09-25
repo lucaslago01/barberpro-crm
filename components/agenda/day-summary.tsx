@@ -19,6 +19,42 @@ const currency = new Intl.NumberFormat('pt-BR', {
 // Horários que o cliente pode escolher no dia (grade das 09:00 às 18:30, sem almoço e sem 18:30)
 const BOOKABLE_SLOTS = 15
 
+// Versão enxuta para o celular: uma faixa com o que o barbeiro quer ver primeiro
+export function DaySummaryCompact({ slots = [] }: { slots?: AgendaSlot[] }) {
+  const active = slots.filter((a) => !a.available)
+  const expected = active
+    .filter((a) => a.status !== 'cancelado' && a.status !== 'faltou')
+    .reduce((sum, a) => sum + a.price, 0)
+  const realized = active
+    .filter((a) => a.status === 'concluido')
+    .reduce((sum, a) => sum + a.price, 0)
+  const done = active.filter((a) => a.status === 'concluido').length
+  const total = active.filter((a) => a.status !== 'cancelado').length
+
+  const items = [
+    { label: 'Atendidos', value: `${done}/${total}`, tone: 'text-foreground' },
+    { label: 'Previsto', value: currency.format(expected), tone: 'text-foreground' },
+    { label: 'Realizado', value: currency.format(realized), tone: 'text-success' },
+  ]
+
+  return (
+    <Panel className="md:hidden">
+      <div className="grid grid-cols-3 divide-x divide-border">
+        {items.map((i) => (
+          <div key={i.label} className="min-w-0 px-3 py-3 text-center">
+            <p className={cn('truncate text-sm font-bold tabular-nums', i.tone)}>
+              {i.value}
+            </p>
+            <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              {i.label}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  )
+}
+
 export function DaySummary({ slots = [] }: { slots?: AgendaSlot[] }) {
   const expected = slots
     .filter((a) => a.status !== 'cancelado' && a.status !== 'faltou')
