@@ -19,17 +19,19 @@ export function UserAvatar({
   size = 'md',
   ring = false,
   className,
+  src,
 }: {
   name: string
   size?: keyof typeof sizes
   ring?: boolean
   className?: string
+  src?: string | null
 }) {
   const unknown = !name || name.toLowerCase().includes('cliente novo')
   return (
     <div
       className={cn(
-        'grid shrink-0 place-items-center rounded-full bg-secondary font-semibold text-muted-foreground select-none',
+        'grid shrink-0 place-items-center overflow-hidden rounded-full bg-secondary font-semibold text-muted-foreground select-none',
         'bg-gradient-to-br from-secondary to-accent',
         ring && 'ring-2 ring-gold/60 ring-offset-2 ring-offset-card',
         sizes[size],
@@ -37,7 +39,14 @@ export function UserAvatar({
       )}
       aria-hidden="true"
     >
-      {unknown ? '?' : initials(name)}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="size-full object-cover" />
+      ) : unknown ? (
+        '?'
+      ) : (
+        initials(name)
+      )}
     </div>
   )
 }

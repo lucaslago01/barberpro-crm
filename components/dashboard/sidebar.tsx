@@ -44,6 +44,7 @@ export function Sidebar() {
   const [barbershopName, setBarbershopName] = useState('')
   const [ready, setReady] = useState(false)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
     getSession().then((session) => {
@@ -53,12 +54,14 @@ export function Sidebar() {
     if (cached) {
       setBarbershopName(cached.barbershopName)
       setLogoUrl(cached.logoUrl)
+      setAvatarUrl(cached.avatarUrl ?? null)
       setReady(true)
     }
     getSettings()
       .then((s) => {
         setBarbershopName(s.barbershopName)
         setLogoUrl(s.logoUrl)
+        setAvatarUrl(s.avatarUrl ?? null)
       })
       .catch(() => {})
       .finally(() => setReady(true))
@@ -144,7 +147,7 @@ export function Sidebar() {
       {/* Profile */}
       <div className="border-t border-sidebar-border p-3">
         <div className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left">
-          <UserAvatar name={userEmail || 'Usuário'} size="md" ring />
+          <UserAvatar name={userEmail || 'Usuário'} size="md" ring src={avatarUrl} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">
               {userEmail ? userEmail.split('@')[0] : 'Usuário'}

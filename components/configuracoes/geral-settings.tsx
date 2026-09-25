@@ -7,6 +7,7 @@ import {
   getSettings,
   updateSettings,
   uploadLogo,
+  uploadAvatar,
   type BarbershopSettings,
 } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
@@ -114,6 +115,33 @@ export function GeralSettings() {
     }
   }
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Escolha um arquivo de imagem (PNG, JPG, etc.).')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('A imagem precisa ter no máximo 2 MB.')
+      return
+    }
+    setError(null)
+    setUploadingAvatar(true)
+    try {
+      const url = await uploadAvatar(file)
+      update({ avatarUrl: url })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao enviar a foto')
+    } finally {
+      setUploadingAvatar(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
+
   if (loading) {
     return (
       <Panel className="p-5">
@@ -164,6 +192,26 @@ export function GeralSettings() {
             <Upload className="size-3.5 text-gold" />
             {uploading ? 'Enviando...' : 'Alterar logo'}
           </button>
+          <div className="mt-2 flex flex-col items-center gap-2 border-t border-border pt-4">
+            <div className="grid size-16 place-items-center overflow-hidden rounded-full border border-border bg-background/40 text-[10px] text-muted-foreground">
+              {settings.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={settings.avatarUrl} alt="Foto de perfil" className="size-full object-cover" />
+              ) : (
+                'Sem foto'
+              )}
+            </div>
+            <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background/40 px-3 text-xs font-medium text-foreground transition-colors hover:border-gold/40 disabled:opacity-60"
+            >
+              <Upload className="size-3.5 text-gold" />
+              {uploadingAvatar ? 'Enviando...' : 'Foto de perfil'}
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 space-y-3.5">

@@ -7,6 +7,7 @@ export interface BarbershopSettings {
   instagram: string
   description: string
   logoUrl: string | null
+  avatarUrl?: string | null
   msgBoasVindas?: string
   msgAniversario?: string
   msgLembrete?: string
@@ -40,7 +41,7 @@ function mergeCache(patch: Partial<BarbershopSettings>) {
 export async function getSettings(): Promise<BarbershopSettings> {
   const { data, error } = await supabase
     .from('barberpro_settings')
-    .select('barbershop_name, phone, address, instagram, description, logo_url, msg_boas_vindas, msg_aniversario, msg_lembrete, msg_opt_out')
+    .select('barbershop_name, phone, address, instagram, description, logo_url, avatar_url, msg_boas_vindas, msg_aniversario, msg_lembrete, msg_opt_out')
     .eq('id', 1)
     .single()
 
@@ -55,6 +56,7 @@ export async function getSettings(): Promise<BarbershopSettings> {
     instagram: data.instagram || '',
     description: data.description || '',
     logoUrl: data.logo_url || null,
+    avatarUrl: data.avatar_url || null,
     msgBoasVindas: data.msg_boas_vindas || '',
     msgAniversario: data.msg_aniversario || '',
     msgLembrete: data.msg_lembrete || '',
@@ -65,7 +67,7 @@ export async function getSettings(): Promise<BarbershopSettings> {
 }
 
 export async function updateSettings(
-  settings: Partial<Omit<BarbershopSettings, 'logoUrl'>>,
+  settings: Partial<Omit<BarbershopSettings, 'logoUrl' | 'avatarUrl'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('barberpro_settings')
@@ -89,10 +91,9 @@ export async function updateSettings(
   mergeCache(settings)
 }
 
-// Envia a imagem para o Supabase Storage e grava o link no banco.
-export async function uploadLogo(file: File): Promise<string> {
+async function uploadImage(file: File, prefix: string): Promise<string> {
   const ext = file.name.split('.').pop() || 'png'
-  const path = `logo-${Date.now()}.${ext}`
+  const path = `${prefix}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await supabase.storage
     .from('barbershop-assets')
@@ -106,7 +107,12 @@ export async function uploadLogo(file: File): Promise<string> {
     .from('barbershop-assets')
     .getPublicUrl(path)
 
-  const publicUrl = publicUrlData.publicUrl
+  return publicUrlData.publicUrl
+}
+
+// Envia a logo para o Supabase Storage e grava o link no banco.
+export async function uploadLogo(file: File): Promise<string> {
+  const publicUrl = await uploadImage(file, 'logo')
 
   const { error: updateError } = await supabase
     .from('barberpro_settings')
@@ -118,6 +124,24 @@ export async function uploadLogo(file: File): Promise<string> {
   }
 
   mergeCache({ logoUrl: publicUrl })
+
+  return publicUrl
+}
+
+// Envia a foto de perfil do barbeiro e grava o link no banco.
+export async function uploadAvatar(file: File): Promise<string> {
+  const publicUrl = await uploadImage(file, 'avatar')
+
+  const { error: updateError } = await supabase
+    .from('barberpro_settings')
+    .update({ avatar_url: publicUrl })
+    .eq('id', 1)
+
+  if (updateError) {
+    throw new Error(`Erro ao salvar a foto: ${updateError.message}`)
+  }
+
+  mergeCache({ avatarUrl: publicUrl })
 
   return publicUrl
 }
