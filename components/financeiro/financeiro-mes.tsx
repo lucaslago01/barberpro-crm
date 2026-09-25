@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { Panel } from '@/components/dashboard/panel'
 import { getClients } from '@/lib/supabase-data'
-import { markClubPaymentAndRecord } from '@/lib/supabase-club'
+import { markClubPaymentAndRecord, setClubSubscription } from '@/lib/supabase-club'
 import {
   CLUB_PLANS,
   EXPENSE_CATEGORIES,
@@ -61,6 +61,59 @@ function parseAmount(value: string) {
 function shortDay(day: string) {
   const [, m, d] = day.split('-')
   return `${d}/${m}`
+}
+
+/* ---------- Chave "recorrente" (usada nas janelas de despesa e de mensalidade) ---------- */
+
+function RecurringToggle({
+  checked,
+  onChange,
+  hint,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  hint: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors',
+        checked ? 'border-gold/40 bg-gold/10' : 'border-border bg-background/30',
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-2.5">
+        <Repeat className={cn('size-4 shrink-0', checked ? 'text-gold' : 'text-muted-foreground')} />
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">Recorrente</span>
+          <span className="block text-xs text-muted-foreground">{hint}</span>
+        </span>
+      </span>
+      <span
+        className={cn(
+          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+          checked ? 'bg-gold' : 'bg-white/10',
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
+            checked ? 'translate-x-6' : 'translate-x-1',
+          )}
+        />
+      </span>
+    </button>
+  )
+}
+
+// "2026-09-21" + 30 dias -> "2026-10-21"
+function addDaysToDay(day: string, days: number) {
+  const d = new Date(`${day}T00:00:00`)
+  d.setDate(d.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 /* ---------- Janela: lançar despesa ---------- */
@@ -146,40 +199,11 @@ function ExpenseModal({
         </div>
 
         <div className="space-y-3">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={recurring}
-            onClick={() => setRecurring((v) => !v)}
-            className={cn(
-              'flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors',
-              recurring ? 'border-gold/40 bg-gold/10' : 'border-border bg-background/30',
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-2.5">
-              <Repeat className={cn('size-4 shrink-0', recurring ? 'text-gold' : 'text-muted-foreground')} />
-              <span className="min-w-0">
-                <span className="block text-sm font-medium">Despesa recorrente</span>
-                <span className="block text-xs text-muted-foreground">
-                  Repete todo mês, com vencimento
-                </span>
-              </span>
-            </span>
-            <span
-              className={cn(
-                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-                recurring ? 'bg-gold' : 'bg-white/10',
-              )}
-            >
-              <span
-                className={cn(
-                  'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
-                  recurring ? 'translate-x-6' : 'translate-x-1',
-                )}
-              />
-            </span>
-          </button>
-
+          <RecurringToggle
+            checked={recurring}
+            onChange={setRecurring}
+            hint="Repete todo mês, com vencimento"
+          />
           {recurring ? (
             <>
               <div className="grid grid-cols-2 gap-3">
@@ -296,9 +320,15 @@ function ClubModal({
   const [plan, setPlan] = useState(CLUB_PLANS[0])
   const [amount, setAmount] = useState(String(PLAN_PRICES[CLUB_PLANS[0]] ?? ''))
   const [note, setNote] = useState('')
+  const [recurring, setRecurring] = useState(false)
+  const [receivedNow, setReceivedNow] = useState(true)
+  const [dueDate, setDueDate] = useState('')
+  const [dueTouched, setDueTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const savingRef = useRef(false)
+
+  const selectedClient = clients.find((c) => c.id === clientId)
 
   useEffect(() => {
     let cancelled = false
@@ -316,9 +346,29 @@ function ClubModal({
     }
   }, [])
 
+  // Vencimento sugerido, no mesmo padrão de Clientes: +30 dias a partir de hoje ou do vencimento
+  // atual (o que for mais tarde). Sem pagamento agora, sugere o vencimento atual do cliente.
+  useEffect(() => {
+    if (!recurring || dueTouched) return
+    const current = selectedClient?.club_due_date || ''
+    if (receivedNow) {
+      setDueDate(addDaysToDay(current && current > day ? current : day, 30))
+    } else {
+      setDueDate(current || day)
+    }
+  }, [recurring, receivedNow, dueTouched, day, selectedClient])
+
   function handlePlanChange(value: string) {
     setPlan(value)
     if (PLAN_PRICES[value] !== undefined) setAmount(String(PLAN_PRICES[value]))
+  }
+
+  function handleClientChange(id: string) {
+    setClientId(id)
+    setDueTouched(false)
+    // Cliente que já é assinante: já vem com o plano dele
+    const found = clients.find((c) => c.id === id)
+    if (found?.club_plan && CLUB_PLANS.includes(found.club_plan)) handlePlanChange(found.club_plan)
   }
 
   async function handleSave() {
@@ -326,19 +376,35 @@ function ClubModal({
     setError(null)
 
     const value = parseAmount(amount)
-    if (!day) return setError('Escolha a data.')
-    if (!(value > 0)) return setError('Informe um valor maior que zero.')
+    const needsPayment = !recurring || receivedNow
+    if (recurring) {
+      if (!clientId) return setError('Escolha o cliente: a assinatura recorrente fica ligada a ele.')
+      if (!dueDate) return setError('Informe o vencimento.')
+    }
+    if (needsPayment) {
+      if (!day) return setError('Escolha a data.')
+      if (!(value > 0)) return setError('Informe um valor maior que zero.')
+    }
 
     savingRef.current = true
     setSaving(true)
     try {
-      await createClubPayment({
-        day,
-        client_id: clientId || null,
-        plan,
-        amount: value,
-        note,
-      })
+      if (recurring) {
+        await setClubSubscription({
+          clientId,
+          plan,
+          dueDate,
+          payment: receivedNow ? { day, amount: value, note } : undefined,
+        })
+      } else {
+        await createClubPayment({
+          day,
+          client_id: clientId || null,
+          plan,
+          amount: value,
+          note,
+        })
+      }
       onSaved()
       onClose()
     } catch (err) {
@@ -353,7 +419,9 @@ function ClubModal({
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
       <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold">Lançar mensalidade</h3>
+          <h3 className="text-base font-semibold">
+            {recurring ? 'Assinatura recorrente do clube' : 'Lançar mensalidade'}
+          </h3>
           <button
             onClick={onClose}
             aria-label="Fechar"
@@ -364,23 +432,60 @@ function ClubModal({
         </div>
 
         <div className="space-y-3">
+          <RecurringToggle
+            checked={recurring}
+            onChange={setRecurring}
+            hint="Renova todo mês, com vencimento"
+          />
+
+          {recurring && (
+            <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-background/40 p-1">
+              {(
+                [
+                  [true, 'Já recebi'],
+                  [false, 'Só agendar vencimento'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    setReceivedNow(value)
+                    setDueTouched(false)
+                  }}
+                  className={
+                    receivedNow === value
+                      ? 'rounded-md bg-gold px-2 py-1.5 text-xs font-semibold text-primary-foreground'
+                      : 'rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground'
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {(!recurring || receivedNow) && (
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Data do pagamento</label>
+              <input
+                type="date"
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
+                className={fieldClass}
+              />
+            </div>
+          )}
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Data do pagamento</label>
-            <input
-              type="date"
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Cliente (opcional)</label>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              {recurring ? 'Cliente' : 'Cliente (opcional)'}
+            </label>
             <select
               value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
+              onChange={(e) => handleClientChange(e.target.value)}
               className={fieldClass}
             >
-              <option value="">Sem cliente</option>
+              <option value="">{recurring ? 'Escolha o cliente' : 'Sem cliente'}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -403,25 +508,55 @@ function ClubModal({
               ))}
             </select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Valor (R$)</label>
-            <input
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputMode="decimal"
-              className={fieldClass}
-              placeholder="0,00"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Observação (opcional)</label>
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className={fieldClass}
-              placeholder="Ex.: pago no Pix"
-            />
-          </div>
+          {(!recurring || receivedNow) && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Valor (R$)</label>
+                <input
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  inputMode="decimal"
+                  className={fieldClass}
+                  placeholder="0,00"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Observação (opcional)
+                </label>
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className={fieldClass}
+                  placeholder="Ex.: pago no Pix"
+                />
+              </div>
+            </>
+          )}
+
+          {recurring && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {receivedNow ? 'Próximo vencimento' : 'Vencimento'}
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => {
+                    setDueDate(e.target.value)
+                    setDueTouched(true)
+                  }}
+                  className={fieldClass}
+                />
+              </div>
+              <p className="text-xs leading-snug text-muted-foreground">
+                {receivedNow
+                  ? 'Lança a mensalidade no clube e deixa o plano e o vencimento salvos no cliente, igual a Marcar pagamento em Clientes. Todo mês ele aparece na renda prevista.'
+                  : 'Só salva o plano e o vencimento no cliente. Nada entra na receita até você confirmar o pagamento em Recebi.'}
+              </p>
+            </>
+          )}
         </div>
 
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
@@ -438,7 +573,7 @@ function ClubModal({
             disabled={saving}
             className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
           >
-            {saving ? 'Salvando...' : 'Lançar'}
+            {saving ? 'Salvando...' : recurring && !receivedNow ? 'Agendar' : 'Lançar'}
           </button>
         </div>
       </div>
@@ -866,7 +1001,7 @@ function FutureBills({
               </p>
               {data.recurringList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Nenhuma ainda. Em Lançar despesa, ative Despesa recorrente.
+                  Nenhuma ainda. Em Lançar despesa, ative a chave Recorrente.
                 </p>
               ) : (
                 <ul className="-mx-2 divide-y divide-border/50">
