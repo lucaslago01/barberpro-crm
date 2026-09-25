@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
-import { getSession, onAuthChange } from '@/lib/auth'
+import { checkSession, onAuthChange, signOut } from '@/lib/auth'
 import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 import { cn } from '@/lib/utils'
 
@@ -22,27 +22,61 @@ export function AppShell({
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [checking, setChecking] = useState(true)
-  const [loggedIn, setLoggedIn] = useState(false)
+  // checking: primeira conferência | ok: logado | unknown: não deu para confirmar agora
+  const [state, setState] = useState<'checking' | 'ok' | 'unknown'>('checking')
+  const [reason, setReason] = useState('')
+  const [attempting, setAttempting] = useState(true)
+  const [retryKey, setRetryKey] = useState(0)
   const [barbershopName, setBarbershopName] = useState('')
   const [userFirstName, setUserFirstName] = useState('')
 
-  // Confere a sessão ao abrir a tela
+  // Confere a sessão. Só vai para o login quando o login realmente acabou; se o servidor está
+  // lento ou a rede caiu, mantém a tela, avisa e tenta de novo sozinho.
   useEffect(() => {
     let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    setAttempting(true)
 
-            getSession().then((session) => {
+    checkSession().then((check) => {
       if (cancelled) return
-      if (session) {
-        setLoggedIn(true)
-        setChecking(false)
-        const email = session.user?.email ?? ''
+      setAttempting(false)
+      if (check.status === 'ok') {
+        setState('ok')
+        const email = check.session.user?.email ?? ''
         const namePart = email.split('@')[0]?.split('.')[0] ?? ''
         setUserFirstName(namePart ? namePart.charAt(0).toUpperCase() + namePart.slice(1) : '')
-      } else {
+      } else if (check.status === 'none') {
         router.replace('/login')
+      } else {
+        setReason(check.reason)
+        setState('unknown')
+        timer = setTimeout(() => setRetryKey((k) => k + 1), 6000)
       }
     })
+
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [router, retryKey])
+
+  // Ao voltar para a aba ou quando a internet volta, tenta de novo na hora
+  useEffect(() => {
+    if (state !== 'unknown') return
+    const retry = () => setRetryKey((k) => k + 1)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') retry()
+    }
+    window.addEventListener('online', retry)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', retry)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [state])
+
+  useEffect(() => {
+    let cancelled = false
 
     // Se a pessoa sair (em qualquer aba), volta para o login
     const stop = onAuthChange((isLogged) => {
@@ -61,7 +95,42 @@ export function AppShell({
     }
   }, [router])
 
-  if (checking || !loggedIn) {
+  if (state === 'unknown') {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center">
+          <p className="text-base font-semibold">
+            {attempting ? 'Reconectando...' : 'Não consegui confirmar seu login'}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Seu login continua salvo. O servidor está lento ou a internet caiu, e vou tentar de novo
+            sozinho.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground/70">{reason}</p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              onClick={() => setRetryKey((k) => k + 1)}
+              disabled={attempting}
+              className="h-10 rounded-lg bg-gold px-4 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            >
+              Tentar agora
+            </button>
+            <button
+              onClick={async () => {
+                await signOut()
+                router.replace('/login')
+              }}
+              className="h-10 rounded-lg border border-border px-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Entrar de novo
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (state !== 'ok') {
     return (
       <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
         Carregando...
