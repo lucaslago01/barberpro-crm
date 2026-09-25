@@ -1,10 +1,11 @@
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react"
+import { getScheduleLabel } from "@/lib/business-hours"
 
 const items = [
   {
     icon: CalendarDays,
     title: "Horários",
-    subtitle: "Ter–Sex: 9h às 20h • Sáb: 9h às 18h",
+    subtitle: getScheduleLabel(" • "),
   },
   {
     icon: MapPin,
@@ -29,7 +30,7 @@ export function InfoStrip({ bordered = true }: { bordered?: boolean }) {
     >
       {items.map((item) => (
         <div key={item.title} className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 text-amber-400">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
             <item.icon className="size-4.5" />
           </div>
           <div className="leading-tight">

@@ -47,7 +47,7 @@ export function SiteHeader() {
   const whatsappUrl = buildWhatsappUrl(phone)
 
   return (
-    <header className={`border-b border-white/10 bg-black/40 backdrop-blur-sm ${ready ? '' : 'opacity-0'}`}>
+    <header className={`relative z-20 border-b border-white/[0.06] bg-black/70 backdrop-blur-xl transition-opacity duration-500 ${ready ? '' : 'opacity-0'}`}>
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (
@@ -60,7 +60,7 @@ export function SiteHeader() {
           ) : (
             <div
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-gradient-to-br from-amber-400/20 to-transparent text-amber-400"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-gold/40 bg-gradient-to-br from-gold/20 to-transparent text-gold"
             >
               <svg viewBox="0 0 24 24" fill="none" className="size-5">
                 <path
@@ -73,15 +73,15 @@ export function SiteHeader() {
             </div>
           )}
           <div className="leading-tight">
-            <p className="text-base font-bold tracking-tight text-amber-400 sm:text-lg">
+            <p className="font-serif text-[17px] font-semibold tracking-tight text-white sm:text-lg">
               {name}
             </p>
-            <p className="text-[10px] font-medium tracking-[0.2em] text-zinc-500">BARBEARIA</p>
+            <p className="text-[9px] font-semibold tracking-[0.3em] text-gold/80">BARBEARIA</p>
           </div>
 
           <a
             href="/agendar"
-            className="ml-3 hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-400 sm:flex"
+            className="ml-3 hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-gold/30 hover:bg-gold/10 hover:text-gold sm:flex"
             aria-label="Voltar para início do agendamento"
           >
             <Home className="size-4" />
@@ -93,7 +93,7 @@ export function SiteHeader() {
           {phone && (
             <>
               <a href={whatsappUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-right transition-opacity hover:opacity-80">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gold">
                   <Phone className="size-3.5" />
                 </div>
                 <div className="leading-tight">
@@ -107,7 +107,7 @@ export function SiteHeader() {
           )}
 
           <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gold">
               <AtSign className="size-3.5" />
             </div>
             <div className="leading-tight">
@@ -121,7 +121,7 @@ export function SiteHeader() {
           href={whatsappUrl ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 transition-opacity hover:opacity-80 sm:hidden"
+          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gold transition-opacity hover:opacity-80 sm:hidden"
           aria-label="Falar no WhatsApp"
         >
           <MessageCircle className="size-4" />
@@ -129,7 +129,7 @@ export function SiteHeader() {
 
         <a
           href="/agendar"
-          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 transition-opacity hover:opacity-80 sm:hidden"
+          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gold transition-opacity hover:opacity-80 sm:hidden"
           aria-label="Voltar para início do agendamento"
         >
           <Home className="size-4" />
@@ -139,7 +139,7 @@ export function SiteHeader() {
           href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-400 sm:hidden"
+          className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gold sm:hidden"
           aria-label={"Instagram de " + name}
         >
           <AtSign className="size-4" />

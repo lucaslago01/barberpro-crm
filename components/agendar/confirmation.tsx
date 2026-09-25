@@ -80,13 +80,13 @@ export function Confirmation({
   if (success) {
     return (
       <section className="mx-auto w-full max-w-xl px-4 pb-16 text-center">
-        <div className="rounded-3xl border border-amber-400/30 bg-zinc-950/70 p-8 shadow-2xl shadow-black/40">
-          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-amber-400/15 text-amber-400">
+        <div className="rounded-3xl border border-gold/30 bg-zinc-950/70 p-8 shadow-2xl shadow-black/40">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-gold/15 text-gold">
             <CheckCircle2 className="size-9" />
           </div>
           <h2 className="mt-5 text-2xl font-extrabold text-white">Agendamento confirmado!</h2>
           <p className="mt-2 text-sm text-zinc-400">
-            Seu horário para <span className="text-amber-400">{service.nome}</span> foi reservado com sucesso.
+            Seu horário para <span className="text-gold">{service.nome}</span> foi reservado com sucesso.
             Entraremos em contato pelo WhatsApp se precisar de algo.
           </p>
           <div className="mt-6 space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-left">
@@ -120,7 +120,7 @@ export function Confirmation({
 
           <dl className="mt-6 space-y-4">
             <div className="flex items-start gap-3">
-              <Scissors className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <Scissors className="mt-0.5 size-4 shrink-0 text-gold" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Serviço</dt>
                 <dd className="text-sm font-medium text-white">
@@ -138,7 +138,7 @@ export function Confirmation({
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Calendar className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <Calendar className="mt-0.5 size-4 shrink-0 text-gold" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Data</dt>
                 <dd className="text-sm font-medium text-white">
@@ -147,14 +147,14 @@ export function Confirmation({
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <Clock className="mt-0.5 size-4 shrink-0 text-gold" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Horário</dt>
                 <dd className="text-sm font-medium text-white">{selectedTime ?? "Não selecionado"}</dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <User className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <User className="mt-0.5 size-4 shrink-0 text-gold" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Cliente</dt>
                 <dd className="text-sm font-medium text-white">{data.nome}</dd>
@@ -162,7 +162,7 @@ export function Confirmation({
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Wallet className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <Wallet className="mt-0.5 size-4 shrink-0 text-gold" />
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Valor</dt>
                 <dd className="text-sm font-semibold text-white">
@@ -170,7 +170,7 @@ export function Confirmation({
                     addonService ? (
                       <span>
                         <span className="text-emerald-400">Grátis (clube)</span>
-                        <span className="ml-2 text-amber-400">+ {formatPreco(addonPriceCentavos)} sobrancelha</span>
+                        <span className="ml-2 text-gold">+ {formatPreco(addonPriceCentavos)} sobrancelha</span>
                       </span>
                     ) : (
                       <span className="text-emerald-400">Grátis (plano do clube)</span>
@@ -210,7 +210,7 @@ export function Confirmation({
               type="button"
               onClick={handleConfirm}
               disabled={submitting}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-4 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full ag-btn-gold px-4 text-sm font-semibold transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
                 <>

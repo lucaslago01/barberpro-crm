@@ -118,7 +118,7 @@ export function TimeSelection({
           {/* Seleção de horários */}
           <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/10 text-gold">
                 <Clock className="size-5" />
               </div>
               <div>
@@ -140,7 +140,7 @@ export function TimeSelection({
                       type="button"
                       aria-pressed="true"
                       onClick={() => onSelectTime(time)}
-                      className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 text-sm font-bold text-black shadow-[0_0_0_1px_rgba(251,191,36,0.25)] transition-all"
+                      className="flex h-12 items-center justify-center rounded-xl ag-btn-gold text-sm font-bold shadow-[0_0_0_1px_rgba(212,175,55,0.25)] transition-all"
                     >
                       {time}
                     </button>
@@ -187,7 +187,7 @@ export function TimeSelection({
                 <span className="text-xs text-zinc-400">Disponível</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-gradient-to-b from-amber-300 to-amber-500" />
+                <span className="size-3 rounded-full bg-gold" />
                 <span className="text-xs text-zinc-400">Selecionado</span>
               </div>
               <div className="flex items-center gap-2">
@@ -219,11 +219,11 @@ export function TimeSelection({
 
             <div className="mt-4 flex flex-col gap-2.5">
               <div className="flex items-center gap-2 text-zinc-300">
-                <Clock className="size-4 text-amber-400" />
+                <Clock className="size-4 text-gold" />
                 <span className="text-sm">{service.duracaoMin} min</span>
               </div>
               <div className="flex items-center gap-2 text-zinc-300">
-                <Wallet className="size-4 text-amber-400" />
+                <Wallet className="size-4 text-gold" />
                 <span className="text-sm font-semibold text-white">
                   {formatPreco(service.precoCentavos)}
                 </span>
@@ -233,7 +233,7 @@ export function TimeSelection({
             <button
               type="button"
               onClick={onChangeService}
-              className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-amber-400/30 px-4 text-sm font-semibold text-amber-300 transition-colors hover:bg-amber-400/10"
+              className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-gold/30 px-4 text-sm font-semibold text-gold transition-colors hover:bg-gold/10"
             >
               <ArrowLeft className="size-4" />
               Alterar serviço
@@ -244,14 +244,14 @@ export function TimeSelection({
             <h3 className="text-base font-bold text-white">Resumo do agendamento</h3>
             <dl className="mt-4 flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <Scissors className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <Scissors className="mt-0.5 size-4 shrink-0 text-gold" />
                 <div>
                   <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Serviço</dt>
                   <dd className="text-sm font-medium text-white">{service.nome}</dd>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Calendar className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <Calendar className="mt-0.5 size-4 shrink-0 text-gold" />
                 <div>
                   <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Data</dt>
                   <dd className="text-sm font-medium text-white">{formatFullDate(selectedDate)}</dd>
@@ -261,7 +261,7 @@ export function TimeSelection({
                 <Clock
                   className={
                     selectedTime !== null
-                      ? "mt-0.5 size-4 shrink-0 text-amber-400"
+                      ? "mt-0.5 size-4 shrink-0 text-gold"
                       : "mt-0.5 size-4 shrink-0 text-zinc-500"
                   }
                 />
@@ -297,7 +297,7 @@ export function TimeSelection({
             type="button"
             onClick={onContinue}
             disabled={selectedTime === null}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-6 text-sm font-semibold text-black transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full ag-btn-gold px-6 text-sm font-semibold transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
           >
             Próximo passo
             <ArrowRight className="size-4" />

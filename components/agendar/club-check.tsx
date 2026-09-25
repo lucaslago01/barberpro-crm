@@ -56,7 +56,7 @@ export function ClubCheck({ onResult }: ClubCheckProps) {
     return (
       <section className="mx-auto w-full max-w-xl px-4 pb-10 sm:px-6">
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 p-6 shadow-2xl shadow-black/40 sm:p-8">
-          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 text-gold">
             <Crown className="size-7" />
           </div>
           <h2 className="text-center text-xl font-bold text-white sm:text-2xl">
@@ -70,7 +70,7 @@ export function ClubCheck({ onResult }: ClubCheckProps) {
             <button
               type="button"
               onClick={() => setAsked(true)}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 text-sm font-semibold text-black transition-all hover:brightness-110 active:translate-y-px"
+              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full ag-btn-gold text-sm font-semibold transition-all hover:brightness-110 active:translate-y-px"
             >
               <Crown className="size-4" />
               Sim, sou assinante
@@ -96,7 +96,7 @@ export function ClubCheck({ onResult }: ClubCheckProps) {
   return (
     <section className="mx-auto w-full max-w-xl px-4 pb-10 sm:px-6">
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 p-6 shadow-2xl shadow-black/40 sm:p-8">
-        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-gold/30 bg-gold/10 text-gold">
           <MessageCircle className="size-7" />
         </div>
         <h2 className="text-center text-xl font-bold text-white sm:text-2xl">
@@ -117,13 +117,13 @@ export function ClubCheck({ onResult }: ClubCheckProps) {
             }}
             placeholder="(41) 99999-9999"
             autoComplete="tel"
-            className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-center text-base text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-amber-400/50 focus:bg-white/[0.05]"
+            className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-center text-base text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-gold/50 focus:bg-white/[0.05]"
           />
         </div>
 
         {notFound && (
-          <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-center">
-            <p className="text-sm text-amber-300">
+          <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-4 text-center">
+            <p className="text-sm text-gold">
               Não encontramos uma assinatura ativa para esse número.
             </p>
             <button
@@ -149,7 +149,7 @@ export function ClubCheck({ onResult }: ClubCheckProps) {
             type="button"
             onClick={handleCheck}
             disabled={!isWhatsappValid(phone) || checking}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 text-sm font-semibold text-black transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full ag-btn-gold text-sm font-semibold transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
           >
             {checking ? "Conferindo..." : "Conferir"}
             {!checking && <ShieldCheck className="size-4" />}

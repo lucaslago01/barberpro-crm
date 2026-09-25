@@ -1,7 +1,7 @@
 "use client"
 
-import { Scissors, ShieldCheck, ArrowRight } from "lucide-react"
-import { type AgendarService } from "@/lib/agendar/services"
+import { ArrowRight, Crown, ShieldCheck } from "lucide-react"
+import { type AgendarService, formatPreco } from "@/lib/agendar/services"
 import { ServiceCard } from "@/components/agendar/service-card"
 import { InfoStrip } from "@/components/agendar/info-strip"
 
@@ -13,6 +13,26 @@ interface ServiceSelectionProps {
   onContinue: () => void
 }
 
+function GroupTitle({
+  children,
+  hint,
+  icon,
+}: {
+  children: React.ReactNode
+  hint?: string
+  icon?: React.ReactNode
+}) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-3 px-1">
+      <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-white sm:text-2xl">
+        {icon}
+        {children}
+      </h2>
+      {hint && <span className="pb-1 text-xs text-zinc-500">{hint}</span>}
+    </div>
+  )
+}
+
 export function ServiceSelection({
   services,
   clubServices,
@@ -22,73 +42,96 @@ export function ServiceSelection({
 }: ServiceSelectionProps) {
   const allServices = [...services, ...clubServices]
   const selectedService = allServices.find((s) => s.id === selectedId)
+  const isClub = Boolean(selectedService?.isClube)
 
   return (
-    <section className="mx-auto w-full max-w-3xl px-4 pb-10 sm:px-6">
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/70 shadow-2xl shadow-black/40">
-        <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
-              <Scissors className="size-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white sm:text-xl">Nossos serviços</h2>
-              <p className="text-sm text-zinc-400">Qualidade, estilo e o melhor atendimento para você.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 self-start rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-2 sm:self-center">
-            <ShieldCheck className="size-4 shrink-0 text-amber-400" />
-            <div className="leading-tight">
-              <p className="text-[11px] font-semibold tracking-wide text-amber-400">BARBEARIA DE CONFIANÇA</p>
-              <p className="text-[11px] text-zinc-500">Mais de 500 clientes satisfeitos</p>
-            </div>
-          </div>
+    <section
+      className={`mx-auto w-full max-w-5xl px-4 transition-[padding] sm:px-6 ${
+        selectedService ? "pb-32" : "pb-10"
+      }`}
+    >
+      <div role="radiogroup" aria-label="Serviços" className="space-y-9">
+        <div>
+          <GroupTitle hint={`${services.length} opções`}>Serviços</GroupTitle>
+          <ul className="grid gap-2.5 md:grid-cols-2">
+            {services.map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                selected={service.id === selectedId}
+                onSelect={onSelect}
+              />
+            ))}
+          </ul>
         </div>
 
-        <ul className="flex flex-col gap-3 p-4 sm:gap-3 sm:p-5">
-          {services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              selected={service.id === selectedId}
-              onSelect={onSelect}
-            />
-          ))}
-          {clubServices.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              selected={service.id === selectedId}
-              onSelect={onSelect}
-              freeLabel
-            />
-          ))}
-        </ul>
-
-        <InfoStrip />
+        {clubServices.length > 0 && (
+          <div>
+            <GroupTitle icon={<Crown className="size-5 text-emerald-400" />}>
+              Assinantes do clube
+            </GroupTitle>
+            <p className="-mt-1 mb-3 px-1 text-[13px] text-zinc-500">
+              Já é do clube? Escolha a versão incluída no seu plano.
+            </p>
+            <ul className="grid gap-2.5 md:grid-cols-2">
+              {clubServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  selected={service.id === selectedId}
+                  onSelect={onSelect}
+                  freeLabel
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
+      <div className="mt-10 flex items-center justify-center gap-2 text-center text-xs text-zinc-500">
+        <ShieldCheck className="size-4 shrink-0 text-gold/80" />
+        Confirmação pelo WhatsApp · Cancele até 2h antes do horário
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.02]">
+        <InfoStrip bordered={false} />
+      </div>
+
+      {/* Barra fixa: a única chamada de ação da etapa, sempre ao alcance do polegar */}
       <div
-        className={
-          selectedService
-            ? "mt-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 opacity-100 transition-all"
-            : "pointer-events-none mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 opacity-0 transition-all"
-        }
+        className={`fixed inset-x-0 bottom-0 z-40 transition-transform duration-300 ease-out ${
+          selectedService ? "translate-y-0" : "pointer-events-none translate-y-full"
+        }`}
         aria-hidden={!selectedService}
       >
-        <p className="text-sm text-white">
-          <span className="text-zinc-400">Serviço selecionado: </span>
-          <span className="font-semibold text-amber-300">{selectedService?.nome}</span>
-        </p>
-        <button
-          type="button"
-          onClick={onContinue}
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-5 text-sm font-semibold text-black transition-all hover:brightness-110 active:translate-y-px"
-        >
-          Continuar
-          <ArrowRight className="size-4" />
-        </button>
+        <div className="border-t border-gold/20 bg-black/80 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 pb-[max(env(safe-area-inset-bottom),0.875rem)] pt-3.5 sm:px-6">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-wider text-zinc-500">Selecionado</p>
+              <p className="truncate text-sm font-semibold text-white">{selectedService?.nome}</p>
+              <p className="text-xs text-zinc-400">
+                {selectedService?.duracaoMin} min ·{" "}
+                {isClub ? (
+                  <span className="text-emerald-400">incluso no plano</span>
+                ) : (
+                  <span className="text-gold">
+                    {selectedService?.priceFrom && "a partir de "}
+                    {selectedService ? formatPreco(selectedService.precoCentavos) : ""}
+                  </span>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onContinue}
+              tabIndex={selectedService ? 0 : -1}
+              className="ag-btn-gold inline-flex h-12 shrink-0 items-center gap-2 rounded-full px-6 text-sm font-semibold transition-all active:translate-y-px"
+            >
+              Continuar
+              <ArrowRight className="size-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   )

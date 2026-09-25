@@ -115,7 +115,7 @@ export function DataForm({
           {/* Formulário do cliente */}
           <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/10 text-gold">
                 <User className="size-5" />
               </div>
               <div>
@@ -127,7 +127,7 @@ export function DataForm({
             {/* WhatsApp primeiro, para poder autopreencher o resto */}
             <div className="mt-6">
               <label htmlFor="whatsapp" className="text-sm font-medium text-white">
-                WhatsApp <span className="text-amber-400">*</span>
+                WhatsApp <span className="text-gold">*</span>
               </label>
               <div className="relative mt-2">
                 <Phone className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
@@ -146,7 +146,7 @@ export function DataForm({
                   className={`h-12 w-full rounded-xl border bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:bg-white/[0.05] ${
                     whatsappError
                       ? "border-red-500/60 focus:border-red-500/60"
-                      : "border-white/10 focus:border-amber-400/50"
+                      : "border-white/10 focus:border-gold/50"
                   }`}
                 />
               </div>
@@ -163,7 +163,7 @@ export function DataForm({
             {/* Nome completo */}
             <div className="mt-4">
               <label htmlFor="nome" className="text-sm font-medium text-white">
-                Nome completo <span className="text-amber-400">*</span>
+                Nome completo <span className="text-gold">*</span>
               </label>
               <div className="relative mt-2">
                 <User className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
@@ -174,7 +174,7 @@ export function DataForm({
                   onChange={(e) => onChange({ nome: e.target.value })}
                   placeholder="Digite seu nome completo"
                   autoComplete="name"
-                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-amber-400/50 focus:bg-white/[0.05]"
+                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-gold/50 focus:bg-white/[0.05]"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export function DataForm({
                     className={`h-12 w-full rounded-xl border bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:bg-white/[0.05] ${
                       emailError
                         ? "border-red-500/60 focus:border-red-500/60"
-                        : "border-white/10 focus:border-amber-400/50"
+                        : "border-white/10 focus:border-gold/50"
                     }`}
                   />
                 </div>
@@ -207,7 +207,7 @@ export function DataForm({
 
               <div>
                 <label htmlFor="birthDate" className="text-sm font-medium text-white">
-                  Aniversário <span className="text-amber-400">*</span>
+                  Aniversário <span className="text-gold">*</span>
                 </label>
                 <div className="relative mt-2">
                   <Cake className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
@@ -216,7 +216,7 @@ export function DataForm({
                     type="date"
                     value={data.birthDate}
                     onChange={(e) => onChange({ birthDate: e.target.value })}
-                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white outline-none transition-colors focus:border-amber-400/50 focus:bg-white/[0.05]"
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white outline-none transition-colors focus:border-gold/50 focus:bg-white/[0.05]"
                   />
                 </div>
               </div>
@@ -226,7 +226,7 @@ export function DataForm({
 
             {/* Informações adicionais */}
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/10 text-gold">
                 <MessageCircle className="size-5" />
               </div>
               <div>
@@ -246,7 +246,7 @@ export function DataForm({
                 placeholder="Ex.: tipo de corte, preferência, alergias, etc."
                 rows={4}
                 maxLength={MAX_OBS}
-                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-amber-400/50 focus:bg-white/[0.05]"
+                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-gold/50 focus:bg-white/[0.05]"
               />
               <div className="mt-1 text-right text-xs text-zinc-500">
                 {data.observacoes.length}/{MAX_OBS}
@@ -256,7 +256,7 @@ export function DataForm({
             {/* Lembrete */}
             <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
               <div className="flex items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/10 text-gold">
                   <Bell className="size-5" />
                 </div>
                 <div>
@@ -273,7 +273,7 @@ export function DataForm({
                 aria-label="Ativar lembrete do agendamento"
                 onClick={() => onChange({ lembrete: !data.lembrete })}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                  data.lembrete ? "bg-gradient-to-b from-amber-300 to-amber-500" : "bg-zinc-700"
+                  data.lembrete ? "ag-btn-gold" : "bg-zinc-700"
                 }`}
               >
                 <span
@@ -307,11 +307,11 @@ export function DataForm({
 
             <div className="mt-4 flex flex-col gap-2.5">
               <div className="flex items-center gap-2 text-zinc-300">
-                <Clock className="size-4 text-amber-400" />
+                <Clock className="size-4 text-gold" />
                 <span className="text-sm">{service.duracaoMin} min</span>
               </div>
               <div className="flex items-center gap-2 text-zinc-300">
-                <Wallet className="size-4 text-amber-400" />
+                <Wallet className="size-4 text-gold" />
                 <span className="text-sm font-semibold text-white">
                   {service.isClube ? "Grátis (Clube)" : formatPreco(service.precoCentavos)}
                 </span>
@@ -321,7 +321,7 @@ export function DataForm({
             <button
               type="button"
               onClick={onChangeService}
-              className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-amber-400/30 px-4 text-sm font-semibold text-amber-300 transition-colors hover:bg-amber-400/10"
+              className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-gold/30 px-4 text-sm font-semibold text-gold transition-colors hover:bg-gold/10"
             >
               <ArrowLeft className="size-4" />
               Alterar serviço
@@ -332,21 +332,21 @@ export function DataForm({
             <h3 className="text-base font-bold text-white">Resumo do agendamento</h3>
             <dl className="mt-4 flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <Scissors className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <Scissors className="mt-0.5 size-4 shrink-0 text-gold" />
                 <div>
                   <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Serviço</dt>
                   <dd className="text-sm font-medium text-white">{service.nome}</dd>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Calendar className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <Calendar className="mt-0.5 size-4 shrink-0 text-gold" />
                 <div>
                   <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Data</dt>
                   <dd className="text-sm font-medium text-white">{formatFullDate(selectedDate)}</dd>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Clock className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                <Clock className="mt-0.5 size-4 shrink-0 text-gold" />
                 <div>
                   <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Horário</dt>
                   <dd className="text-sm font-medium text-white">{selectedTime ?? "Ainda não selecionado"}</dd>
@@ -357,7 +357,7 @@ export function DataForm({
             <div className="my-6 h-px bg-white/10" aria-hidden="true" />
 
             <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-gold/30 bg-gold/10 text-gold">
                 <ShieldCheck className="size-5" />
               </div>
               <div>
@@ -385,7 +385,7 @@ export function DataForm({
             type="button"
             onClick={onContinue}
             disabled={!canContinue}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-6 text-sm font-semibold text-black transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full ag-btn-gold px-6 text-sm font-semibold transition-all hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
           >
             Próximo passo
             <ArrowRight className="size-4" />

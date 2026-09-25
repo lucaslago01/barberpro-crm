@@ -31,14 +31,14 @@ function resolveDescricao(nome: string): string {
 
 function resolveImagem(nome: string): string {
   const n = nome.toLowerCase()
-  if (n.includes('corte') && n.includes('barba')) return '/agendar/corte-barba.png'
-  if (n.includes('corte') && n.includes('infantil')) return '/agendar/corte-infantil.png'
-  if (n.includes('corte')) return '/agendar/corte-masculino.png'
-  if (n.includes('barba') || n.includes('camuflagem')) return '/agendar/barba.png'
-  if (n.includes('sobrancelha')) return '/agendar/sobrancelha.png'
-  if (n.includes('selagem') || n.includes('hidratação') || n.includes('tratamento') || n.includes('platinado')) return '/agendar/tratamento-capilar.png'
-  if (n.includes('limpeza') || n.includes('pele')) return '/agendar/tratamento-capilar.png'
-  return '/agendar/corte-masculino.png'
+  if (n.includes('corte') && n.includes('barba')) return '/agendar/corte-barba.webp'
+  if (n.includes('corte') && n.includes('infantil')) return '/agendar/corte-infantil.webp'
+  if (n.includes('corte')) return '/agendar/corte-masculino.webp'
+  if (n.includes('barba') || n.includes('camuflagem')) return '/agendar/barba.webp'
+  if (n.includes('sobrancelha')) return '/agendar/sobrancelha.webp'
+  if (n.includes('selagem') || n.includes('hidratação') || n.includes('tratamento') || n.includes('platinado')) return '/agendar/tratamento-capilar.webp'
+  if (n.includes('limpeza') || n.includes('pele')) return '/agendar/tratamento-capilar.webp'
+  return '/agendar/corte-masculino.webp'
 }
 
 export async function getServicesFromDB(): Promise<{ services: AgendarService[]; clubServices: AgendarService[] }> {
@@ -74,7 +74,7 @@ export const services: AgendarService[] = [
     descricao: "Corte tradicional ou moderno, do seu jeito.",
     duracaoMin: 35,
     precoCentavos: 8000,
-    imagem: "/agendar/corte-masculino.png",
+    imagem: "/agendar/corte-masculino.webp",
   },
   {
     id: "barba",
@@ -82,7 +82,7 @@ export const services: AgendarService[] = [
     descricao: "Aparação e desenho da barba.",
     duracaoMin: 40,
     precoCentavos: 6500,
-    imagem: "/agendar/barba.png",
+    imagem: "/agendar/barba.webp",
   },
   {
     id: "corte-barba",
@@ -90,7 +90,7 @@ export const services: AgendarService[] = [
     descricao: "O combo completo para você.",
     duracaoMin: 50,
     precoCentavos: 14000,
-    imagem: "/agendar/corte-barba.png",
+    imagem: "/agendar/corte-barba.webp",
   },
   {
     id: "sobrancelha",
@@ -98,7 +98,7 @@ export const services: AgendarService[] = [
     descricao: "Design e alinhamento da sobrancelha.",
     duracaoMin: 30,
     precoCentavos: 3000,
-    imagem: "/agendar/sobrancelha.png",
+    imagem: "/agendar/sobrancelha.webp",
   },
 ]
 
@@ -109,7 +109,7 @@ export const clubServices: AgendarService[] = [
     descricao: "Incluso no seu plano de assinatura.",
     duracaoMin: 35,
     precoCentavos: 0,
-    imagem: "/agendar/corte-masculino.png",
+    imagem: "/agendar/corte-masculino.webp",
     isClube: true,
     clubPlanLabel: "Corte",
     baseServiceName: "Corte",
@@ -120,7 +120,7 @@ export const clubServices: AgendarService[] = [
     descricao: "Incluso no seu plano de assinatura.",
     duracaoMin: 40,
     precoCentavos: 0,
-    imagem: "/agendar/barba.png",
+    imagem: "/agendar/barba.webp",
     isClube: true,
     clubPlanLabel: "Barba",
     baseServiceName: "Barba",
@@ -131,7 +131,7 @@ export const clubServices: AgendarService[] = [
     descricao: "Incluso no seu plano de assinatura.",
     duracaoMin: 50,
     precoCentavos: 0,
-    imagem: "/agendar/corte-barba.png",
+    imagem: "/agendar/corte-barba.webp",
     isClube: true,
     clubPlanLabel: "Corte e barba",
     baseServiceName: "Corte + Barba",

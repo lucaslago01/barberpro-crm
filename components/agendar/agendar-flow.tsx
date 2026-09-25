@@ -9,6 +9,7 @@ import { DateSelection } from "@/components/agendar/date-selection"
 import { TimeSelection } from "@/components/agendar/time-selection"
 import { DataForm, type AgendarFormData } from "@/components/agendar/data-form"
 import { Confirmation } from "@/components/agendar/confirmation"
+import { BrandHero } from "@/components/agendar/brand-hero"
 
 
 function AddonSelection({
@@ -54,7 +55,7 @@ function AddonSelection({
                   onClick={() => onSelect(selected ? null : s)}
                   className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-colors ${
                     selected
-                      ? 'border-amber-400/60 bg-amber-400/[0.06]'
+                      ? 'border-gold/60 bg-gold/[0.06]'
                       : 'border-white/10 bg-white/[0.02] hover:border-white/20'
                   }`}
                 >
@@ -63,7 +64,7 @@ function AddonSelection({
                     <p className="text-xs text-zinc-400">{s.duracaoMin} min</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-amber-400">
+                    <p className="text-sm font-bold text-gold">
                       {isClub ? formatPreco(s.precoCentavos) : formatPreco(s.precoCentavos)}
                     </p>
                     <p className="text-[10px] text-zinc-500">sempre avulso</p>
@@ -94,7 +95,7 @@ function AddonSelection({
             <button
               type="button"
               onClick={onContinue}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-4 text-sm font-semibold text-black transition-all hover:brightness-110"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full ag-btn-gold px-4 text-sm font-semibold transition-all hover:brightness-110"
             >
               Continuar
             </button>
@@ -151,34 +152,43 @@ export function AgendarFlow() {
 
   return (
     <>
-      <div className="relative overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[url('/agendar/hero-bg.png')] bg-cover bg-center opacity-25"
-        />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/40 via-black to-black" />
+      {/* Primeira etapa abre pela marca; as seguintes vão direto ao passo */}
+      {step === 1 && <BrandHero />}
 
-        <div className="relative flex flex-col gap-8 px-4 pt-8 pb-10 sm:gap-10 sm:px-6 sm:pt-10 sm:pb-12">
+      <div className="relative overflow-hidden">
+        {step !== 1 && (
+          <>
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[url('/agendar/hero-bg.webp')] bg-cover bg-center opacity-20"
+            />
+            <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/40 via-black to-black" />
+          </>
+        )}
+
+        <div
+          className={`relative flex flex-col gap-8 px-4 sm:gap-10 sm:px-6 ${
+            step === 1 ? "pt-2 pb-8" : "pt-8 pb-10 sm:pt-10 sm:pb-12"
+          }`}
+        >
           <StepIndicator currentStep={step} />
 
           {step === 1 && (
             <div className="mx-auto max-w-xl text-center">
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Escolha o <span className="text-amber-400">serviço</span>
-              </h1>
-              <p className="mt-3 text-sm text-zinc-400 sm:text-base">
-                Escolha o serviço que deseja e reserve seu horário de forma rápida e prática.
-              </p>
+              <h2 className="font-serif text-[30px] font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+                Escolha o <span className="ag-gold-text italic">serviço</span>
+              </h2>
+              <p className="mt-2 text-sm text-zinc-400">Toque no serviço e depois em continuar.</p>
             </div>
           )}
 
           {step === 2 && (
             <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold shadow-[0_0_30px_-8px_rgba(212,175,55,0.45)]">
                 <Scissors className="size-6" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Deseja adicionar <span className="text-amber-400">sobrancelha</span>?
+              <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                Deseja adicionar <span className="ag-gold-text italic">sobrancelha</span>?
               </h1>
               <p className="mt-3 text-sm text-zinc-400 sm:text-base">
                 Aproveite e adicione a sobrancelha ao seu atendimento.
@@ -188,11 +198,11 @@ export function AgendarFlow() {
 
           {step === 3 && (
             <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold shadow-[0_0_30px_-8px_rgba(212,175,55,0.45)]">
                 <CalendarDays className="size-6" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Escolha a <span className="text-amber-400">data</span>
+              <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                Escolha a <span className="ag-gold-text italic">data</span>
               </h1>
               <p className="mt-3 text-sm text-zinc-400 sm:text-base">
                 Selecione o dia que preferir. Mostraremos os horários disponíveis para o serviço escolhido.
@@ -202,11 +212,11 @@ export function AgendarFlow() {
 
           {step === 4 && (
             <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold shadow-[0_0_30px_-8px_rgba(212,175,55,0.45)]">
                 <Clock className="size-6" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Escolha o <span className="text-amber-400">horário</span>
+              <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                Escolha o <span className="ag-gold-text italic">horário</span>
               </h1>
               <p className="mt-3 text-sm text-zinc-400 sm:text-base">
                 Selecione um horário disponível para o seu atendimento.
@@ -216,11 +226,11 @@ export function AgendarFlow() {
 
           {step === 5 && (
             <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold shadow-[0_0_30px_-8px_rgba(212,175,55,0.45)]">
                 <User className="size-6" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Seus <span className="text-amber-400">dados</span>
+              <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                Seus <span className="ag-gold-text italic">dados</span>
               </h1>
               <p className="mt-3 text-sm text-zinc-400 sm:text-base">
                 Preencha suas informações para finalizar o agendamento.
@@ -230,11 +240,11 @@ export function AgendarFlow() {
 
           {step === 6 && (
             <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-400">
+              <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold shadow-[0_0_30px_-8px_rgba(212,175,55,0.45)]">
                 <CheckCircle2 className="size-6" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-                Confirme seu <span className="text-amber-400">agendamento</span>
+              <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+                Confirme seu <span className="ag-gold-text italic">agendamento</span>
               </h1>
               <p className="mt-3 text-sm text-zinc-400 sm:text-base">
                 Revise os dados e confirme para finalizar.
