@@ -11,13 +11,15 @@ import {
   Check,
   X,
   UserX,
+  TriangleAlert,
+  ChevronDown,
 } from 'lucide-react'
 import { Panel } from '@/components/dashboard/panel'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { AgendaStatusBadge } from '@/components/dashboard/badges'
 import { NewAppointmentModal } from '@/components/dashboard/new-appointment-modal'
 import { RescheduleModal } from '@/components/dashboard/reschedule-modal'
-import { DaySummary } from './day-summary'
+import { DaySummary, DaySummaryCompact } from './day-summary'
 import {
   agendaFilters,
   type AgendaStatus,
@@ -310,6 +312,332 @@ function TimelineRow({
   )
 }
 
+/* ---------- Confirmação de ação destrutiva ---------- */
+
+type PendingAction = { slot: AgendaSlot; status: Extract<AgendaStatus, 'cancelado' | 'faltou'> }
+
+function ConfirmStatusModal({
+  action,
+  onClose,
+  onConfirm,
+}: {
+  action: PendingAction
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const isCancel = action.status === 'cancelado'
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
+        <h3 className="mb-2 text-base font-semibold">
+          {isCancel ? 'Cancelar agendamento' : 'Marcar como faltou'}
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {isCancel
+            ? 'O horário volta a ficar livre na agenda.'
+            : 'O atendimento fica registrado como falta do cliente.'}
+        </p>
+
+        <div className="mb-5 rounded-lg border border-border bg-background/40 px-3 py-2">
+          <p className="text-sm font-medium">{action.slot.client}</p>
+          <p className="text-xs text-muted-foreground">
+            {action.slot.service} · {action.slot.time}
+          </p>
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            onClick={onClose}
+            className="h-11 rounded-lg border border-border px-3.5 text-sm text-muted-foreground hover:text-foreground sm:h-auto sm:py-2"
+          >
+            Voltar
+          </button>
+          <button
+            onClick={onConfirm}
+            className={cn(
+              'h-11 rounded-lg px-3.5 text-sm font-semibold text-white hover:brightness-105 sm:h-auto sm:py-2',
+              isCancel ? 'bg-danger' : 'bg-rose-500',
+            )}
+          >
+            {isCancel ? 'Cancelar agendamento' : 'Marcar como faltou'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Celular: card compacto ---------- */
+
+const statusLabel: Record<AgendaStatus, string> = {
+  agendado: 'Agendado',
+  confirmado: 'Confirmado',
+  atendimento: 'Em atendimento',
+  concluido: 'Concluído',
+  cancelado: 'Cancelado',
+  faltou: 'Faltou',
+}
+
+function toMinutes(time: string) {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+function durationMinutes(duration: string) {
+  const n = parseInt(duration, 10)
+  return Number.isFinite(n) && n > 0 ? n : 30
+}
+
+function formatMinutes(total: number) {
+  const h = Math.floor(total / 60) % 24
+  const m = total % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+// Para cada agendamento ativo, guarda o horário do outro com o qual ele se sobrepõe
+function findConflicts(slots: AgendaSlot[]) {
+  const active = slots.filter(
+    (a) => !a.available && a.status !== 'cancelado' && a.status !== 'faltou',
+  )
+  const map = new Map<string, string>()
+  for (const a of active) {
+    const aStart = toMinutes(a.time)
+    const aEnd = aStart + durationMinutes(a.duration)
+    for (const b of active) {
+      if (a.id === b.id) continue
+      const bStart = toMinutes(b.time)
+      const bEnd = bStart + durationMinutes(b.duration)
+      if (aStart < bEnd && bStart < aEnd) {
+        map.set(a.id, b.time)
+        break
+      }
+    }
+  }
+  return map
+}
+
+type MobileItem =
+  | { type: 'appointment'; slot: AgendaSlot }
+  | { type: 'free'; slots: AgendaSlot[] }
+
+// Junta horários livres seguidos numa linha só
+function groupForMobile(rows: AgendaSlot[]): MobileItem[] {
+  const items: MobileItem[] = []
+  for (const slot of rows) {
+    if (slot.available) {
+      const last = items[items.length - 1]
+      if (last && last.type === 'free') last.slots.push(slot)
+      else items.push({ type: 'free', slots: [slot] })
+    } else {
+      items.push({ type: 'appointment', slot })
+    }
+  }
+  return items
+}
+
+function ActionButton({
+  label,
+  icon: Icon,
+  tone = 'default',
+  disabled,
+  onClick,
+  className,
+}: {
+  label: string
+  icon: typeof Pencil
+  tone?: 'default' | 'success' | 'danger' | 'rose'
+  disabled?: boolean
+  onClick?: () => void
+  className?: string
+}) {
+  const tones = {
+    default: 'border-border text-foreground hover:bg-white/5',
+    success: 'border-success/40 bg-success/15 text-success hover:bg-success/25',
+    danger: 'border-danger/30 text-danger hover:bg-danger/10',
+    rose: 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10',
+  }
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'inline-flex h-11 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-colors',
+        tones[tone],
+        disabled && 'cursor-not-allowed opacity-30 hover:bg-transparent',
+        className,
+      )}
+    >
+      <Icon className="size-4" />
+      {label}
+    </button>
+  )
+}
+
+function MobileAppointmentCard({
+  slot,
+  conflictWith,
+  expanded,
+  onToggle,
+  onUpdateStatus,
+  onEdit,
+  onReschedule,
+}: {
+  slot: AgendaSlot
+  conflictWith?: string
+  expanded: boolean
+  onToggle: () => void
+  onUpdateStatus?: (id: string, status: AgendaStatus) => void
+  onEdit?: (slot: AgendaSlot) => void
+  onReschedule?: (slot: AgendaSlot) => void
+}) {
+  const muted = slot.status === 'cancelado' || slot.status === 'faltou'
+  const canReschedule = slot.status === 'agendado' || slot.status === 'confirmado'
+  const end = formatMinutes(toMinutes(slot.time) + durationMinutes(slot.duration))
+
+  return (
+    <li
+      className={cn(
+        'rounded-xl border border-l-[3px] border-border bg-card/70',
+        cardAccent[slot.status],
+        muted && 'opacity-70',
+      )}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+      >
+        <div className="w-11 shrink-0">
+          <p className="text-sm font-semibold tabular-nums">{slot.time}</p>
+          <p className="text-[10px] tabular-nums text-muted-foreground">até {end}</p>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              'truncate text-sm font-medium',
+              muted && 'line-through decoration-muted-foreground/50',
+            )}
+          >
+            {slot.client}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {slot.service}
+            {slot.addonService ? ` + ${slot.addonService}` : ''}
+          </p>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <p className="text-sm font-semibold tabular-nums">{currency.format(slot.price)}</p>
+          <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className={cn('size-1.5 rounded-full', dotColor[slot.status])} />
+            {statusLabel[slot.status]}
+          </p>
+        </div>
+
+        <ChevronDown
+          className={cn(
+            'size-4 shrink-0 text-muted-foreground transition-transform',
+            expanded && 'rotate-180',
+          )}
+        />
+      </button>
+
+      {conflictWith && (
+        <p className="flex items-center gap-1.5 px-3 pb-2.5 text-[11px] font-medium text-warning">
+          <TriangleAlert className="size-3.5 shrink-0" />
+          Sobrepõe o agendamento das {conflictWith}
+        </p>
+      )}
+
+      {expanded && (
+        <div className="border-t border-border/60 px-3 pb-3 pt-3">
+          {slot.notes && (
+            <p className="mb-3 rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-muted-foreground">
+              {slot.notes}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <ActionButton
+              label="Concluir atendimento"
+              icon={Check}
+              tone="success"
+              className="col-span-2"
+              disabled={slot.status === 'concluido'}
+              onClick={() => onUpdateStatus?.(slot.id, 'concluido')}
+            />
+            <ActionButton
+              label="Reagendar"
+              icon={CalendarClock}
+              disabled={!canReschedule}
+              onClick={() => onReschedule?.(slot)}
+            />
+            <ActionButton label="Editar" icon={Pencil} onClick={() => onEdit?.(slot)} />
+            <ActionButton
+              label="Faltou"
+              icon={UserX}
+              tone="rose"
+              disabled={slot.status === 'faltou'}
+              onClick={() => onUpdateStatus?.(slot.id, 'faltou')}
+            />
+            <ActionButton
+              label="Cancelar"
+              icon={X}
+              tone="danger"
+              disabled={slot.status === 'cancelado'}
+              onClick={() => onUpdateStatus?.(slot.id, 'cancelado')}
+            />
+          </div>
+        </div>
+      )}
+    </li>
+  )
+}
+
+const FREE_PREVIEW = 6
+
+function MobileFreeGroup({
+  slots,
+  onSchedule,
+}: {
+  slots: AgendaSlot[]
+  onSchedule: (slot: AgendaSlot) => void
+}) {
+  const [showAll, setShowAll] = useState(false)
+  const visible = showAll ? slots : slots.slice(0, FREE_PREVIEW)
+  const hidden = slots.length - visible.length
+
+  return (
+    <li className="rounded-xl border border-dashed border-border/70 px-3 py-2.5">
+      <p className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Clock className="size-3.5" />
+        {slots.length === 1 ? '1 horário livre' : `${slots.length} horários livres`}
+        <span className="text-muted-foreground/60">· toque para agendar</span>
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {visible.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => onSchedule(s)}
+            className="h-9 min-w-14 rounded-lg border border-gold/30 bg-gold/10 px-2.5 text-xs font-semibold tabular-nums text-gold transition-colors hover:bg-gold/20"
+          >
+            {s.time}
+          </button>
+        ))}
+        {hidden > 0 && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="h-9 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            +{hidden}
+          </button>
+        )}
+      </div>
+    </li>
+  )
+}
+
 export function AgendaView({
   slots = [],
   date: dateProp,
@@ -324,6 +652,8 @@ export function AgendaView({
   const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
   const [creatingTime, setCreatingTime] = useState<string | undefined>()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const currentDate = dateProp ?? internalDate
   const isToday = isSameDay(currentDate, new Date())
@@ -352,12 +682,26 @@ export function AgendaView({
     return map
   }, [slots])
 
+  // Cancelar e faltou passam pela confirmação; os demais aplicam direto
+  function requestStatus(slot: AgendaSlot, status: AgendaStatus) {
+    if (status === 'cancelado' || status === 'faltou') {
+      setPendingAction({ slot, status })
+      return
+    }
+    setExpandedId(null)
+    onUpdateStatus?.(slot.id, status)
+  }
+
+  const conflicts = useMemo(() => findConflicts(slots), [slots])
+
   const rows = useMemo(() => {
     if (filter === 'todos') return slots
     return slots.filter(
       (a) => !a.available && a.status === filter,
     )
   }, [filter, slots])
+
+  const mobileItems = useMemo(() => groupForMobile(rows), [rows])
 
   return (
     <div className="space-y-5">
@@ -367,6 +711,18 @@ export function AgendaView({
           onClose={() => setEditingSlot(null)}
           onSave={async (notes) => {
             await onUpdateNotes?.(editingSlot.id, notes)
+          }}
+        />
+      )}
+
+      {pendingAction && (
+        <ConfirmStatusModal
+          action={pendingAction}
+          onClose={() => setPendingAction(null)}
+          onConfirm={() => {
+            onUpdateStatus?.(pendingAction.slot.id, pendingAction.status)
+            setPendingAction(null)
+            setExpandedId(null)
           }}
         />
       )}
@@ -470,9 +826,11 @@ export function AgendaView({
         </div>
       </Panel>
 
+      <DaySummaryCompact slots={slots} />
+
       {/* Timeline + summary */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
-        <Panel className="p-4 sm:p-5">
+        <Panel className="p-3 sm:p-5">
           {rows.length === 0 ? (
             <div className="grid place-items-center gap-2 py-16 text-center">
               <Clock className="size-8 text-muted-foreground/50" />
@@ -481,13 +839,43 @@ export function AgendaView({
               </p>
             </div>
           ) : (
-            <ol>
+            <>
+            {/* Celular: cards compactos, horários livres agrupados */}
+            <ul className="space-y-2 md:hidden">
+              {mobileItems.map((item, i) =>
+                item.type === 'free' ? (
+                  <MobileFreeGroup
+                    key={`free-${i}`}
+                    slots={item.slots}
+                    onSchedule={(s) => {
+                      setCreatingTime(s.time)
+                      setCreating(true)
+                    }}
+                  />
+                ) : (
+                  <MobileAppointmentCard
+                    key={item.slot.id}
+                    slot={item.slot}
+                    conflictWith={conflicts.get(item.slot.id)}
+                    expanded={expandedId === item.slot.id}
+                    onToggle={() =>
+                      setExpandedId((cur) => (cur === item.slot.id ? null : item.slot.id))
+                    }
+                    onUpdateStatus={(_id, status) => requestStatus(item.slot, status)}
+                    onEdit={(s) => setEditingSlot(s)}
+                    onReschedule={(s) => setReschedulingSlot(s)}
+                  />
+                ),
+              )}
+            </ul>
+
+            <ol className="hidden md:block">
               {rows.map((slot, i) => (
                 <TimelineRow
                   key={slot.id}
                   slot={slot}
                   last={i === rows.length - 1}
-                  onUpdateStatus={onUpdateStatus}
+                  onUpdateStatus={(_id, status) => requestStatus(slot, status)}
                   onEdit={(s) => setEditingSlot(s)}
                   onReschedule={(s) => setReschedulingSlot(s)}
                   onSchedule={(s) => {
@@ -497,10 +885,13 @@ export function AgendaView({
                 />
               ))}
             </ol>
+            </>
           )}
         </Panel>
 
-        <DaySummary slots={slots} />
+        <div className="hidden md:block">
+          <DaySummary slots={slots} />
+        </div>
       </div>
     </div>
   )
