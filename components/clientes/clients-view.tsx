@@ -289,6 +289,128 @@ function ClientRow({
   )
 }
 
+// Versão em card do ClientRow, usada só no celular (a tabela aparece a partir de md)
+function ClientCard({
+  client,
+  checked,
+  onToggle,
+  onEdit,
+  onView,
+  onViewHistory,
+  onDelete,
+  menuOpen,
+  onToggleMenu,
+}: {
+  client: Client
+  onView: () => void
+  onViewHistory: () => void
+  onDelete: () => void
+  menuOpen: boolean
+  onToggleMenu: () => void
+  checked: boolean
+  onToggle: () => void
+  onEdit: () => void
+}) {
+  return (
+    <li className="rounded-xl border border-border bg-background/30 p-3.5">
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          aria-label={`Selecionar ${client.name}`}
+          className="mt-3 size-4 shrink-0 rounded border-border bg-transparent accent-gold"
+        />
+        <UserAvatar name={client.name} size="md" ring={client.status === 'vip'} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{client.name}</p>
+          <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-success">
+            <MessageCircle className="size-3" />
+            {client.whatsapp}
+          </p>
+        </div>
+        <div className="shrink-0">
+          <ClientStatusBadge status={client.status} />
+        </div>
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg bg-white/[0.03] px-3 py-2.5 text-xs">
+        <div>
+          <dt className="text-muted-foreground">Último atendimento</dt>
+          <dd className="mt-0.5 font-medium">
+            {client.lastVisit}
+            {client.lastVisitAgo && (
+              <span className="ml-1 font-normal text-muted-foreground">
+                · {client.lastVisitAgo}
+              </span>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Ticket médio</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums">
+            {currency.format(client.avgTicket)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Visitas</dt>
+          <dd className="mt-0.5 font-medium tabular-nums">{client.visits}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Frequência</dt>
+          <dd className="mt-0.5 font-medium">{client.frequency}</dd>
+        </div>
+      </dl>
+
+      <div className="relative mt-3 flex items-center gap-2">
+        <button
+          onClick={onView}
+          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium text-foreground transition-colors hover:bg-white/5"
+        >
+          <Eye className="size-4" />
+          Perfil
+        </button>
+        <button
+          onClick={onEdit}
+          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-medium text-foreground transition-colors hover:bg-white/5"
+        >
+          <Pencil className="size-4" />
+          Editar
+        </button>
+        <WhatsappIconButton
+          className="size-10"
+          label={`Enviar WhatsApp para ${client.name}`}
+          phone={client.whatsapp === '-' ? null : client.whatsapp}
+        />
+        <button
+          aria-label="Mais opções"
+          onClick={onToggleMenu}
+          className="grid size-10 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+        >
+          <MoreHorizontal className="size-4" />
+        </button>
+
+        {menuOpen && (
+          <div className="absolute bottom-full right-0 z-10 mb-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
+            <button
+              onClick={onViewHistory}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground hover:bg-white/5"
+            >
+              Ver histórico
+            </button>
+            <button
+              onClick={onDelete}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-white/5"
+            >
+              Excluir cliente
+            </button>
+          </div>
+        )}
+      </div>
+    </li>
+  )
+}
+
 function NewClientModal({
   onClose,
   onCreated,
@@ -1118,7 +1240,7 @@ function ClientsTable() {
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 p-4">
-        <div className="relative min-w-[220px] flex-1">
+        <div className="relative min-w-[220px] basis-full sm:basis-auto sm:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
@@ -1292,7 +1414,8 @@ function ClientsTable() {
 
       {/* Table */}
       {!loading && !error && (
-        <div className="overflow-x-auto">
+        <>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -1354,16 +1477,47 @@ function ClientsTable() {
               ))}
             </tbody>
           </table>
-
-          {filtered.length === 0 && (
-            <div className="grid place-items-center gap-2 py-16 text-center">
-              <Users className="size-8 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                Nenhum cliente encontrado com esses filtros.
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Celular: lista de cards */}
+        <ul className="space-y-2.5 px-3 pb-3 md:hidden">
+          {filtered.map((client) => (
+            <ClientCard
+              key={client.id}
+              client={client}
+              checked={selected.has(client.id)}
+              onToggle={() => toggle(client.id)}
+              onEdit={() =>
+                setEditingClient(rawClients.find((c) => c.id === client.id) || null)
+              }
+              onView={() => {
+                setViewingClient(rawClients.find((c) => c.id === client.id) || null)
+                setViewingTab('info')
+              }}
+              onViewHistory={() => {
+                setViewingClient(rawClients.find((c) => c.id === client.id) || null)
+                setViewingTab('historico')
+                setOpenMenuId(null)
+              }}
+              onDelete={() => {
+                setDeletingClient(rawClients.find((c) => c.id === client.id) || null)
+                setOpenMenuId(null)
+              }}
+              menuOpen={openMenuId === client.id}
+              onToggleMenu={() => setOpenMenuId(openMenuId === client.id ? null : client.id)}
+            />
+          ))}
+        </ul>
+
+        {filtered.length === 0 && (
+          <div className="grid place-items-center gap-2 py-16 text-center">
+            <Users className="size-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum cliente encontrado com esses filtros.
+            </p>
+          </div>
+        )}
+        </>
       )}
 
       {/* Pagination */}
