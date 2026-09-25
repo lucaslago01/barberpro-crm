@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState } from 'react'
 import {
   Settings2,
   Scissors,
@@ -10,16 +10,9 @@ import {
   Bell,
   ShieldCheck,
   UserRound,
-  Store,
-  Upload,
   Plus,
-  Check,
   X,
   ChevronDown,
-  MonitorSmartphone,
-  LogOut,
-  KeyRound,
-  Trash2,
   type LucideIcon,
 } from 'lucide-react'
 import { Panel, PanelHeader } from '@/components/dashboard/panel'
@@ -86,40 +79,8 @@ function Switch({
   )
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="grid gap-1.5 sm:grid-cols-[140px_1fr] sm:items-center sm:gap-4">
-      <label className="text-sm text-muted-foreground">{label}</label>
-      {children}
-    </div>
-  )
-}
-
 const inputClass =
   'h-10 w-full rounded-xl border border-border bg-background/40 px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-gold/40 focus:ring-1 focus:ring-gold/30'
-
-function TextInput({
-  defaultValue,
-  placeholder,
-}: {
-  defaultValue?: string
-  placeholder?: string
-}) {
-  return (
-    <input
-      type="text"
-      defaultValue={defaultValue}
-      placeholder={placeholder}
-      className={inputClass}
-    />
-  )
-}
 
 function Select({
   defaultValue,
@@ -142,71 +103,6 @@ function Select({
       </select>
       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
-  )
-}
-
-/* ---------- Geral tab ---------- */
-
-
-
-function BarbershopInfo() {
-  return (
-    <Panel className="p-5">
-      <PanelHeader
-        className="px-0 pt-0"
-        icon={<Store className="size-[18px]" />}
-        title="Informações da barbearia"
-      />
-      <p className="-mt-2 mb-5 text-sm text-muted-foreground">
-        Dados que aparecem para seus clientes.
-      </p>
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <div className="flex shrink-0 flex-col items-center gap-3">
-          <div className="grid size-28 place-items-center rounded-2xl border border-border bg-background/40">
-            <div className="text-center leading-none">
-              <Scissors className="mx-auto mb-1.5 size-5 -rotate-90 text-gold" />
-              <p className="font-serif text-sm font-bold tracking-[0.12em]">
-                BARBER<span className="text-gold">PRO</span>
-              </p>
-              <p className="mt-1 text-[7px] font-medium tracking-[0.25em] text-muted-foreground">
-                BARBEARIA
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background/40 px-3 text-xs font-medium text-foreground transition-colors hover:border-gold/40"
-          >
-            <Upload className="size-3.5 text-gold" />
-            Alterar logo
-          </button>
-        </div>
-        <div className="flex-1 space-y-3.5">
-          <Field label="Nome da barbearia">
-            <TextInput defaultValue="BarberPro" />
-          </Field>
-          <Field label="Telefone / WhatsApp">
-            <TextInput defaultValue="(41) 99999-9999" />
-          </Field>
-          <Field label="Endereço">
-            <TextInput defaultValue="R. das Flores, 123 - Centro, Curitiba - PR" />
-          </Field>
-          <Field label="Instagram">
-            <TextInput defaultValue="@barberpro" />
-          </Field>
-          <div className="grid gap-1.5 sm:grid-cols-[140px_1fr] sm:gap-4">
-            <label className="text-sm text-muted-foreground sm:pt-2">
-              Descrição
-            </label>
-            <textarea
-              defaultValue="Cortes modernos, barba e estilo. Mais que um corte, uma experiência."
-              rows={3}
-              className={cn(inputClass, 'h-auto resize-none py-2 leading-relaxed')}
-            />
-          </div>
-        </div>
-      </div>
-    </Panel>
   )
 }
 
@@ -323,52 +219,6 @@ function BookingSettings() {
   )
 }
 
-/* ---------- WhatsApp tab ---------- */
-
-function WhatsappConnection() {
-  return (
-    <Panel className="p-5">
-      <PanelHeader
-        className="px-0 pt-0"
-        icon={<MessageCircle className="size-[18px]" />}
-        title="Conexão WhatsApp"
-      />
-      <p className="-mt-2 mb-5 text-sm text-muted-foreground">
-        Gerencie a conexão com seu número do WhatsApp.
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex items-center gap-3 rounded-xl border border-success/25 bg-success/10 p-4">
-          <span className="relative grid size-10 place-items-center rounded-full bg-success/15">
-            <span className="size-2.5 rounded-full bg-success" />
-            <span className="absolute size-2.5 animate-ping rounded-full bg-success/60" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-success">Conectado</p>
-            <p className="text-xs text-muted-foreground">
-              Seu WhatsApp está conectado e pronto para uso.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/30 p-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Número conectado</p>
-            <p className="mt-0.5 text-base font-semibold tabular-nums">
-              (41) 99999-9999
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 text-sm font-medium text-danger transition-colors hover:bg-danger/20"
-          >
-            <X className="size-4" />
-            Desconectar
-          </button>
-        </div>
-      </div>
-    </Panel>
-  )
-}
-
 /* ---------- Serviços tab ---------- */
 
 /* ---------- Notificações tab ---------- */
@@ -422,15 +272,6 @@ function NotificationSettings() {
     </Panel>
   )
 }
-
-/* ---------- Segurança tab ---------- */
-
-const sessions = [
-  { device: 'MacBook Pro · Chrome', location: 'Curitiba, PR', current: true, time: 'Agora' },
-  { device: 'iPhone 15 · Safari', location: 'Curitiba, PR', current: false, time: 'há 2 horas' },
-  { device: 'Windows · Edge', location: 'São Paulo, SP', current: false, time: 'há 3 dias' },
-]
-
 
 /* ---------- Tab content ---------- */
 
