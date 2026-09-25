@@ -62,6 +62,10 @@ BEGIN
   END LOOP;
 END $$;
 
+-- A versão da create_appointment_v3 que recebe IDs (uuid,uuid,...) é do CRM:
+-- fica só para usuário logado. Só a versão em texto (nome/telefone) é pública.
+REVOKE EXECUTE ON FUNCTION public.barberpro_create_appointment_v3(uuid,uuid,timestamp without time zone,text,uuid,numeric,boolean) FROM anon;
+
 -- 4) Storage (logo e foto do barbeiro) -------------------------------------------
 -- Bucket público para leitura; só autenticado envia/troca arquivos.
 DROP POLICY IF EXISTS assets_public_read ON storage.objects;
