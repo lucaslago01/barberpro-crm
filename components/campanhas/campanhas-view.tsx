@@ -244,7 +244,7 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">Nova campanha</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">

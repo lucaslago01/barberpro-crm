@@ -339,7 +339,7 @@ function NewClientModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">Novo cliente</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -738,7 +738,7 @@ function EditClientModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">Editar cliente</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -868,7 +868,7 @@ function ClientProfileModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5">
+      <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold">{client.name}</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -1089,7 +1089,7 @@ function ClientsTable() {
 
       {deletingClient && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <h3 className="mb-2 text-base font-semibold">Excluir cliente</h3>
             <p className="mb-5 text-sm text-muted-foreground">
               Tem certeza que deseja excluir <strong>{deletingClient.name}</strong>? Essa ação não pode ser desfeita.
@@ -1459,7 +1459,7 @@ function ClubMembersPanel() {
 
       {showAll && members && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">Assinantes do clube</h3>
               <button
@@ -1563,7 +1563,7 @@ function FeaturedPanel() {
       </ul>
       {showAll && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">Clientes em destaque</h3>
               <button onClick={() => setShowAll(false)} className="text-muted-foreground hover:text-foreground">
@@ -1663,7 +1663,7 @@ function RecoverPanel() {
 
       {showAll && clients && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">Clientes para recuperar</h3>
               <button
@@ -1758,7 +1758,7 @@ function BirthdaysPanel() {
       </Panel>
       {showAll && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">Próximos aniversários</h3>
               <button onClick={() => setShowAll(false)} className="text-muted-foreground hover:text-foreground">
@@ -1840,7 +1840,7 @@ function InteractionsPanel() {
 
       {showAll && interactions && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">Últimas interações</h3>
               <button

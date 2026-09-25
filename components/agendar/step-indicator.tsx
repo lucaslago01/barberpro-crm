@@ -10,7 +10,9 @@ const steps = [
 ]
 
 export function StepIndicator({ currentStep }: { currentStep: number }) {
+  const current = steps.find((s) => s.number === currentStep)
   return (
+    <>
     <nav
       aria-label="Etapas do agendamento"
       className="mx-auto flex w-full max-w-xl items-start justify-between px-4"
@@ -37,11 +39,12 @@ export function StepIndicator({ currentStep }: { currentStep: number }) {
               </div>
               <span
                 className={
-                  isCompleted
+                  "hidden sm:block " +
+                  (isCompleted
                     ? "text-[11px] font-medium text-amber-400/80 sm:text-xs"
                     : isActive
                       ? "text-[11px] font-medium text-amber-400 sm:text-xs"
-                      : "text-[11px] font-medium text-zinc-500 sm:text-xs"
+                      : "text-[11px] font-medium text-zinc-500 sm:text-xs")
                 }
               >
                 {step.label}
@@ -61,5 +64,9 @@ export function StepIndicator({ currentStep }: { currentStep: number }) {
         )
       })}
     </nav>
+    <p className="mt-3 text-center text-xs font-medium text-amber-400 sm:hidden">
+      Etapa {currentStep} de {steps.length} · {current?.label}
+    </p>
+    </>
   )
 }
