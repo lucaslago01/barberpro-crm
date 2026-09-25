@@ -14,12 +14,51 @@ export const EXPENSE_CATEGORIES = [
 
 export const CLUB_PLANS = ['Corte', 'Corte e barba', 'Barba']
 
+// Valor sugerido de cada plano do clube (o Juan pode mudar na hora de lançar).
+// Também é a base da previsão de renda do clube nos meses seguintes.
+export const PLAN_PRICES: Record<string, number> = {
+  Corte: 139,
+  'Corte e barba': 229,
+  Barba: 159,
+}
+
 export interface Expense {
   id: string
   day: string
   description: string
   category: string
   amount: number
+  recurring_id: string | null
+}
+
+// Despesa que se repete todo mês (aluguel, internet...)
+export interface RecurringExpense {
+  id: string
+  description: string
+  category: string
+  amount: number
+  due_day: number // 1 a 31
+  start_month: string // "2026-10-01"
+}
+
+// Recorrente que ainda não foi paga no mês em vista
+export interface PendingExpense {
+  recurringId: string
+  description: string
+  category: string
+  amount: number
+  dueDate: string // "2026-10-05"
+  overdue: boolean
+}
+
+// Mensalidade do clube esperada no mês em vista, ainda sem pagamento lançado
+export interface ClubForecastItem {
+  clientId: string
+  name: string
+  plan: string
+  amount: number
+  dueDate: string
+  overdue: boolean
 }
 
 export interface ClubPayment {
@@ -76,6 +115,13 @@ export interface MonthFinance {
   daily: DailyPoint[]
   byCategory: CategoryTotal[]
   byService: ServiceTotal[]
+  // Pagamentos futuros
+  recurringAvailable: boolean // false enquanto supabase/recurring.sql não foi rodado
+  recurringList: RecurringExpense[]
+  pendingExpenses: PendingExpense[]
+  pendingExpensesTotal: number
+  clubForecast: ClubForecastItem[]
+  clubForecastTotal: number
 }
 
 function pad(n: number) {
@@ -96,6 +142,85 @@ function dayNumber(day: string) {
   return Number(day.slice(8, 10))
 }
 
+// Vencimento dentro de um mês. Dia 31 em mês de 30 dias vira o último dia do mês.
+export function dueDateInMonth(year: number, month: number, dueDay: number) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  return dayString(year, month, Math.min(Math.max(dueDay, 1), daysInMonth))
+}
+
+// Recorrentes (ainda não pagas neste mês) e previsão do clube. Só faz sentido do mês atual em diante.
+function buildPending(params: {
+  year: number
+  month: number
+  recurring: RecurringExpense[]
+  paidRecurringIds: Set<string>
+}): { list: PendingExpense[]; total: number } {
+  const { year, month, recurring, paidRecurringIds } = params
+  const monthKey = dayString(year, month, 1).slice(0, 7)
+  const today = todayString()
+  const isPastOrCurrent = monthKey <= today.slice(0, 7)
+
+  const list = recurring
+    .filter((r) => r.start_month.slice(0, 7) <= monthKey && !paidRecurringIds.has(r.id))
+    .map((r) => {
+      const dueDate = dueDateInMonth(year, month, r.due_day)
+      return {
+        recurringId: r.id,
+        description: r.description,
+        category: r.category,
+        amount: r.amount,
+        dueDate,
+        overdue: isPastOrCurrent && dueDate < today,
+      }
+    })
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+
+  return { list, total: list.reduce((sum, p) => sum + p.amount, 0) }
+}
+
+// Assinantes que devem pagar no mês em vista e ainda não têm pagamento lançado nele.
+// Usa o vencimento atual de cada assinante; nos meses seguintes assume que renova no mesmo dia.
+function buildClubForecast(params: {
+  year: number
+  month: number
+  members: { id: string; name: string; club_plan: string; club_due_date: string }[]
+  paidClientIds: Set<string>
+}): { list: ClubForecastItem[]; total: number } {
+  const { year, month, members, paidClientIds } = params
+  const monthKey = dayString(year, month, 1).slice(0, 7)
+  const today = todayString()
+  const currentKey = today.slice(0, 7)
+
+  // Meses passados já estão fechados: o que valeu foi o que foi lançado
+  if (monthKey < currentKey) return { list: [], total: 0 }
+
+  const list: ClubForecastItem[] = []
+  for (const m of members) {
+    if (!m.club_due_date || paidClientIds.has(m.id)) continue
+    const dueKey = m.club_due_date.slice(0, 7)
+    if (dueKey > monthKey) continue // vence só em mês posterior
+
+    // Vencimento deste mês: o dia exato se cai no mês; senão o mesmo dia do mês (renovação)
+    // No mês atual, quem está atrasado de meses anteriores mostra a data real do vencimento
+    const dueDate =
+      dueKey === monthKey || monthKey === currentKey
+        ? m.club_due_date
+        : dueDateInMonth(year, month, dayNumber(m.club_due_date))
+
+    list.push({
+      clientId: m.id,
+      name: m.name,
+      plan: m.club_plan,
+      amount: PLAN_PRICES[m.club_plan] ?? 0,
+      dueDate,
+      overdue: monthKey === currentKey && dueDate < today,
+    })
+  }
+  list.sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+
+  return { list, total: list.reduce((sum, i) => sum + i.amount, 0) }
+}
+
 // month: 0 = janeiro
 export async function getMonthFinance(year: number, month: number): Promise<MonthFinance> {
   const startDay = dayString(year, month, 1)
@@ -104,7 +229,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
   const endDay = dayString(nextYear, nextMonth, 1)
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-  const [appts, exp, club] = await Promise.all([
+  const [appts, exp, club, rec, members] = await Promise.all([
     supabase
       .from('barberpro_appointments')
       .select(
@@ -114,9 +239,10 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
       .lt('time', `${endDay}T00:00:00`)
       .eq('status', 'concluido')
       .order('time', { ascending: false }),
+    // "*" para funcionar mesmo antes de rodar supabase/recurring.sql (colunas novas opcionais)
     supabase
       .from('barberpro_expenses')
-      .select('id, day, description, category, amount')
+      .select('*')
       .gte('day', startDay)
       .lt('day', endDay)
       .order('day', { ascending: false }),
@@ -126,6 +252,16 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
       .gte('day', startDay)
       .lt('day', endDay)
       .order('day', { ascending: false }),
+    // Pagamentos futuros: se a tabela ainda não existe, o Financeiro segue sem essa parte
+    supabase
+      .from('barberpro_recurring_expenses')
+      .select('id, description, category, amount, due_day, start_month')
+      .order('due_day', { ascending: true }),
+    supabase
+      .from('barberpro_clients')
+      .select('id, name, club_plan, club_due_date')
+      .not('club_plan', 'is', null)
+      .not('club_due_date', 'is', null),
   ])
 
   if (appts.error) throw new Error(`Erro ao buscar atendimentos: ${appts.error.message}`)
@@ -160,6 +296,7 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     description: e.description,
     category: e.category,
     amount: Number(e.amount),
+    recurring_id: e.recurring_id ?? null,
   }))
 
   const clubList: ClubPayment[] = (club.data || []).map((c: any) => ({
@@ -238,6 +375,34 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     .map(([name, v]) => ({ name, count: v.count, total: v.total }))
     .sort((a, b) => b.total - a.total || b.count - a.count)
 
+  // Pagamentos futuros (nada disso entra no lucro até ser pago)
+  const recurringAvailable = !rec.error
+  const recurringList: RecurringExpense[] = (rec.data || []).map((r: any) => ({
+    id: r.id,
+    description: r.description,
+    category: r.category,
+    amount: Number(r.amount),
+    due_day: Number(r.due_day),
+    start_month: String(r.start_month),
+  }))
+
+  const paidRecurringIds = new Set(
+    expenseList.filter((e) => e.recurring_id).map((e) => e.recurring_id as string),
+  )
+  const pending = buildPending({ year, month, recurring: recurringList, paidRecurringIds })
+
+  const paidClientIds = new Set(
+    clubList.filter((c) => c.client_id).map((c) => c.client_id as string),
+  )
+  const forecast = members.error
+    ? { list: [] as ClubForecastItem[], total: 0 }
+    : buildClubForecast({
+        year,
+        month,
+        members: (members.data || []) as any[],
+        paidClientIds,
+      })
+
   return {
     walkIn,
     club: clubTotal,
@@ -253,6 +418,12 @@ export async function getMonthFinance(year: number, month: number): Promise<Mont
     daily,
     byCategory,
     byService,
+    recurringAvailable,
+    recurringList,
+    pendingExpenses: pending.list,
+    pendingExpensesTotal: pending.total,
+    clubForecast: forecast.list,
+    clubForecastTotal: forecast.total,
   }
 }
 
@@ -261,9 +432,66 @@ export async function createExpense(params: {
   description: string
   category: string
   amount: number
+  recurring_id?: string
+  recurring_month?: string
 }): Promise<void> {
   const { error } = await supabase.from('barberpro_expenses').insert(params)
   if (error) throw new Error(`Erro ao lançar despesa: ${error.message}`)
+}
+
+const RECURRING_MISSING_MESSAGE =
+  'Para usar despesas recorrentes, rode o arquivo supabase/recurring.sql no SQL Editor do Supabase.'
+
+function isMissingTable(error: { code?: string; message: string }) {
+  return (
+    error.code === '42P01' ||
+    error.code === 'PGRST205' ||
+    /does not exist|schema cache|Could not find/i.test(error.message)
+  )
+}
+
+// Cadastra uma despesa que se repete todo mês. Ela aparece como "a pagar" a partir de start_month.
+export async function createRecurringExpense(params: {
+  description: string
+  category: string
+  amount: number
+  due_day: number
+  start_month: string // "2026-10" ou "2026-10-01"
+}): Promise<void> {
+  const { error } = await supabase.from('barberpro_recurring_expenses').insert({
+    description: params.description,
+    category: params.category,
+    amount: params.amount,
+    due_day: params.due_day,
+    start_month: `${params.start_month.slice(0, 7)}-01`,
+  })
+  if (error) {
+    if (isMissingTable(error)) throw new Error(RECURRING_MISSING_MESSAGE)
+    throw new Error(`Erro ao cadastrar despesa recorrente: ${error.message}`)
+  }
+}
+
+// Encerra a recorrência. O que já foi pago continua no histórico dos meses.
+export async function deleteRecurringExpense(id: string): Promise<void> {
+  const { error } = await supabase.from('barberpro_recurring_expenses').delete().eq('id', id)
+  if (error) throw new Error(`Erro ao encerrar despesa recorrente: ${error.message}`)
+}
+
+// Confirma o pagamento de uma recorrente num mês: vira uma despesa normal daquele mês
+// (na data do vencimento), e o item sai de "a pagar".
+export async function markRecurringPaid(
+  item: PendingExpense,
+  year: number,
+  month: number,
+): Promise<void> {
+  await createExpense({
+    day: item.dueDate,
+    description: item.description,
+    category: item.category,
+    amount: item.amount,
+    recurring_id: item.recurringId,
+    recurring_month: dayString(year, month, 1),
+  })
 }
 
 export async function deleteExpense(id: string): Promise<void> {
