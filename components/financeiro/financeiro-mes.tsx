@@ -16,21 +16,30 @@ import {
   Scissors,
   Receipt,
   Wallet,
+  CalendarClock,
+  Repeat,
   type LucideIcon,
 } from 'lucide-react'
 import { Panel } from '@/components/dashboard/panel'
 import { getClients } from '@/lib/supabase-data'
+import { markClubPaymentAndRecord } from '@/lib/supabase-club'
 import {
   CLUB_PLANS,
   EXPENSE_CATEGORIES,
+  PLAN_PRICES,
   createClubPayment,
   createExpense,
+  createRecurringExpense,
   deleteClubPayment,
   deleteExpense,
+  deleteRecurringExpense,
   getMonthFinance,
+  markRecurringPaid,
   todayString,
+  type ClubForecastItem,
   type DailyPoint,
   type MonthFinance,
+  type PendingExpense,
 } from '@/lib/supabase-finance'
 import type { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -39,13 +48,6 @@ const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 })
-
-// Valor sugerido de cada plano do clube (o Juan pode mudar na hora de lançar)
-const PLAN_PRICES: Record<string, number> = {
-  Corte: 139,
-  'Corte e barba': 229,
-  Barba: 159,
-}
 
 const fieldClass =
   'w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40'
@@ -74,6 +76,9 @@ function ExpenseModal({
   const [category, setCategory] = useState('aluguel')
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
+  const [recurring, setRecurring] = useState(false)
+  const [dueDay, setDueDay] = useState(String(new Date().getDate()))
+  const [startMonth, setStartMonth] = useState(todayString().slice(0, 7))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const savingRef = useRef(false)
@@ -83,19 +88,37 @@ function ExpenseModal({
     setError(null)
 
     const value = parseAmount(amount)
-    if (!day) return setError('Escolha a data.')
+    const dueDayNumber = Number(dueDay)
+    if (recurring) {
+      if (!Number.isInteger(dueDayNumber) || dueDayNumber < 1 || dueDayNumber > 31) {
+        return setError('O dia do vencimento precisa ser de 1 a 31.')
+      }
+      if (!startMonth) return setError('Escolha o mês em que começa.')
+    } else if (!day) {
+      return setError('Escolha a data.')
+    }
     if (!description.trim()) return setError('Escreva uma descrição.')
     if (!(value > 0)) return setError('Informe um valor maior que zero.')
 
     savingRef.current = true
     setSaving(true)
     try {
-      await createExpense({
-        day,
-        category,
-        description: description.trim(),
-        amount: value,
-      })
+      if (recurring) {
+        await createRecurringExpense({
+          description: description.trim(),
+          category,
+          amount: value,
+          due_day: dueDayNumber,
+          start_month: startMonth,
+        })
+      } else {
+        await createExpense({
+          day,
+          category,
+          description: description.trim(),
+          amount: value,
+        })
+      }
       onSaved()
       onClose()
     } catch (err) {
@@ -110,7 +133,9 @@ function ExpenseModal({
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4">
       <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold">Lançar despesa</h3>
+          <h3 className="text-base font-semibold">
+            {recurring ? 'Cadastrar despesa recorrente' : 'Lançar despesa'}
+          </h3>
           <button
             onClick={onClose}
             aria-label="Fechar"
@@ -121,15 +146,84 @@ function ExpenseModal({
         </div>
 
         <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Data</label>
-            <input
-              type="date"
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              className={fieldClass}
-            />
-          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={recurring}
+            onClick={() => setRecurring((v) => !v)}
+            className={cn(
+              'flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors',
+              recurring ? 'border-gold/40 bg-gold/10' : 'border-border bg-background/30',
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              <Repeat className={cn('size-4 shrink-0', recurring ? 'text-gold' : 'text-muted-foreground')} />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium">Despesa recorrente</span>
+                <span className="block text-xs text-muted-foreground">
+                  Repete todo mês, com vencimento
+                </span>
+              </span>
+            </span>
+            <span
+              className={cn(
+                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+                recurring ? 'bg-gold' : 'bg-white/10',
+              )}
+            >
+              <span
+                className={cn(
+                  'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
+                  recurring ? 'translate-x-6' : 'translate-x-1',
+                )}
+              />
+            </span>
+          </button>
+
+          {recurring ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    Dia do vencimento
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={dueDay}
+                    onChange={(e) => setDueDay(e.target.value)}
+                    inputMode="numeric"
+                    className={fieldClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Começa em</label>
+                  <input
+                    type="month"
+                    value={startMonth}
+                    onChange={(e) => setStartMonth(e.target.value)}
+                    className={fieldClass}
+                  />
+                </div>
+              </div>
+              <p className="text-xs leading-snug text-muted-foreground">
+                Todo mês ela aparece em Pagamentos futuros no dia do vencimento. Você confirma
+                quando pagar, e só então entra no lucro. Em meses curtos, o dia 31 vale o último
+                dia do mês.
+              </p>
+            </>
+          ) : (
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Data</label>
+              <input
+                type="date"
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
+                className={fieldClass}
+              />
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Categoria</label>
             <select
@@ -179,7 +273,7 @@ function ExpenseModal({
             disabled={saving}
             className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
           >
-            {saving ? 'Salvando...' : 'Lançar'}
+            {saving ? 'Salvando...' : recurring ? 'Cadastrar' : 'Lançar'}
           </button>
         </div>
       </div>
@@ -646,6 +740,226 @@ function DailyChart({ daily }: { daily: DailyPoint[] }) {
   )
 }
 
+/* ---------- Pagamentos futuros: despesas a pagar e renda prevista do clube ---------- */
+
+function OverdueBadge() {
+  return (
+    <span className="ml-1.5 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
+      Atrasada
+    </span>
+  )
+}
+
+function FutureBills({
+  data,
+  monthKey,
+  currentKey,
+  busyKey,
+  onPayExpense,
+  onPayClub,
+  onRemoveRecurring,
+}: {
+  data: MonthFinance
+  monthKey: string
+  currentKey: string
+  busyKey: string | null
+  onPayExpense: (item: PendingExpense) => void
+  onPayClub: (item: ClubForecastItem) => void
+  onRemoveRecurring: (id: string, description: string) => void
+}) {
+  const isPastMonth = monthKey < currentKey
+  const canConfirmClub = monthKey === currentKey
+  const projectedProfit = data.profit + data.clubForecastTotal - data.pendingExpensesTotal
+
+  const smallButton =
+    'inline-flex h-9 shrink-0 items-center rounded-lg border border-gold/40 bg-gold/10 px-3 text-xs font-semibold text-gold transition-colors hover:bg-gold/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8'
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-2.5">
+        <CalendarClock className="size-[18px] shrink-0 text-gold" />
+        <h2 className="text-[15px] font-semibold tracking-tight">Pagamentos futuros</h2>
+      </div>
+
+      {!isPastMonth && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard
+            label="A pagar"
+            value={currency.format(data.pendingExpensesTotal)}
+            detail={`${data.pendingExpenses.length} despesa(s) recorrente(s)`}
+            icon={Wallet}
+            tone="bg-danger/12 text-danger"
+          />
+          <StatCard
+            label="Clube previsto"
+            value={currency.format(data.clubForecastTotal)}
+            detail={`${data.clubForecast.length} mensalidade(s) esperada(s)`}
+            icon={Crown}
+            tone="bg-success/12 text-success"
+          />
+          <StatCard
+            label="Lucro previsto"
+            value={currency.format(projectedProfit)}
+            detail="Lucro do mês + clube previsto − despesas a pagar"
+            icon={CircleDollarSign}
+            tone="bg-gold/12 text-gold"
+          />
+        </div>
+      )}
+
+      <div className={cn('grid grid-cols-1 gap-5', !isPastMonth && 'xl:grid-cols-2')}>
+        <Panel className="p-5">
+          <SectionTitle
+            icon={TrendingDown}
+            hint={data.pendingExpenses.length > 0 ? currency.format(data.pendingExpensesTotal) : undefined}
+          >
+            Despesas a pagar
+          </SectionTitle>
+          {!data.recurringAvailable ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Para usar despesas recorrentes, rode o arquivo{' '}
+              <span className="font-medium text-foreground">supabase/recurring.sql</span> no SQL
+              Editor do Supabase.
+            </p>
+          ) : data.pendingExpenses.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Nenhuma despesa recorrente a pagar neste mês.
+            </p>
+          ) : (
+            <ul className="-mx-2 divide-y divide-border/50">
+              {data.pendingExpenses.map((p) => (
+                <li
+                  key={p.recurringId}
+                  className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {p.description}
+                      {p.overdue && <OverdueBadge />}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Vence {shortDay(p.dueDate)} · <span className="capitalize">{p.category}</span>
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-semibold tabular-nums text-danger">
+                      - {currency.format(p.amount)}
+                    </span>
+                    <button
+                      onClick={() => onPayExpense(p)}
+                      disabled={busyKey === p.recurringId}
+                      className={smallButton}
+                    >
+                      {busyKey === p.recurringId ? 'Salvando...' : 'Paguei'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {data.recurringAvailable && (
+            <div className="mt-5 border-t border-border pt-4">
+              <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <Repeat className="size-3.5" />
+                Cadastradas (repetem todo mês)
+              </p>
+              {data.recurringList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma ainda. Em Lançar despesa, ative Despesa recorrente.
+                </p>
+              ) : (
+                <ul className="-mx-2 divide-y divide-border/50">
+                  {data.recurringList.map((r) => (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{r.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Todo dia {r.due_day} · <span className="capitalize">{r.category}</span>
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm font-semibold tabular-nums">
+                          {currency.format(r.amount)}
+                        </span>
+                        <button
+                          onClick={() => onRemoveRecurring(r.id, r.description)}
+                          aria-label="Encerrar recorrência"
+                          title="Encerrar recorrência"
+                          className="grid size-10 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-danger/15 hover:text-danger sm:size-8"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </Panel>
+
+        {!isPastMonth && (
+          <Panel className="p-5">
+            <SectionTitle
+              icon={Crown}
+              hint={data.clubForecast.length > 0 ? currency.format(data.clubForecastTotal) : undefined}
+            >
+              Renda prevista do clube
+            </SectionTitle>
+            {data.clubForecast.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Nenhuma mensalidade esperada neste mês.
+              </p>
+            ) : (
+              <ul className="-mx-2 divide-y divide-border/50">
+                {data.clubForecast.map((c) => (
+                  <li
+                    key={c.clientId}
+                    className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {c.name}
+                        {c.overdue && <OverdueBadge />}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        Vence {shortDay(c.dueDate)} · {c.plan}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm font-semibold tabular-nums text-success">
+                        + {currency.format(c.amount)}
+                      </span>
+                      {canConfirmClub && (
+                        <button
+                          onClick={() => onPayClub(c)}
+                          disabled={busyKey === c.clientId}
+                          className={smallButton}
+                        >
+                          {busyKey === c.clientId ? 'Salvando...' : 'Recebi'}
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-4 text-xs leading-snug text-muted-foreground">
+              Previsão pelo vencimento atual de cada assinante. Nos meses seguintes, considera que
+              ele renova no mesmo dia. Ao marcar Recebi, a mensalidade é lançada no clube e o
+              vencimento avança.
+            </p>
+          </Panel>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ---------- Tela ---------- */
 
 export function FinanceiroMes() {
@@ -658,8 +972,9 @@ export function FinanceiroMes() {
   const [reloadKey, setReloadKey] = useState(0)
   const [expenseOpen, setExpenseOpen] = useState(false)
   const [clubOpen, setClubOpen] = useState(false)
+  const [busyKey, setBusyKey] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{
-    kind: 'expense' | 'club'
+    kind: 'expense' | 'club' | 'recurring'
     id: string
     label: string
   } | null>(null)
@@ -702,12 +1017,17 @@ export function FinanceiroMes() {
     setPendingDelete({ kind: 'club', id, label: plan })
   }
 
+  function handleRemoveRecurring(id: string, description: string) {
+    setPendingDelete({ kind: 'recurring', id, label: description })
+  }
+
   async function confirmDelete() {
     if (!pendingDelete) return
     const { kind, id } = pendingDelete
     setPendingDelete(null)
     try {
       if (kind === 'expense') await deleteExpense(id)
+      else if (kind === 'recurring') await deleteRecurringExpense(id)
       else await deleteClubPayment(id)
       reload()
     } catch (err) {
@@ -716,10 +1036,43 @@ export function FinanceiroMes() {
           ? err.message
           : kind === 'expense'
             ? 'Erro ao apagar despesa'
-            : 'Erro ao apagar mensalidade',
+            : kind === 'recurring'
+              ? 'Erro ao encerrar despesa recorrente'
+              : 'Erro ao apagar mensalidade',
       )
     }
   }
+
+  async function handlePayExpense(item: PendingExpense) {
+    if (busyKey) return
+    setBusyKey(item.recurringId)
+    setError(null)
+    try {
+      await markRecurringPaid(item, year, month)
+      reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar o pagamento')
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  async function handlePayClub(item: ClubForecastItem) {
+    if (busyKey) return
+    setBusyKey(item.clientId)
+    setError(null)
+    try {
+      await markClubPaymentAndRecord(item.clientId, item.plan, item.dueDate, item.amount)
+      reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao lançar a mensalidade')
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`
+  const currentKey = todayString().slice(0, 7)
 
   const monthLabelRaw = new Date(year, month, 1).toLocaleDateString('pt-BR', {
     month: 'long',
@@ -740,10 +1093,16 @@ export function FinanceiroMes() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
             <h3 className="mb-2 text-base font-semibold">
-              {pendingDelete.kind === 'expense' ? 'Apagar despesa' : 'Apagar mensalidade'}
+              {pendingDelete.kind === 'expense'
+                ? 'Apagar despesa'
+                : pendingDelete.kind === 'recurring'
+                  ? 'Encerrar despesa recorrente'
+                  : 'Apagar mensalidade'}
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              O lançamento sai do mês e o lucro é recalculado. Não dá para desfazer.
+              {pendingDelete.kind === 'recurring'
+                ? 'Ela deixa de aparecer como a pagar nos próximos meses. O que já foi pago continua no histórico.'
+                : 'O lançamento sai do mês e o lucro é recalculado. Não dá para desfazer.'}
             </p>
             <div className="mb-5 rounded-lg border border-border bg-background/40 px-3 py-2">
               <p className="truncate text-sm font-medium">{pendingDelete.label}</p>
@@ -945,6 +1304,17 @@ export function FinanceiroMes() {
               O valor avulso soma os atendimentos marcados como concluídos na agenda. O valor do
               clube vem das mensalidades que você lança aqui.
             </p>
+
+            {/* Pagamentos futuros */}
+            <FutureBills
+              data={data}
+              monthKey={monthKey}
+              currentKey={currentKey}
+              busyKey={busyKey}
+              onPayExpense={handlePayExpense}
+              onPayClub={handlePayClub}
+              onRemoveRecurring={handleRemoveRecurring}
+            />
 
             {/* Gráfico */}
             <DailyChart daily={data.daily} />
