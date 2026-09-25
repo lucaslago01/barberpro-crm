@@ -32,6 +32,8 @@ import {
   updateClient,
   getClientAppointments,
   deleteClient,
+  deleteClientWithHistory,
+  ClientHasHistoryError,
   setClientOptOut,
   getRecentInteractions,
   type ClientAppointmentHistoryItem,
@@ -1072,6 +1074,8 @@ function ClientsTable() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [deletingClient, setDeletingClient] = useState<SupabaseClient | null>(null)
   const [deleteError, setDeleteError] = useState('')
+  const [deleteNeedsHistory, setDeleteNeedsHistory] = useState(false)
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -1222,10 +1226,23 @@ function ClientsTable() {
                 {deleteError}
               </p>
             )}
+            {deleteNeedsHistory && (
+              <label className="mb-4 flex items-start gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={deleteConfirmed}
+                  onChange={(e) => setDeleteConfirmed(e.target.checked)}
+                  className="mt-0.5 size-4 accent-[var(--danger)]"
+                />
+                <span>Entendo que os agendamentos e as mensalidades deste cliente serão apagados de vez.</span>
+              </label>
+            )}
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
                   setDeleteError('')
+                  setDeleteNeedsHistory(false)
+                  setDeleteConfirmed(false)
                   setDeletingClient(null)
                 }}
                 className="rounded-lg border border-border px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground"
@@ -1233,19 +1250,29 @@ function ClientsTable() {
                 Cancelar
               </button>
               <button
+                disabled={deleteNeedsHistory && !deleteConfirmed}
                 onClick={async () => {
                   setDeleteError('')
                   try {
-                    await deleteClient(deletingClient.id)
+                    if (deleteNeedsHistory) {
+                      await deleteClientWithHistory(deletingClient.id)
+                    } else {
+                      await deleteClient(deletingClient.id)
+                    }
+                    setDeleteNeedsHistory(false)
+                    setDeleteConfirmed(false)
                     setDeletingClient(null)
                     loadClients()
                   } catch (e) {
+                    if (e instanceof ClientHasHistoryError) {
+                      setDeleteNeedsHistory(true)
+                    }
                     setDeleteError(e instanceof Error ? e.message : 'Não foi possível excluir o cliente.')
                   }
                 }}
-                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white hover:brightness-105"
+                className="rounded-lg bg-danger px-3.5 py-2 text-sm font-semibold text-white hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Excluir
+                {deleteNeedsHistory ? 'Excluir cliente e histórico' : 'Excluir'}
               </button>
             </div>
           </div>

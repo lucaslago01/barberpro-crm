@@ -274,6 +274,36 @@ export async function getClientAppointments(
   }))
 }
 
+export class ClientHasHistoryError extends Error {
+  constructor() {
+    super(
+      'Este cliente tem agendamentos ou atendimentos registrados (mesmo os cancelados contam). Excluí-lo apaga também todo o histórico e o financeiro dele.',
+    )
+    this.name = 'ClientHasHistoryError'
+  }
+}
+
+// Apaga o cliente junto com agendamentos e mensalidades do clube dele.
+export async function deleteClientWithHistory(id: string): Promise<void> {
+  const { error: apptError } = await supabase
+    .from('barberpro_appointments')
+    .delete()
+    .eq('client_id', id)
+  if (apptError) {
+    throw new Error(`Erro ao apagar os agendamentos do cliente: ${apptError.message}`)
+  }
+
+  const { error: payError } = await supabase
+    .from('barberpro_club_payments')
+    .delete()
+    .eq('client_id', id)
+  if (payError) {
+    throw new Error(`Erro ao apagar as mensalidades do cliente: ${payError.message}`)
+  }
+
+  await deleteClient(id)
+}
+
 export async function deleteClient(id: string): Promise<void> {
   const { data, error } = await supabase
     .from('barberpro_clients')
@@ -283,9 +313,7 @@ export async function deleteClient(id: string): Promise<void> {
 
   if (error) {
     if (error.code === '23503' || /foreign key/i.test(error.message)) {
-      throw new Error(
-        'Este cliente não pode ser excluído porque tem agendamentos ou atendimentos registrados (mesmo os cancelados contam). Isso preserva o histórico e o financeiro.',
-      )
+      throw new ClientHasHistoryError()
     }
     throw new Error(`Erro ao excluir cliente: ${error.message}`)
   }
