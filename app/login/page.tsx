@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Scissors } from 'lucide-react'
-import { getSession, signIn } from '@/lib/auth'
+import { getSession, readAuthIssue, signIn } from '@/lib/auth'
 import { getCachedSettings, getSettings } from '@/lib/supabase-settings'
 
 export default function LoginPage() {
@@ -13,8 +13,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [barbershopName, setBarbershopName] = useState('')
+  const [issue, setIssue] = useState<{ text: string; at: string } | null>(null)
 
   useEffect(() => {
+    setIssue(readAuthIssue())
     getSession().then((session) => {
       if (session) router.replace('/')
     })
@@ -93,6 +95,15 @@ export default function LoginPage() {
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
+
+          {issue && !error && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Seu login foi encerrado. Entre de novo.
+              <span className="mt-1 block text-[11px] text-muted-foreground/60">
+                {new Date(issue.at).toLocaleString('pt-BR')} · {issue.text}
+              </span>
+            </p>
+          )}
 
           <button
             type="submit"
