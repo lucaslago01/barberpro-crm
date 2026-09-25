@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BarChart3, TrendingDown, TrendingUp } from 'lucide-react'
 import {
   getPeriodStats,
@@ -9,20 +9,27 @@ import {
   type PeriodStats,
 } from '@/lib/supabase-reports'
 import { Panel } from './panel'
+import { cn } from '@/lib/utils'
 
-const W = 640
-const H = 220
-const PAD_L = 34
-const PAD_R = 8
-const PAD_T = 28
-const PAD_B = 22
+const H = 200
+const PAD_L = 42
+const PAD_R = 10
+const PAD_T = 14
+const PAD_B = 24
 
-const innerW = W - PAD_L - PAD_R
 const innerH = H - PAD_T - PAD_B
+
+// Uma medida por vez: dois eixos Y no mesmo gráfico inventam uma correlação que não existe
+type Measure = 'revenue' | 'sessions'
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
+})
+
+const compact = new Intl.NumberFormat('pt-BR', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
 })
 
 function monthLabel(date: Date) {
@@ -35,10 +42,40 @@ function pctTrend(current: number, previous: number) {
   return Math.round(((current - previous) / previous) * 100)
 }
 
+// Arredonda o topo do eixo para um número redondo (1, 2, 2.5 ou 5 × 10^n)
+function niceMax(value: number) {
+  if (value <= 0) return 1
+  const exp = Math.floor(Math.log10(value))
+  const base = 10 ** exp
+  const n = value / base
+  const step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10
+  return step * base
+}
+
 export function Performance() {
   const [current, setCurrent] = useState<PeriodStats | null>(null)
   const [previous, setPrevious] = useState<PeriodStats | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [measure, setMeasure] = useState<Measure>('revenue')
+  const [hover, setHover] = useState<number | null>(null)
+  const [width, setWidth] = useState(640)
+  const roRef = useRef<ResizeObserver | null>(null)
+
+  // Desenha na largura real: assim os rótulos do eixo não encolhem no celular.
+  // Callback ref porque a área do gráfico só existe depois que os dados chegam.
+  const wrapRef = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect()
+    if (!el) return
+    setWidth(Math.round(el.getBoundingClientRect().width) || 640)
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width
+      if (w > 0) setWidth(Math.round(w))
+    })
+    ro.observe(el)
+    roRef.current = ro
+  }, [])
+
+  useEffect(() => () => roRef.current?.disconnect(), [])
 
   useEffect(() => {
     let cancelled = false
@@ -53,13 +90,59 @@ export function Performance() {
         }
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar desempenho')
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar desempenho')
+        }
       })
 
     return () => {
       cancelled = true
     }
   }, [])
+
+  const daily = current?.daily ?? []
+
+  const chart = useMemo(() => {
+    const W = width
+    const innerW = Math.max(40, W - PAD_L - PAD_R)
+    const values = daily.map((d) => (measure === 'revenue' ? d.revenue : d.sessions))
+    const max = niceMax(Math.max(1, ...values))
+    const n = Math.max(1, values.length)
+    const step = innerW / n
+    // Barra fina: no máximo 24px de largura na escala do desenho
+    const barW = Math.min(24, step * 0.56)
+
+    let peak = 0
+    values.forEach((v, i) => {
+      if (v > values[peak]) peak = i
+    })
+
+    // Rótulos do eixo x com folga garantida: evita "29/09" colidindo com "30/09"
+    const minGap = 38
+    const every = Math.max(1, Math.ceil(minGap / Math.max(1, step)))
+    const labelIndexes: number[] = []
+    for (let i = 0; i < n; i += every) labelIndexes.push(i)
+    const last = n - 1
+    if (labelIndexes.length > 0) {
+      const prev = labelIndexes[labelIndexes.length - 1]
+      if ((last - prev) * step >= minGap) labelIndexes.push(last)
+      else labelIndexes[labelIndexes.length - 1] = last
+    }
+
+    return {
+      W,
+      innerW,
+      labelIndexes,
+      values,
+      max,
+      step,
+      barW,
+      peak,
+      y: (v: number) => PAD_T + innerH - (v / max) * innerH,
+      x: (i: number) => PAD_L + i * step + step / 2,
+      ticks: Array.from({ length: 5 }, (_, i) => (max / 4) * i),
+    }
+  }, [daily, measure, width])
 
   if (error) {
     return (
@@ -72,38 +155,11 @@ export function Performance() {
   if (!current || !previous) {
     return (
       <Panel className="flex flex-col p-5">
-        <p className="text-sm text-muted-foreground">Carregando desempenho...</p>
+        <div className="h-5 w-40 animate-pulse rounded bg-white/5" />
+        <div className="mt-4 h-[200px] animate-pulse rounded-xl bg-white/5" />
       </Panel>
     )
   }
-
-  const daily = current.daily
-  const n = daily.length
-  const step = innerW / n
-  const barW = step * 0.5
-
-  const maxRevenue = Math.max(1, ...daily.map((d) => d.revenue))
-  const maxSessions = Math.max(1, ...daily.map((d) => d.sessions))
-
-  function yRev(v: number) {
-    return PAD_T + innerH - (v / maxRevenue) * innerH
-  }
-  function ySess(v: number) {
-    return PAD_T + innerH - (v / maxSessions) * innerH
-  }
-  function x(i: number) {
-    return PAD_L + i * step + step / 2
-  }
-
-  const linePoints = daily.map((d, i) => `${x(i)},${ySess(d.sessions)}`).join(' ')
-
-  let peakIndex = 0
-  daily.forEach((d, i) => {
-    if (d.revenue > daily[peakIndex].revenue) peakIndex = i
-  })
-
-  const gridSteps = 4
-  const gridLines = Array.from({ length: gridSteps + 1 }, (_, i) => (maxRevenue / gridSteps) * i)
 
   const totalAtendimentos = current.completed + current.clubVisits
   const prevTotalAtendimentos = previous.completed + previous.clubVisits
@@ -131,141 +187,195 @@ export function Performance() {
     },
   ]
 
+  const active = hover ?? chart.peak
+  const activeDay = daily[active]
+  const activeValue = chart.values[active] ?? 0
+  const hasData = chart.values.some((v) => v > 0)
+
+  function formatValue(v: number) {
+    return measure === 'revenue' ? currency.format(v) : String(v)
+  }
+
+  function formatTick(v: number) {
+    if (measure === 'sessions') return String(Math.round(v))
+    return v === 0 ? '0' : compact.format(v)
+  }
+
   return (
     <Panel className="flex flex-col p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <BarChart3 className="size-5 text-gold" />
-          <h2 className="text-[15px] font-semibold tracking-tight">
-            Desempenho do mês
-          </h2>
+          <h2 className="text-[15px] font-semibold tracking-tight">Desempenho do mês</h2>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-xs font-medium text-muted-foreground">
+        <span className="rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-xs font-medium text-muted-foreground">
           {monthLabel(getPreset('mes').from)}
         </span>
       </div>
 
-      {/* Legend */}
-      <div className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-[3px] bg-gold" />
-          Faturamento
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full border-2 border-foreground/70" />
-          Atendimentos
-        </span>
+      {/* Uma medida por vez, cada uma com o seu próprio eixo */}
+      <div className="mb-3 inline-flex self-start rounded-lg border border-border bg-background/40 p-0.5">
+        {(
+          [
+            { key: 'revenue', label: 'Faturamento' },
+            { key: 'sessions', label: 'Atendimentos' },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => {
+              setMeasure(opt.key)
+              setHover(null)
+            }}
+            className={cn(
+              'rounded-[7px] px-3 py-1.5 text-xs font-medium transition-colors',
+              measure === opt.key
+                ? 'bg-gold text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
-      {/* Chart */}
-      <div className="w-full">
+      {/* Valor do dia em foco: substitui rótulos em cima de cada barra */}
+      <div className="mb-1 flex items-baseline gap-2">
+        <span className="text-xl font-bold tracking-tight tabular-nums">
+          {formatValue(activeValue)}
+        </span>
+        {activeDay && hasData && (
+          <span className="text-xs text-muted-foreground">
+            dia {activeDay.label}
+            {hover === null && ' · melhor do mês'}
+          </span>
+        )}
+      </div>
+
+      <div ref={wrapRef} className="w-full" onMouseLeave={() => setHover(null)}>
         <svg
-          viewBox={`0 0 ${W} ${H}`}
-          className="h-[200px] w-full sm:h-[230px]"
-          preserveAspectRatio="none"
+          viewBox={`0 0 ${chart.W} ${H}`}
+          width={chart.W}
+          height={H}
+          className="h-[200px] w-full"
           role="img"
-          aria-label="Gráfico de faturamento e atendimentos ao longo do mês"
+          aria-label={
+            measure === 'revenue'
+              ? 'Faturamento por dia do mês'
+              : 'Atendimentos por dia do mês'
+          }
         >
-          {/* grid */}
-          {gridLines.map((g, i) => (
+          {/* grade */}
+          {chart.ticks.map((t, i) => (
             <g key={i}>
               <line
                 x1={PAD_L}
-                x2={W - PAD_R}
-                y1={yRev(g)}
-                y2={yRev(g)}
+                x2={chart.W - PAD_R}
+                y1={chart.y(t)}
+                y2={chart.y(t)}
                 stroke="currentColor"
-                className="text-white/5"
+                className="text-white/[0.06]"
                 strokeWidth={1}
               />
               <text
                 x={PAD_L - 8}
-                y={yRev(g) + 3}
+                y={chart.y(t) + 3}
                 textAnchor="end"
-                className="fill-muted-foreground text-[9px]"
+                className="fill-muted-foreground text-[10px]"
               >
-                {g === 0 ? '0' : `${Math.round(g)}`}
+                {formatTick(t)}
               </text>
             </g>
           ))}
 
-          {/* bars */}
-          {daily.map((d, i) => {
-            const isPeak = i === peakIndex && d.revenue > 0
+          {/* barras: a do dia em foco fica cheia, as outras recuam */}
+          {chart.values.map((v, i) => {
+            const h = PAD_T + innerH - chart.y(v)
             return (
-              <rect
-                key={d.label}
-                x={x(i) - barW / 2}
-                y={yRev(d.revenue)}
-                width={barW}
-                height={PAD_T + innerH - yRev(d.revenue)}
-                rx={2}
-                className={isPeak ? 'fill-gold' : 'fill-gold/45'}
-              />
+              <g key={i}>
+                {/* área de toque maior que a barra */}
+                <rect
+                  x={chart.x(i) - chart.step / 2}
+                  y={PAD_T}
+                  width={chart.step}
+                  height={innerH}
+                  fill="transparent"
+                  onMouseEnter={() => setHover(i)}
+                />
+                {v > 0 && (
+                  <rect
+                    x={chart.x(i) - chart.barW / 2}
+                    y={chart.y(v)}
+                    width={chart.barW}
+                    height={Math.max(2, h)}
+                    rx={3}
+                    className={cn(
+                      'pointer-events-none transition-[fill]',
+                      i === active ? 'fill-gold' : 'fill-gold/35',
+                    )}
+                  />
+                )}
+              </g>
             )
           })}
 
-          {/* line */}
-          <polyline
-            points={linePoints}
-            fill="none"
-            stroke="currentColor"
-            className="text-foreground/80"
-            strokeWidth={1.75}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-
-          {/* peak marker */}
-          {daily[peakIndex].revenue > 0 && (
-            <circle
-              cx={x(peakIndex)}
-              cy={ySess(daily[peakIndex].sessions)}
-              r={4}
-              className="fill-background stroke-gold"
-              strokeWidth={2}
+          {/* marca do dia em foco */}
+          {hasData && (
+            <line
+              x1={chart.x(active)}
+              x2={chart.x(active)}
+              y1={PAD_T}
+              y2={PAD_T + innerH}
+              stroke="currentColor"
+              className="pointer-events-none text-gold/25"
+              strokeWidth={1}
             />
           )}
 
-          {/* x labels (every 5th) */}
-          {daily.map((d, i) =>
-            i % 5 === 0 || i === n - 1 ? (
+          {/* rótulos do eixo x */}
+          {chart.labelIndexes.map((i) => {
+            const d = daily[i]
+            if (!d) return null
+            const isLast = i === daily.length - 1
+            return (
               <text
                 key={`x-${d.label}`}
-                x={x(i)}
+                x={chart.x(i)}
                 y={H - 6}
-                textAnchor="middle"
-                className="fill-muted-foreground text-[9px]"
+                textAnchor={isLast ? 'end' : i === 0 ? 'start' : 'middle'}
+                className="fill-muted-foreground text-[10px]"
               >
                 {d.label}
               </text>
-            ) : null,
-          )}
+            )
+          })}
         </svg>
       </div>
 
-      {/* Peak tooltip pill */}
-      {daily[peakIndex].revenue > 0 && (
-        <div className="-mt-2 flex justify-center">
-          <span className="rounded-md border border-gold/30 bg-gold/10 px-2.5 py-1 text-xs font-semibold text-gold">
-            {currency.format(daily[peakIndex].revenue)}
-          </span>
-        </div>
-      )}
-
-      {/* Stats */}
       <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label}>
-            <p className="text-lg font-bold tracking-tight">{s.value}</p>
+            <p className="text-lg font-bold tracking-tight tabular-nums">{s.value}</p>
             <p className="text-xs text-muted-foreground">{s.label}</p>
             <p
-              className={`mt-1 inline-flex items-center gap-0.5 text-xs font-semibold ${
-                s.trend >= 0 ? 'text-success' : 'text-danger'
-              }`}
+              className={cn(
+                'mt-1 inline-flex flex-wrap items-center gap-x-1 text-xs font-semibold',
+                s.trend === 0
+                  ? 'text-muted-foreground'
+                  : s.trend > 0
+                    ? 'text-success'
+                    : 'text-danger',
+              )}
             >
-              {s.trend >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-              {Math.abs(s.trend)}%
+              {s.trend !== 0 &&
+                (s.trend > 0 ? (
+                  <TrendingUp className="size-3" />
+                ) : (
+                  <TrendingDown className="size-3" />
+                ))}
+              {s.trend === 0 ? 'estável' : `${Math.abs(s.trend)}%`}
+              <span className="font-normal text-muted-foreground">vs. mês anterior</span>
             </p>
           </div>
         ))}

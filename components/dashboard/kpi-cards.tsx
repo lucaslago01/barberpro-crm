@@ -7,8 +7,6 @@ import {
   Users,
   Star,
   UserPlus,
-  TrendingUp,
-  TrendingDown,
   type LucideIcon,
 } from 'lucide-react'
 import { getDashboardKpis } from '@/lib/supabase-data'
@@ -24,6 +22,13 @@ const iconMap: Record<string, LucideIcon> = {
   UserPlus,
 }
 
+const toneMap: Record<string, string> = {
+  gold: 'bg-gold/12 text-gold',
+  success: 'bg-success/12 text-success',
+  info: 'bg-info/12 text-info',
+  muted: 'bg-white/[0.06] text-muted-foreground',
+}
+
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -33,8 +38,7 @@ type Kpi = {
   label: string
   value: string
   icon: string
-  trend: number
-  trendUp: boolean
+  tone: 'gold' | 'success' | 'info' | 'muted'
 }
 
 export function KpiCards() {
@@ -63,36 +67,31 @@ export function KpiCards() {
           label: 'Agendamentos no mês',
           value: data ? String(data.totalAppointments) : '-',
           icon: 'CalendarCheck',
-          trend: 0,
-          trendUp: true,
+          tone: 'gold',
         },
         {
           label: 'Faturamento do mês (concluídos)',
           value: data ? currency.format(data.revenue) : '-',
           icon: 'CircleDollarSign',
-          trend: 0,
-          trendUp: true,
+          tone: 'success',
         },
         {
           label: 'Clientes totais',
           value: data ? String(data.totalClients) : '-',
           icon: 'Users',
-          trend: 0,
-          trendUp: true,
+          tone: 'info',
         },
         {
           label: `Clientes em risco (+${RISK_DAYS} dias)`,
           value: clients ? String(clients.atRisk) : '-',
           icon: 'Star',
-          trend: 0,
-          trendUp: false,
+          tone: 'muted',
         },
         {
           label: 'Novos clientes no mês',
           value: clients ? String(clients.newClients) : '-',
           icon: 'UserPlus',
-          trend: 0,
-          trendUp: true,
+          tone: 'gold',
         },
       ])
       setLoading(false)
@@ -119,34 +118,27 @@ export function KpiCards() {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
       {kpis.map((kpi, index) => {
         const Icon = iconMap[kpi.icon]
-        const Trend = kpi.trendUp ? TrendingUp : TrendingDown
         return (
           <div
             key={kpi.label}
             className={cn(
-              'group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30',
+              'group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25',
               // com 5 cards em 2 colunas, o último ocupa a linha inteira no celular
               index === kpis.length - 1 && kpis.length % 2 === 1 && 'col-span-2 sm:col-span-1',
             )}
           >
-            <div className="flex items-start justify-between gap-2">
-              <span className="grid size-10 place-items-center rounded-xl bg-gold/12 text-gold">
-                <Icon className="size-5" />
-              </span>
-              {kpi.trend > 0 && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-0.5 text-xs font-semibold',
-                    kpi.trendUp ? 'text-success' : 'text-danger',
-                  )}
-                >
-                  <Trend className="size-3.5" />
-                  {kpi.trend}%
-                </span>
+            <span
+              className={cn(
+                'grid size-9 place-items-center rounded-xl',
+                toneMap[kpi.tone] ?? toneMap.gold,
               )}
-            </div>
-            <p className="mt-3 break-words text-xl font-bold tracking-tight sm:text-2xl">{kpi.value}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{kpi.label}</p>
+            >
+              <Icon className="size-[18px]" />
+            </span>
+            <p className="mt-3 break-words text-xl font-bold tracking-tight tabular-nums sm:text-2xl">
+              {kpi.value}
+            </p>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{kpi.label}</p>
           </div>
         )
       })}
