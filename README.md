@@ -13,11 +13,11 @@ pnpm install
 pnpm dev
 ```
 
-## Deploy (Easypanel)
+## Deploy (Vercel)
 
-1. Serviço do tipo App com origem no GitHub e build por **Dockerfile**.
-2. Cadastre `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` como variáveis de ambiente **e** como build args (são embutidas no build; se mudar, faça novo deploy).
-3. Porta do serviço: `3000`.
+1. Projeto ligado ao repositório, branch de produção `main`.
+2. Em Settings → Environment Variables, cadastre `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` para Production.
+3. Cada push na `main` publica automaticamente.
 
 ## Banco (Supabase)
 
