@@ -2,9 +2,8 @@
 
 import { Download } from 'lucide-react'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CalendarCheck,
   CalendarDays,
   CircleDollarSign,
   Receipt,
@@ -145,19 +144,68 @@ function StatCard({
   detail?: string
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_16px_40px_-24px_rgba(0,0,0,0.7)] transition-colors hover:border-gold/30">
-      <div className="flex items-center gap-3">
-        <span className={cn('grid size-11 place-items-center rounded-xl', tone)}>
-          <Icon className="size-5" />
+    <div className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25 sm:p-5">
+      <div className="flex items-center gap-2.5">
+        <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', tone)}>
+          <Icon className="size-[18px]" />
         </span>
-        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="min-w-0 text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
+          {label}
+        </p>
       </div>
-      <p className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.7rem]">{value}</p>
-      {detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}
+      <p className="mt-3 break-words text-xl font-bold tracking-tight tabular-nums sm:text-2xl">
+        {value}
+      </p>
+      {detail && <p className="mt-1 text-xs leading-snug text-muted-foreground">{detail}</p>}
       <div className="mt-1.5">
         <Delta current={current} previous={previous} inverse={inverse} />
       </div>
     </div>
+  )
+}
+
+
+/* ---------- Faturamento em destaque ---------- */
+
+function PeriodHero({
+  stats,
+  prevStats,
+}: {
+  stats: PeriodStats
+  prevStats: PeriodStats
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-card">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-28 size-64 rounded-full bg-gold/10 blur-3xl"
+      />
+      <div className="relative p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0">
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <CircleDollarSign className="size-3.5 text-gold" />
+              Faturamento do período
+            </p>
+            <p className="mt-2 text-[40px] font-bold leading-none tracking-tight tabular-nums sm:text-5xl">
+              {currency.format(stats.revenue)}
+            </p>
+            <div className="mt-2.5">
+              <Delta current={stats.revenue} previous={prevStats.revenue} />
+            </div>
+          </div>
+
+          <div className="text-left sm:text-right">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Atendimentos</p>
+            <p className="mt-1 text-2xl font-bold leading-none tabular-nums">{stats.completed}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ticket médio {currency.format(stats.avgTicket)}
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
   )
 }
 
@@ -318,131 +366,232 @@ function GoalBar({
 
 /* ---------- Receita e atendimentos (barras + linha) ---------- */
 
-const W = 720
 const H = 260
-const PAD_L = 46
-const PAD_R = 34
+const PAD_L = 52
+const PAD_R = 12
 const PAD_T = 18
 const PAD_B = 26
-const innerW = W - PAD_L - PAD_R
 const innerH = H - PAD_T - PAD_B
 
+// Uma medida por vez: receita e atendimentos em dois eixos Y no mesmo gráfico
+// alinham escalas arbitrárias e sugerem uma correlação que não está nos dados.
+type ChartMeasure = 'revenue' | 'sessions'
+
 function RevenueSessionsChart({ daily }: { daily: PeriodStats['daily'] }) {
-  const revMax = niceMax(Math.max(0, ...daily.map((d) => d.revenue)), 100)
-  const sessMax = niceMax(Math.max(0, ...daily.map((d) => d.sessions)), 4)
-  const fractions = [0, 0.25, 0.5, 0.75, 1]
+  const [measure, setMeasure] = useState<ChartMeasure>('revenue')
+  const [hover, setHover] = useState<number | null>(null)
+  const [width, setWidth] = useState(720)
+  const roRef = useRef<ResizeObserver | null>(null)
 
-  const revY = (v: number) => PAD_T + innerH - (v / revMax) * innerH
-  const sessY = (v: number) => PAD_T + innerH - (v / sessMax) * innerH
+  // Desenha na largura real: sem isso os rótulos encolhem junto com o SVG no celular
+  const wrapRef = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect()
+    if (!el) return
+    setWidth(Math.round(el.getBoundingClientRect().width) || 720)
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width
+      if (w > 0) setWidth(Math.round(w))
+    })
+    ro.observe(el)
+    roRef.current = ro
+  }, [])
 
-  const n = daily.length
-  const step = innerW / Math.max(n, 1)
-  const barW = Math.min(step * 0.5, 14)
-  const labelEvery = Math.max(1, Math.ceil(n / 8))
+  useEffect(() => () => roRef.current?.disconnect(), [])
 
-  const linePoints = daily
-    .map((d, i) => `${PAD_L + i * step + step / 2},${sessY(d.sessions)}`)
-    .join(' ')
+  const chart = useMemo(() => {
+    const W = width
+    const innerW = Math.max(40, W - PAD_L - PAD_R)
+    const values = daily.map((d) => (measure === 'revenue' ? d.revenue : d.sessions))
+    const max = niceMax(Math.max(0, ...values), measure === 'revenue' ? 100 : 4)
+    const n = Math.max(1, values.length)
+    const step = innerW / n
+    const barW = Math.min(step * 0.56, 24)
+
+    let peak = 0
+    values.forEach((v, i) => {
+      if (v > values[peak]) peak = i
+    })
+
+    // Rótulos do eixo x com folga garantida
+    const minGap = 40
+    const every = Math.max(1, Math.ceil(minGap / Math.max(1, step)))
+    const labelIndexes: number[] = []
+    for (let i = 0; i < n; i += every) labelIndexes.push(i)
+    const last = n - 1
+    if (labelIndexes.length > 0) {
+      const prev = labelIndexes[labelIndexes.length - 1]
+      if ((last - prev) * step >= minGap) labelIndexes.push(last)
+      else labelIndexes[labelIndexes.length - 1] = last
+    }
+
+    return {
+      W,
+      values,
+      max,
+      step,
+      barW,
+      peak,
+      labelIndexes,
+      y: (v: number) => PAD_T + innerH - (v / max) * innerH,
+      x: (i: number) => PAD_L + i * step + step / 2,
+      ticks: [0, 0.25, 0.5, 0.75, 1].map((f) => f * max),
+    }
+  }, [daily, measure, width])
+
+  const activeIndex = hover ?? chart.peak
+  const activeDay = daily[activeIndex]
+  const activeValue = chart.values[activeIndex] ?? 0
+  const hasData = chart.values.some((v) => v > 0)
+
+  const formatValue = (v: number) =>
+    measure === 'revenue' ? currency.format(v) : String(Math.round(v))
+  const formatTick = (v: number) =>
+    measure === 'revenue'
+      ? v === 0
+        ? '0'
+        : Math.round(v).toLocaleString('pt-BR')
+      : String(Math.round(v))
 
   return (
-    <Panel className="flex flex-col p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <BarChart3 className="size-[18px] text-gold" />
-          <h2 className="text-[15px] font-semibold tracking-tight">Receita e atendimentos</h2>
-        </div>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-[3px] bg-gold" />
-            Receita (R$)
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full border-2 border-foreground/70" />
-            Atendimentos
-          </span>
-        </div>
+    <Panel className="flex min-w-0 flex-col p-5">
+      <div className="mb-3 flex items-center gap-2.5">
+        <BarChart3 className="size-[18px] text-gold" />
+        <h2 className="text-[15px] font-semibold tracking-tight">Receita e atendimentos</h2>
       </div>
 
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="h-[230px] w-full sm:h-[260px]"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label="Gráfico de receita e atendimentos ao longo do período"
-      >
-        {fractions.map((f) => (
-          <g key={f}>
+      {/* Uma medida por vez, cada uma com o seu próprio eixo */}
+      <div className="mb-3 inline-flex self-start rounded-lg border border-border bg-background/40 p-0.5">
+        {(
+          [
+            { key: 'revenue', label: 'Receita' },
+            { key: 'sessions', label: 'Atendimentos' },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => {
+              setMeasure(opt.key)
+              setHover(null)
+            }}
+            className={cn(
+              'rounded-[7px] px-3 py-1.5 text-xs font-medium transition-colors',
+              measure === opt.key
+                ? 'bg-gold text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Leitura do dia em foco, no lugar de um número sobre cada barra */}
+      <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-xl font-bold tracking-tight tabular-nums">
+          {formatValue(activeValue)}
+        </span>
+        {activeDay && hasData && (
+          <span className="text-xs text-muted-foreground">
+            {activeDay.label}
+            {hover === null && ' · melhor do período'}
+          </span>
+        )}
+      </div>
+
+      <div ref={wrapRef} className="w-full" onMouseLeave={() => setHover(null)}>
+        <svg
+          viewBox={`0 0 ${chart.W} ${H}`}
+          width={chart.W}
+          height={H}
+          className="h-[240px] w-full"
+          role="img"
+          aria-label={
+            measure === 'revenue'
+              ? 'Receita por dia do período'
+              : 'Atendimentos por dia do período'
+          }
+        >
+          {chart.ticks.map((t, i) => (
+            <g key={i}>
+              <line
+                x1={PAD_L}
+                x2={chart.W - PAD_R}
+                y1={chart.y(t)}
+                y2={chart.y(t)}
+                stroke="currentColor"
+                className="text-white/[0.06]"
+                strokeWidth={1}
+              />
+              <text
+                x={PAD_L - 8}
+                y={chart.y(t) + 3}
+                textAnchor="end"
+                className="fill-muted-foreground text-[10px]"
+              >
+                {formatTick(t)}
+              </text>
+            </g>
+          ))}
+
+          {chart.values.map((v, i) => {
+            const isActive = i === activeIndex
+            return (
+              <g key={i}>
+                <title>{`${daily[i]?.label}: ${formatValue(v)}`}</title>
+                {/* área de toque maior que a barra */}
+                <rect
+                  x={PAD_L + i * chart.step}
+                  y={PAD_T}
+                  width={chart.step}
+                  height={innerH}
+                  fill="transparent"
+                  onMouseEnter={() => setHover(i)}
+                />
+                {v > 0 && (
+                  <rect
+                    x={chart.x(i) - chart.barW / 2}
+                    y={chart.y(v)}
+                    width={chart.barW}
+                    height={Math.max(2, PAD_T + innerH - chart.y(v))}
+                    rx={3}
+                    className={cn('pointer-events-none', isActive ? 'fill-gold' : 'fill-gold/35')}
+                  />
+                )}
+              </g>
+            )
+          })}
+
+          {hasData && (
             <line
-              x1={PAD_L}
-              x2={W - PAD_R}
-              y1={revY(f * revMax)}
-              y2={revY(f * revMax)}
+              x1={chart.x(activeIndex)}
+              x2={chart.x(activeIndex)}
+              y1={PAD_T}
+              y2={PAD_T + innerH}
               stroke="currentColor"
-              className="text-white/5"
+              className="pointer-events-none text-gold/25"
               strokeWidth={1}
             />
-            <text
-              x={PAD_L - 8}
-              y={revY(f * revMax) + 3}
-              textAnchor="end"
-              className="fill-muted-foreground text-[9px]"
-            >
-              {f === 0 ? '0' : Math.round(f * revMax).toLocaleString('pt-BR')}
-            </text>
-            <text
-              x={W - PAD_R + 8}
-              y={sessY(f * sessMax) + 3}
-              textAnchor="start"
-              className="fill-muted-foreground text-[9px]"
-            >
-              {Math.round(f * sessMax)}
-            </text>
-          </g>
-        ))}
+          )}
 
-        {daily.map((d, i) => {
-          const center = PAD_L + i * step + step / 2
-          return (
-            <g key={`${d.label}-${i}`}>
-              <title>{`${d.label}: ${currency.format(d.revenue)} · ${d.sessions} atendimento(s)`}</title>
-              <rect
-                x={center - barW / 2}
-                y={revY(d.revenue)}
-                width={barW}
-                height={PAD_T + innerH - revY(d.revenue)}
-                rx={2}
-                className="fill-gold/55"
-              />
-            </g>
-          )
-        })}
-
-        {n > 1 && (
-          <polyline
-            points={linePoints}
-            fill="none"
-            stroke="currentColor"
-            className="text-foreground/80"
-            strokeWidth={1.75}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        )}
-
-        {daily.map((d, i) =>
-          i % labelEvery === 0 || i === n - 1 ? (
-            <text
-              key={`x-${d.label}-${i}`}
-              x={PAD_L + i * step + step / 2}
-              y={H - 6}
-              textAnchor="middle"
-              className="fill-muted-foreground text-[9px]"
-            >
-              {d.label}
-            </text>
-          ) : null,
-        )}
-      </svg>
+          {chart.labelIndexes.map((i) => {
+            const d = daily[i]
+            if (!d) return null
+            const isLast = i === daily.length - 1
+            return (
+              <text
+                key={`x-${d.label}-${i}`}
+                x={chart.x(i)}
+                y={H - 6}
+                textAnchor={isLast ? 'end' : i === 0 ? 'start' : 'middle'}
+                className="fill-muted-foreground text-[10px]"
+              >
+                {d.label}
+              </text>
+            )
+          })}
+        </svg>
+      </div>
     </Panel>
   )
 }
@@ -673,15 +822,33 @@ const GPAD_L = 34
 const GPAD_R = 12
 const GPAD_T = 16
 const GPAD_B = 26
-const gInnerW = GW - GPAD_L - GPAD_R
 const gInnerH = GH - GPAD_T - GPAD_B
 
 function ClientsGrowth({ points }: { points: GrowthPoint[] }) {
+  const [width, setWidth] = useState(GW)
+  const roRef = useRef<ResizeObserver | null>(null)
+
+  const wrapRef = useCallback((el: HTMLDivElement | null) => {
+    roRef.current?.disconnect()
+    if (!el) return
+    setWidth(Math.round(el.getBoundingClientRect().width) || GW)
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width
+      if (w > 0) setWidth(Math.round(w))
+    })
+    ro.observe(el)
+    roRef.current = ro
+  }, [])
+
+  useEffect(() => () => roRef.current?.disconnect(), [])
+
+  const chartW = width
+  const gInner = Math.max(40, chartW - GPAD_L - GPAD_R)
   const n = points.length
   const max = niceMax(Math.max(0, ...points.map((p) => p.value)), 10)
   const grid = [0, 1 / 3, 2 / 3, 1].map((f) => Math.round(f * max))
 
-  const gx = (i: number) => GPAD_L + (n > 1 ? (i / (n - 1)) * gInnerW : gInnerW / 2)
+  const gx = (i: number) => GPAD_L + (n > 1 ? (i / (n - 1)) * gInner : gInner / 2)
   const gy = (v: number) => GPAD_T + gInnerH - (v / max) * gInnerH
 
   const line = points.map((d, i) => `${gx(i)},${gy(d.value)}`).join(' ')
@@ -695,11 +862,12 @@ function ClientsGrowth({ points }: { points: GrowthPoint[] }) {
         icon={<Users className="size-[18px]" />}
         title="Evolução de clientes"
       />
-      <div className="relative">
+      <div ref={wrapRef} className="relative">
         <svg
-          viewBox={`0 0 ${GW} ${GH}`}
+          viewBox={`0 0 ${chartW} ${GH}`}
+          width={chartW}
+          height={GH}
           className="h-[200px] w-full"
-          preserveAspectRatio="none"
           role="img"
           aria-label="Evolução mensal da base de clientes"
         >
@@ -714,7 +882,7 @@ function ClientsGrowth({ points }: { points: GrowthPoint[] }) {
             <g key={g}>
               <line
                 x1={GPAD_L}
-                x2={GW - GPAD_R}
+                x2={chartW - GPAD_R}
                 y1={gy(g)}
                 y2={gy(g)}
                 stroke="currentColor"
@@ -725,7 +893,7 @@ function ClientsGrowth({ points }: { points: GrowthPoint[] }) {
                 x={GPAD_L - 8}
                 y={gy(g) + 3}
                 textAnchor="end"
-                className="fill-muted-foreground text-[9px]"
+                className="fill-muted-foreground text-[10px]"
               >
                 {g}
               </text>
@@ -751,7 +919,7 @@ function ClientsGrowth({ points }: { points: GrowthPoint[] }) {
               x={gx(i)}
               y={GH - 6}
               textAnchor="middle"
-              className="fill-muted-foreground text-[9px]"
+              className="fill-muted-foreground text-[10px]"
             >
               {d.month}
             </text>
@@ -778,7 +946,8 @@ function TopClients({ clients }: { clients: PeriodStats['topClients'] }) {
           Nenhum atendimento concluído neste período.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -811,6 +980,35 @@ function TopClients({ clients }: { clients: PeriodStats['topClients'] }) {
             </tbody>
           </table>
         </div>
+
+        {/* Celular: lista */}
+        <ul className="space-y-1 px-3 pb-3 md:hidden">
+          {clients.map((c, i) => (
+            <li
+              key={`m-${c.name}-${i}`}
+              className="flex items-center gap-3 rounded-xl px-2 py-2.5"
+            >
+              <span
+                className={cn(
+                  'grid size-6 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums',
+                  i === 0 ? 'bg-gold/15 text-gold' : 'bg-white/[0.06] text-muted-foreground',
+                )}
+              >
+                {i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{c.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {c.count} atendimento{c.count > 1 ? 's' : ''}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-gold">
+                {currency.format(c.total)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        </>
       )}
     </Panel>
   )
@@ -1028,13 +1226,13 @@ export function RelatoriosMes() {
 
       {/* Período */}
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible">
           {PRESETS.map((p) => (
             <button
               key={p.key}
               onClick={() => choosePreset(p.key)}
               className={cn(
-                'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                'shrink-0 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
                 preset === p.key
                   ? 'border-gold/40 bg-gold/12 text-gold'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
@@ -1082,7 +1280,7 @@ export function RelatoriosMes() {
           <button
             onClick={exportCsv}
             disabled={!stats || loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <Download className="size-4" />
             Exportar CSV
@@ -1102,32 +1300,28 @@ export function RelatoriosMes() {
         stats &&
         prevStats && (
           <>
+            <PeriodHero stats={stats} prevStats={prevStats} />
+
             {/* Cartões */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+              {/* Faturamento, atendimentos e ticket médio já abrem a tela no destaque acima */}
               <StatCard
-                label="Atendimentos concluídos"
-                value={String(stats.completed)}
-                icon={CalendarCheck}
-                tone="bg-info/12 text-info"
-                current={stats.completed}
-                previous={prevStats.completed}
-              />
-              <StatCard
-                label="Faturamento"
-                value={currency.format(stats.revenue)}
-                detail={`Avulso ${currency.format(stats.walkIn)} · Clube ${currency.format(stats.club)}`}
-                icon={CircleDollarSign}
-                tone="bg-gold/12 text-gold"
-                current={stats.revenue}
-                previous={prevStats.revenue}
-              />
-              <StatCard
-                label="Ticket médio"
-                value={currency.format(stats.avgTicket)}
+                label="Avulso"
+                value={currency.format(stats.walkIn)}
+                detail={`${stats.completed} atendimento(s) concluído(s)`}
                 icon={Receipt}
+                tone="bg-gold/12 text-gold"
+                current={stats.walkIn}
+                previous={prevStats.walkIn}
+              />
+              <StatCard
+                label="Clube"
+                value={currency.format(stats.club)}
+                detail={`${stats.clubVisits} atendimento(s) do clube`}
+                icon={CircleDollarSign}
                 tone="bg-success/12 text-success"
-                current={stats.avgTicket}
-                previous={prevStats.avgTicket}
+                current={stats.club}
+                previous={prevStats.club}
               />
               <StatCard
                 label="Faltas"
