@@ -33,10 +33,12 @@ function isValidTimeFormat(value: string) {
 
 export function NewAppointmentModal({
   initialDate,
+  initialTime,
   onClose,
   onCreated,
 }: {
   initialDate: Date
+  initialTime?: string
   onClose: () => void
   onCreated: () => void
 }) {
@@ -47,7 +49,7 @@ export function NewAppointmentModal({
   const [clientId, setClientId] = useState('')
   const [serviceId, setServiceId] = useState('')
   const [dateStr, setDateStr] = useState(() => toInputValue(initialDate))
-  const [time, setTime] = useState<string | null>(null)
+  const [time, setTime] = useState<string | null>(initialTime ?? null)
   const [customTime, setCustomTime] = useState('')
   const [notes, setNotes] = useState('')
   const [isClubVisit, setIsClubVisit] = useState(false)

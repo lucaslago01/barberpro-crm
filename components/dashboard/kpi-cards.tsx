@@ -117,13 +117,17 @@ export function KpiCards() {
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-      {kpis.map((kpi) => {
+      {kpis.map((kpi, index) => {
         const Icon = iconMap[kpi.icon]
         const Trend = kpi.trendUp ? TrendingUp : TrendingDown
         return (
           <div
             key={kpi.label}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30"
+            className={cn(
+              'group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30',
+              // com 5 cards em 2 colunas, o último ocupa a linha inteira no celular
+              index === kpis.length - 1 && kpis.length % 2 === 1 && 'col-span-2 sm:col-span-1',
+            )}
           >
             <div className="flex items-start justify-between gap-2">
               <span className="grid size-10 place-items-center rounded-xl bg-gold/12 text-gold">
@@ -141,7 +145,7 @@ export function KpiCards() {
                 </span>
               )}
             </div>
-            <p className="mt-3 text-2xl font-bold tracking-tight">{kpi.value}</p>
+            <p className="mt-3 break-words text-xl font-bold tracking-tight sm:text-2xl">{kpi.value}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{kpi.label}</p>
           </div>
         )
