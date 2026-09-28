@@ -218,7 +218,15 @@ export function NewAppointmentModal({
       }
 
       const dateTime = new Date(y, m - 1, d, h, min).toISOString()
-      await createAppointment({ clientId, serviceId, dateTime, notes })
+      await createAppointment({
+        clientId,
+        serviceId,
+        dateTime,
+        notes,
+        isClubVisit,
+        addonServiceId: addonServiceId || null,
+        addonPrice: selectedAddon?.price || 0,
+      })
       onCreated()
       onClose()
     } catch (err) {
