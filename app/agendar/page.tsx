@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function AgendarPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="agendar-theme min-h-screen bg-black text-white">
       <SiteHeader />
 
       <main>

@@ -61,8 +61,8 @@
   --popover: oklch(0.205 0.005 70);
   --popover-foreground: oklch(0.96 0.003 90);
 
-  --primary: oklch(0.8 0.12 84);
-  --primary-foreground: oklch(0.2 0.02 70);
+  --primary: oklch(0.62 0.19 305);
+  --primary-foreground: oklch(0.98 0.01 305);
 
   --secondary: oklch(0.26 0.005 70);
   --secondary-foreground: oklch(0.96 0.003 90);
@@ -77,16 +77,16 @@
 
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.8 0.12 84);
+  --ring: oklch(0.62 0.19 305);
 
-  --gold: oklch(0.8 0.12 84);
-  --gold-soft: oklch(0.8 0.12 84 / 14%);
+  --gold: oklch(0.62 0.19 305);
+  --gold-soft: oklch(0.62 0.19 305 / 14%);
   --success: oklch(0.72 0.16 155);
   --warning: oklch(0.8 0.13 80);
   --info: oklch(0.68 0.14 235);
   --danger: oklch(0.65 0.2 22);
 
-  --chart-1: oklch(0.8 0.12 84);
+  --chart-1: oklch(0.62 0.19 305);
   --chart-2: oklch(0.72 0.16 155);
 
   --radius: 0.85rem;
@@ -96,8 +96,15 @@
 
   --sidebar: oklch(0.145 0.004 60);
   --sidebar-foreground: oklch(0.9 0.003 90);
-  --sidebar-accent: oklch(0.8 0.12 84);
+  --sidebar-accent: oklch(0.62 0.19 305);
   --sidebar-border: oklch(1 0 0 / 8%);
+}
+
+/* A página pública /agendar mantém a cor dourada original mesmo com o
+   CRM em roxo — só ela usa esta classe, aplicada no wrapper de app/agendar/page.tsx */
+.agendar-theme {
+  --gold: oklch(0.8 0.12 84);
+  --gold-soft: oklch(0.8 0.12 84 / 14%);
 }
 
 @layer base {
