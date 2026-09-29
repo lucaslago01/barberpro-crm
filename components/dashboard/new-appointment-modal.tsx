@@ -47,6 +47,9 @@ export function NewAppointmentModal({
   const [loadingOptions, setLoadingOptions] = useState(true)
 
   const [clientId, setClientId] = useState('')
+  const [clientQuery, setClientQuery] = useState('')
+  const [showClientList, setShowClientList] = useState(false)
+  const clientBoxRef = useRef<HTMLDivElement>(null)
   const [serviceId, setServiceId] = useState('')
   const [dateStr, setDateStr] = useState(() => toInputValue(initialDate))
   const [time, setTime] = useState<string | null>(initialTime ?? null)
@@ -150,6 +153,35 @@ export function NewAppointmentModal({
       setIsClubVisit(false)
     }
   }, [isAddonOnlyService]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fecha a lista de clientes ao clicar fora do campo de busca
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (clientBoxRef.current && !clientBoxRef.current.contains(e.target as Node)) {
+        setShowClientList(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function clientLabel(c: Client) {
+    return c.name + (c.phone ? ` · ${c.phone}` : '')
+  }
+
+  function selectClient(c: Client) {
+    setClientId(c.id)
+    setClientQuery(clientLabel(c))
+    setShowClientList(false)
+  }
+
+  const filteredClients = (() => {
+    const q = clientQuery.trim().toLowerCase()
+    if (!q || clientQuery === (selectedClient ? clientLabel(selectedClient) : '')) return clients
+    return clients.filter(
+      (c) => c.name.toLowerCase().includes(q) || (c.phone ?? '').toLowerCase().includes(q),
+    )
+  })()
 
   // Horários do dia escolhido (vazio se a barbearia estiver fechada)
   const daySlots = (() => {
@@ -258,21 +290,40 @@ export function NewAppointmentModal({
           <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
         ) : (
           <div className="space-y-4">
-            <div>
+            <div ref={clientBoxRef} className="relative">
               <label className="mb-1 block text-xs text-muted-foreground">Cliente</label>
-              <select
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
+              <input
+                type="text"
+                value={clientQuery}
+                onChange={(e) => {
+                  setClientQuery(e.target.value)
+                  setShowClientList(true)
+                  if (clientId) setClientId('')
+                }}
+                onFocus={() => setShowClientList(true)}
+                placeholder="Buscar por nome ou telefone..."
                 className={fieldClass}
-              >
-                <option value="">Selecione o cliente</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                    {c.phone ? ` · ${c.phone}` : ''}
-                  </option>
-                ))}
-              </select>
+                autoComplete="off"
+              />
+              {showClientList && (
+                <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+                  {filteredClients.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
+                  ) : (
+                    filteredClients.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => selectClient(c)}
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-white/5"
+                      >
+                        {c.name}
+                        {c.phone ? ` · ${c.phone}` : ''}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
