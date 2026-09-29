@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Check, MessageCircle, Gift, Clock, BellOff } from 'lucide-react'
-import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { Panel, PanelHeader, PanelIcon } from '@/components/dashboard/panel'
 import { getSettings, updateSettings } from '@/lib/supabase-settings'
 
 const textareaClass =
@@ -102,7 +102,7 @@ export function MensagensSettings() {
     <div className="space-y-4">
       {mensagens.map((m) => (
         <Panel key={m.key} className="p-5">
-          <PanelHeader className="px-0 pt-0" icon={m.icon} title={m.label} />
+          <PanelHeader className="px-0 pt-0" icon={<PanelIcon icon={m.icon} />} title={m.label} />
           <p className="-mt-2 mb-3 text-sm text-muted-foreground">{m.description}</p>
 
           {m.prefix && (

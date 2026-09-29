@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Scissors, Pencil, Trash2, X } from 'lucide-react'
-import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { Panel, PanelHeader, PanelIcon } from '@/components/dashboard/panel'
 import {
   getServices,
   createService,
@@ -154,12 +154,69 @@ function ServiceModal({
   )
 }
 
+function DeleteConfirmModal({
+  service,
+  onClose,
+  onConfirm,
+  deleting,
+  error,
+}: {
+  service: ServiceOption
+  onClose: () => void
+  onConfirm: () => void
+  deleting: boolean
+  error: string | null
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-card p-5">
+        <h3 className="mb-2 text-base font-semibold">Apagar serviço</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Essa ação não pode ser desfeita.
+        </p>
+
+        <div className="mb-5 flex items-center gap-2.5 rounded-lg border border-border bg-background/40 px-3 py-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-danger/12 text-danger">
+            <Trash2 className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{service.name}</p>
+            <p className="text-xs text-muted-foreground">{service.duration} min</p>
+          </div>
+        </div>
+
+        {error && <p className="mb-3 text-xs text-danger">{error}</p>}
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            className="h-11 rounded-lg border border-border px-3.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60 sm:h-auto sm:py-2"
+          >
+            Voltar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="h-11 rounded-lg bg-danger px-3.5 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60 sm:h-auto sm:py-2"
+          >
+            {deleting ? 'Apagando...' : 'Apagar serviço'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ServicesSettings() {
   const [services, setServices] = useState<ServiceOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<ServiceOption | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ServiceOption | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function load() {
     try {
@@ -188,13 +245,18 @@ export function ServicesSettings() {
     setModalOpen(true)
   }
 
-  async function handleDelete(s: ServiceOption) {
-    if (!window.confirm(`Apagar o serviço "${s.name}"?`)) return
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
     try {
-      await deleteService(s.id)
+      await deleteService(deleteTarget.id)
+      setDeleteTarget(null)
       await load()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao apagar serviço')
+      setDeleteError(err instanceof Error ? err.message : 'Erro ao apagar serviço')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -207,19 +269,33 @@ export function ServicesSettings() {
           onSaved={load}
         />
       )}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          service={deleteTarget}
+          onClose={() => {
+            if (deleting) return
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }}
+          onConfirm={handleConfirmDelete}
+          deleting={deleting}
+          error={deleteError}
+        />
+      )}
 
       <PanelHeader
         className="px-0 pt-0"
-        icon={<Scissors className="size-[18px]" />}
+        icon={<PanelIcon icon={<Scissors className="size-[18px]" />} />}
         title="Serviços oferecidos"
         action={
           <button
             type="button"
             onClick={openNew}
-            className="inline-flex h-9 items-center gap-2 rounded-xl bg-gold px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-gold px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
           >
             <Plus className="size-4" />
-            Novo serviço
+            <span className="hidden sm:inline">Novo serviço</span>
+            <span className="sm:hidden">Novo</span>
           </button>
         }
       />
@@ -240,7 +316,7 @@ export function ServicesSettings() {
           {services.map((s) => (
             <li
               key={s.id}
-              className="flex items-center gap-2.5 rounded-xl border border-border bg-background/30 px-3 py-3 sm:gap-3 sm:px-4"
+              className="flex items-center gap-2.5 rounded-xl border border-border bg-background/30 px-3 py-3 transition-colors hover:border-gold/25 sm:gap-3 sm:px-4"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold/12 text-gold">
                 <Scissors className="size-4" />
@@ -268,7 +344,10 @@ export function ServicesSettings() {
                   <Pencil className="size-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(s)}
+                  onClick={() => {
+                    setDeleteError(null)
+                    setDeleteTarget(s)
+                  }}
                   aria-label={`Apagar ${s.name}`}
                   className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-danger/15 hover:text-danger"
                 >
