@@ -51,6 +51,26 @@ export function PanelHeader({
   )
 }
 
+/** Chip com ícone tingido, para usar no lugar de um ícone solto em PanelHeader */
+export function PanelIcon({
+  icon,
+  className,
+}: {
+  icon: ReactNode
+  className?: string
+}) {
+  return (
+    <span
+      className={cn(
+        'grid size-9 shrink-0 place-items-center rounded-xl bg-gold/12 text-gold',
+        className,
+      )}
+    >
+      {icon}
+    </span>
+  )
+}
+
 /** Contagem ao lado do título do painel */
 export function PanelCount({ value }: { value: number }) {
   return (

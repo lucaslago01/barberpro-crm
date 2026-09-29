@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Check, Store, Upload } from 'lucide-react'
-import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { Panel, PanelHeader, PanelIcon } from '@/components/dashboard/panel'
 import {
   getSettings,
   updateSettings,
@@ -154,7 +154,7 @@ export function GeralSettings() {
     <Panel className="p-5">
       <PanelHeader
         className="px-0 pt-0"
-        icon={<Store className="size-[18px]" />}
+        icon={<PanelIcon icon={<Store className="size-[18px]" />} />}
         title="Informações da barbearia"
       />
       <p className="-mt-2 mb-5 text-sm text-muted-foreground">
@@ -163,7 +163,7 @@ export function GeralSettings() {
 
       <div className="flex flex-col gap-6 sm:flex-row">
         <div className="flex shrink-0 flex-col items-center gap-3">
-          <div className="grid size-28 place-items-center overflow-hidden rounded-2xl border border-border bg-background/40">
+          <div className="grid size-28 place-items-center overflow-hidden rounded-2xl border border-border bg-background/40 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset]">
             {settings.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

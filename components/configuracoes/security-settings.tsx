@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { Check, KeyRound, Lock } from 'lucide-react'
-import { Panel, PanelHeader } from '@/components/dashboard/panel'
+import { Panel, PanelHeader, PanelIcon } from '@/components/dashboard/panel'
 import { updatePassword } from '@/lib/auth'
 
 const fieldClass =
@@ -56,7 +56,7 @@ export function SecuritySettings() {
     <Panel className="p-5">
       <PanelHeader
         className="px-0 pt-0"
-        icon={<KeyRound className="size-[18px]" />}
+        icon={<PanelIcon icon={<KeyRound className="size-[18px]" />} />}
         title="Alterar senha"
       />
       <p className="-mt-2 mb-4 text-sm text-muted-foreground">
