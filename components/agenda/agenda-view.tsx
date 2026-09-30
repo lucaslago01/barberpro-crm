@@ -13,11 +13,13 @@ import {
   UserX,
   TriangleAlert,
   ChevronDown,
+  Repeat,
 } from 'lucide-react'
 import { Panel } from '@/components/dashboard/panel'
 import { UserAvatar } from '@/components/dashboard/user-avatar'
 import { AgendaStatusBadge } from '@/components/dashboard/badges'
 import { NewAppointmentModal } from '@/components/dashboard/new-appointment-modal'
+import { RecurringModal } from '@/components/dashboard/recurring-modal'
 import { RescheduleModal } from '@/components/dashboard/reschedule-modal'
 import { DaySummary, DaySummaryCompact } from './day-summary'
 import {
@@ -261,6 +263,9 @@ function TimelineRow({
                   >
                     {slot.client}
                   </span>
+                  {slot.isRecurring && (
+                    <Repeat className="size-3.5 shrink-0 text-gold" aria-label="Horário fixo" />
+                  )}
                   <AgendaStatusBadge status={slot.status} />
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -516,11 +521,14 @@ function MobileAppointmentCard({
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              'truncate text-sm font-medium',
+              'flex items-center gap-1 truncate text-sm font-medium',
               muted && 'line-through decoration-muted-foreground/50',
             )}
           >
             {slot.client}
+            {slot.isRecurring && (
+              <Repeat className="size-3 shrink-0 text-gold" aria-label="Horário fixo" />
+            )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {slot.service}
@@ -652,6 +660,7 @@ export function AgendaView({
   const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
   const [creatingTime, setCreatingTime] = useState<string | undefined>()
+  const [managingFixed, setManagingFixed] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
@@ -748,6 +757,13 @@ export function AgendaView({
         />
       )}
 
+      {managingFixed && (
+        <RecurringModal
+          onClose={() => setManagingFixed(false)}
+          onChanged={() => onReload?.()}
+        />
+      )}
+
       {/* Controls */}
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
@@ -785,16 +801,26 @@ export function AgendaView({
             </button>
           </div>
 
-          <button
-            onClick={() => {
-              setCreatingTime(undefined)
-              setCreating(true)
-            }}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:w-auto sm:py-2"
-          >
-            <Plus className="size-4" />
-            Novo agendamento
-          </button>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <button
+              onClick={() => setManagingFixed(true)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex-none sm:py-2"
+            >
+              <Repeat className="size-4" />
+              <span className="hidden sm:inline">Horários fixos</span>
+              <span className="sm:hidden">Fixos</span>
+            </button>
+            <button
+              onClick={() => {
+                setCreatingTime(undefined)
+                setCreating(true)
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:flex-none sm:w-auto sm:py-2"
+            >
+              <Plus className="size-4" />
+              Novo agendamento
+            </button>
+          </div>
         </div>
 
         {/* Status filters */}

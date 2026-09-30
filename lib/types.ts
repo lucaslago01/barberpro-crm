@@ -49,4 +49,5 @@ export interface AgendaSlot {
   status: AppointmentStatus
   available?: boolean
   notes?: string
+  isRecurring?: boolean
 }

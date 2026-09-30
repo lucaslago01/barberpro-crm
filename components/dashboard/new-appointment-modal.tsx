@@ -9,6 +9,7 @@ import {
   createAppointment,
   type ServiceOption,
 } from '@/lib/supabase-appointments'
+import { createRecurringAppointment, WEEKDAY_LABELS } from '@/lib/supabase-recurring'
 import type { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { getDaySlots, isOpenDay } from '@/lib/business-hours'
@@ -58,6 +59,7 @@ export function NewAppointmentModal({
   const [isClubVisit, setIsClubVisit] = useState(false)
   const [addonServiceId, setAddonServiceId] = useState('')
   const [clubTouched, setClubTouched] = useState(false)
+  const [fixedWeekly, setFixedWeekly] = useState(false)
 
   const [booked, setBooked] = useState<string[]>([])
   const [bookedReloadKey, setBookedReloadKey] = useState(0)
@@ -196,6 +198,12 @@ export function NewAppointmentModal({
     return isOpenDay(new Date(y, m - 1, d))
   })()
 
+  const selectedWeekday = (() => {
+    if (!dateStr) return null
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Date(y, m - 1, d).getDay()
+  })()
+
   function isPast(slot: string) {
     if (!dateStr) return false
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -249,16 +257,29 @@ export function NewAppointmentModal({
         return
       }
 
-      const dateTime = new Date(y, m - 1, d, h, min).toISOString()
-      await createAppointment({
-        clientId,
-        serviceId,
-        dateTime,
-        notes,
-        isClubVisit,
-        addonServiceId: addonServiceId || null,
-        addonPrice: selectedAddon?.price || 0,
-      })
+      if (fixedWeekly) {
+        await createRecurringAppointment({
+          clientId,
+          serviceId,
+          weekday: new Date(y, m - 1, d).getDay(),
+          time: effectiveTime,
+          notes,
+          isClubVisit,
+          addonServiceId: addonServiceId || null,
+          addonPrice: selectedAddon?.price || 0,
+        })
+      } else {
+        const dateTime = new Date(y, m - 1, d, h, min).toISOString()
+        await createAppointment({
+          clientId,
+          serviceId,
+          dateTime,
+          notes,
+          isClubVisit,
+          addonServiceId: addonServiceId || null,
+          addonPrice: selectedAddon?.price || 0,
+        })
+      }
       onCreated()
       onClose()
     } catch (err) {
@@ -465,6 +486,26 @@ export function NewAppointmentModal({
               </div>
             )}
 
+            <div className="flex items-center justify-between rounded-lg border border-border bg-background/40 px-3 py-2.5">
+              <div>
+                <label htmlFor="fixed-weekly-checkbox" className="text-sm font-medium">
+                  Horário fixo
+                </label>
+                <p className="text-[11px] text-muted-foreground">
+                  {selectedWeekday !== null
+                    ? `Repete toda ${WEEKDAY_LABELS[selectedWeekday].toLowerCase()} nesse horário, a partir de agora. Risca sozinho no agendar.`
+                    : 'Escolha a data para ver em qual dia da semana vai repetir.'}
+                </p>
+              </div>
+              <input
+                id="fixed-weekly-checkbox"
+                type="checkbox"
+                checked={fixedWeekly}
+                onChange={(e) => setFixedWeekly(e.target.checked)}
+                className="size-4 shrink-0 accent-gold"
+              />
+            </div>
+
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
                 Observações (opcional)
@@ -494,7 +535,7 @@ export function NewAppointmentModal({
             disabled={saving || loadingOptions}
             className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
           >
-            {saving ? 'Salvando...' : 'Agendar'}
+            {saving ? 'Salvando...' : fixedWeekly ? 'Fixar horário' : 'Agendar'}
           </button>
         </div>
       </div>
