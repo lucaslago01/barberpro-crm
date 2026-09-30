@@ -12,6 +12,7 @@ import {
   Clock,
   Ban,
   Trash2,
+  Repeat,
 } from 'lucide-react'
 import {
   getAgendaSlotsByDate,
@@ -27,6 +28,7 @@ import { EditAppointmentModal } from './edit-appointment-modal'
 import { NewAppointmentModal } from './new-appointment-modal'
 import { RescheduleModal } from './reschedule-modal'
 import { BlocksModal } from './blocks-modal'
+import { RecurringModal } from './recurring-modal'
 import { deleteBlock, getBlocksByDay, type Block } from '@/lib/supabase-blocks'
 import { RowActionsMenu } from './row-actions-menu'
 import { cn } from '@/lib/utils'
@@ -59,6 +61,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
   const [reschedulingSlot, setReschedulingSlot] = useState<AgendaSlot | null>(null)
   const [creating, setCreating] = useState(false)
   const [blocking, setBlocking] = useState(false)
+  const [managingFixed, setManagingFixed] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [blocks, setBlocks] = useState<Block[]>([])
 
@@ -110,6 +113,13 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'barberpro_blocks' },
+        () => {
+          setReloadKey((k) => k + 1)
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'barberpro_recurring_appointments' },
         () => {
           setReloadKey((k) => k + 1)
         }
@@ -252,6 +262,13 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
         />
       )}
 
+      {managingFixed && (
+        <RecurringModal
+          onClose={() => setManagingFixed(false)}
+          onChanged={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
       <div className="flex flex-col gap-3 px-5 pt-4 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <CalendarDays className="size-5 text-gold" />
@@ -295,6 +312,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
             <Ban className="size-4" />
             <span className="hidden sm:inline">Bloquear horário</span>
             <span className="sm:hidden">Bloquear</span>
+          </button>
+          <button
+            onClick={() => setManagingFixed(true)}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex-none sm:py-2"
+          >
+            <Repeat className="size-4" />
+            <span className="hidden sm:inline">Horários fixos</span>
+            <span className="sm:hidden">Fixos</span>
           </button>
           <button
             onClick={() => setCreating(true)}
@@ -394,7 +419,15 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                     </span>
                     <UserAvatar name={a.client} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{a.client}</p>
+                      <p className="flex items-center gap-1 truncate text-sm font-medium">
+                        {a.client}
+                        {a.isRecurring && (
+                          <Repeat
+                            className="size-3 shrink-0 text-gold"
+                            aria-label="Horário fixo"
+                          />
+                        )}
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {a.service}
                         {a.addonService && <span className="text-gold"> + {a.addonService}</span>}
@@ -531,6 +564,12 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                         <span className="whitespace-nowrap font-medium">
                           {a.client}
                         </span>
+                        {a.isRecurring && (
+                          <Repeat
+                            className="size-3.5 shrink-0 text-gold"
+                            aria-label="Horário fixo"
+                          />
+                        )}
                       </div>
                     </td>
                     <td className="whitespace-nowrap py-3 pr-6 text-muted-foreground">

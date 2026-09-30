@@ -24,6 +24,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
         status,
         notes,
         is_club_visit,
+        recurring_id,
         barberpro_clients (name, phone),
         barberpro_services!service_id (name, duration, price, price_from),
         addon_price
@@ -48,6 +49,7 @@ export async function getAgendaSlots(): Promise<AgendaSlot[]> {
       status: apt.status,
       available: false,
       notes: apt.notes || '',
+      isRecurring: Boolean(apt.recurring_id),
     }))
 
     return slots
@@ -69,6 +71,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
       status,
       notes,
       is_club_visit,
+      recurring_id,
       barberpro_clients (name, phone),
       barberpro_services!service_id (name, duration, price, price_from),
       addon_price,
@@ -97,6 +100,7 @@ export async function getAgendaSlotsByDate(date: Date): Promise<AgendaSlot[]> {
     status: apt.status,
     available: false,
     notes: apt.notes || '',
+    isRecurring: Boolean(apt.recurring_id),
   }))
 }
 
