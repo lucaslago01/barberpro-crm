@@ -8,7 +8,6 @@ import {
   CircleDollarSign,
   Receipt,
   UserX,
-  CircleSlash,
   UserPlus,
   TrendingUp,
   TrendingDown,
@@ -1341,7 +1340,7 @@ export function RelatoriosMes() {
               <StatCard
                 label="Cancelamentos"
                 value={String(stats.cancelled)}
-                icon={CircleSlash}
+                icon={X}
                 tone="bg-danger/12 text-danger"
                 current={stats.cancelled}
                 previous={prevStats.cancelled}
