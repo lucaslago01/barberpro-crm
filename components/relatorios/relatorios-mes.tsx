@@ -148,7 +148,7 @@ function StatCard({
         <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', tone)}>
           <Icon className="size-[18px]" />
         </span>
-        <p className="min-w-0 text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
+        <p className="min-w-0 break-words text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
           {label}
         </p>
       </div>

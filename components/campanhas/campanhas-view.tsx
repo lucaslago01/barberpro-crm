@@ -111,7 +111,7 @@ function StatCards() {
             >
               <stat.icon className="size-[18px]" />
             </span>
-            <p className="min-w-0 text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
+            <p className="min-w-0 break-words text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">
               {stat.label}
             </p>
           </div>
