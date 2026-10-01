@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   UserRound,
   Plus,
-  CircleSlash,
   X,
   ChevronDown,
   Store,
@@ -313,7 +312,7 @@ function BlockedDates() {
     <Panel className="p-5">
       <PanelHeader
         className="px-0 pt-0"
-        icon={<PanelIcon icon={<CircleSlash className="size-[18px]" />} className="bg-danger/12 text-danger" />}
+        icon={<PanelIcon icon={<X className="size-[18px]" />} className="bg-danger/12 text-danger" />}
         title="Bloquear datas"
       />
       <p className="-mt-2 mb-4 text-sm text-muted-foreground">
