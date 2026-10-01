@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Repeat, Trash2, X } from 'lucide-react'
 import { getClients } from '@/lib/supabase-data'
-import { getServices, type ServiceOption } from '@/lib/supabase-appointments'
+import { getServices, getBookedTimes, type ServiceOption } from '@/lib/supabase-appointments'
 import {
   createRecurringAppointment,
   deleteRecurringAppointment,
@@ -130,6 +130,21 @@ export function RecurringModal({
     savingRef.current = true
     setSaving(true)
     try {
+      // A primeira ocorrência cai no próximo (ou neste) dia da semana escolhido.
+      // Confere se já não tem alguém agendado nela antes de fixar.
+      const nextDate = anyDateForWeekday(weekday)
+      const alreadyBooked = await getBookedTimes(nextDate)
+      if (alreadyBooked.includes(time)) {
+        const dateLabel = nextDate.toLocaleDateString('pt-BR', {
+          day: 'numeric',
+          month: 'long',
+        })
+        setError(
+          `Já tem um atendimento marcado em ${dateLabel} (${WEEKDAY_LABELS[weekday].toLowerCase()}) às ${time}. Cancele ou reagende esse atendimento antes de fixar esse horário.`,
+        )
+        return
+      }
+
       await createRecurringAppointment({
         clientId,
         serviceId,
