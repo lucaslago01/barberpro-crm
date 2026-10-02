@@ -382,6 +382,15 @@ export function NewAppointmentModal({
               />
               {showClientList && !showNewClientForm && (
                 <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+                  {/* Botão de cadastro — sempre visível no topo do dropdown */}
+                  <button
+                    type="button"
+                    onClick={openNewClientForm}
+                    className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left text-sm font-medium text-purple-400 hover:bg-white/5"
+                  >
+                    <UserPlus className="size-3.5" />
+                    Cadastrar novo cliente
+                  </button>
                   {filteredClients.map((c) => (
                     <button
                       key={c.id}
@@ -393,15 +402,6 @@ export function NewAppointmentModal({
                       {c.phone ? ` · ${c.phone}` : ''}
                     </button>
                   ))}
-                  {/* Botão de cadastro — sempre visível no rodapé do dropdown */}
-                  <button
-                    type="button"
-                    onClick={openNewClientForm}
-                    className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm font-medium text-purple-400 hover:bg-white/5"
-                  >
-                    <UserPlus className="size-3.5" />
-                    Cadastrar novo cliente
-                  </button>
                 </div>
               )}
 
