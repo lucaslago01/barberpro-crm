@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
-import { getClients } from '@/lib/supabase-data'
+import { X, UserPlus } from 'lucide-react'
+import { getClients, createClient } from '@/lib/supabase-data'
 import {
   getServices,
   getBookedTimes,
@@ -51,6 +51,14 @@ export function NewAppointmentModal({
   const [clientQuery, setClientQuery] = useState('')
   const [showClientList, setShowClientList] = useState(false)
   const clientBoxRef = useRef<HTMLDivElement>(null)
+
+  // Mini-form de cadastro de novo cliente
+  const [showNewClientForm, setShowNewClientForm] = useState(false)
+  const [newClientName, setNewClientName] = useState('')
+  const [newClientPhone, setNewClientPhone] = useState('')
+  const [newClientEmail, setNewClientEmail] = useState('')
+  const [savingNewClient, setSavingNewClient] = useState(false)
+  const [newClientError, setNewClientError] = useState<string | null>(null)
   const [serviceId, setServiceId] = useState('')
   const [dateStr, setDateStr] = useState(() => toInputValue(initialDate))
   const [time, setTime] = useState<string | null>(initialTime ?? null)
@@ -223,6 +231,51 @@ export function NewAppointmentModal({
 
   const effectiveTime = customTime || time
 
+  function openNewClientForm() {
+    // Pré-preenche o nome com o que o usuário já digitou
+    setNewClientName(clientQuery.trim())
+    setNewClientPhone('')
+    setNewClientEmail('')
+    setNewClientError(null)
+    setShowClientList(false)
+    setShowNewClientForm(true)
+  }
+
+  function cancelNewClientForm() {
+    setShowNewClientForm(false)
+    setNewClientName('')
+    setNewClientPhone('')
+    setNewClientEmail('')
+    setNewClientError(null)
+  }
+
+  async function handleCreateNewClient() {
+    if (!newClientName.trim()) {
+      setNewClientError('Nome é obrigatório.')
+      return
+    }
+    setSavingNewClient(true)
+    setNewClientError(null)
+    try {
+      const created = await createClient({
+        name: newClientName.trim(),
+        phone: newClientPhone.trim() || undefined,
+        email: newClientEmail.trim() || undefined,
+      })
+      // Adiciona o novo cliente à lista local e seleciona
+      setClients((prev) => [created, ...prev])
+      selectClient(created)
+      setShowNewClientForm(false)
+      setNewClientName('')
+      setNewClientPhone('')
+      setNewClientEmail('')
+    } catch (err) {
+      setNewClientError(err instanceof Error ? err.message : 'Erro ao cadastrar cliente.')
+    } finally {
+      setSavingNewClient(false)
+    }
+  }
+
   async function handleSave() {
     if (savingRef.current) return
 
@@ -320,29 +373,84 @@ export function NewAppointmentModal({
                   setClientQuery(e.target.value)
                   setShowClientList(true)
                   if (clientId) setClientId('')
+                  if (showNewClientForm) setShowNewClientForm(false)
                 }}
-                onFocus={() => setShowClientList(true)}
+                onFocus={() => { setShowClientList(true); setShowNewClientForm(false) }}
                 placeholder="Buscar por nome ou telefone..."
                 className={fieldClass}
                 autoComplete="off"
               />
-              {showClientList && (
+              {showClientList && !showNewClientForm && (
                 <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
-                  {filteredClients.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
-                  ) : (
-                    filteredClients.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => selectClient(c)}
-                        className="block w-full px-3 py-2 text-left text-sm hover:bg-white/5"
-                      >
-                        {c.name}
-                        {c.phone ? ` · ${c.phone}` : ''}
-                      </button>
-                    ))
+                  {filteredClients.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => selectClient(c)}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-white/5"
+                    >
+                      {c.name}
+                      {c.phone ? ` · ${c.phone}` : ''}
+                    </button>
+                  ))}
+                  {/* Botão de cadastro — sempre visível no rodapé do dropdown */}
+                  <button
+                    type="button"
+                    onClick={openNewClientForm}
+                    className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm font-medium text-purple-400 hover:bg-white/5"
+                  >
+                    <UserPlus className="size-3.5" />
+                    Cadastrar novo cliente
+                  </button>
+                </div>
+              )}
+
+              {/* Mini-formulário de cadastro inline */}
+              {showNewClientForm && (
+                <div className="mt-2 rounded-lg border border-purple-500/30 bg-purple-500/5 p-3 space-y-2">
+                  <p className="text-xs font-medium text-purple-400">Novo cliente</p>
+                  <input
+                    type="text"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    placeholder="Nome *"
+                    className={fieldClass}
+                    autoFocus
+                  />
+                  <input
+                    type="tel"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    placeholder="Telefone (opcional)"
+                    className={fieldClass}
+                  />
+                  <input
+                    type="email"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    placeholder="E-mail (opcional)"
+                    className={fieldClass}
+                  />
+                  {newClientError && (
+                    <p className="text-xs text-red-500">{newClientError}</p>
                   )}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={cancelNewClientForm}
+                      className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateNewClient}
+                      disabled={savingNewClient}
+                      className="flex-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                    >
+                      {savingNewClient ? 'Salvando...' : 'Salvar cliente'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
