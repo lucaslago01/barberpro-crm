@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -11,6 +12,26 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Alguns navegadores mobile (Safari/iOS) não respeitam corretamente o
+// z-index entre elementos com blur quando ambos são "fixed". Para evitar
+// a barra inferior cobrindo botões de modais (ex.: Reagendar), escondemos
+// ela sempre que detectamos um overlay de modal aberto na página.
+function useHasOpenModal() {
+  const [hasOpenModal, setHasOpenModal] = useState(false)
+
+  useEffect(() => {
+    const check = () => {
+      setHasOpenModal(!!document.querySelector('[data-modal-overlay]'))
+    }
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
+  return hasOpenModal
+}
 
 type Item = {
   label: string
@@ -27,6 +48,9 @@ const items: Item[] = [
 
 export function MobileNav({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname()
+  const hasOpenModal = useHasOpenModal()
+
+  if (hasOpenModal) return null
 
   return (
     <nav

@@ -93,7 +93,7 @@ export function RowActionsMenu({
 
       {confirming &&
         createPortal(
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm animate-fade-in">
+          <div data-modal-overlay className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm animate-fade-in">
             <div className="relative w-full max-w-sm rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.009_300)] p-5 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8),0_0_0_1px_oklch(0.62_0.19_305/10%)] animate-scale-in before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-gold/50 before:to-transparent">
               <h3 className="mb-2 text-base font-semibold">
                 {confirming === 'cancelado' ? 'Cancelar agendamento' : 'Marcar como faltou'}
