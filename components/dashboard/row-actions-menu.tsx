@@ -93,8 +93,8 @@ export function RowActionsMenu({
 
       {confirming &&
         createPortal(
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="relative w-full max-w-sm rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.009_300)] p-5 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8),0_0_0_1px_oklch(0.62_0.19_305/10%)] animate-scale-in before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-gold/50 before:to-transparent">
               <h3 className="mb-2 text-base font-semibold">
                 {confirming === 'cancelado' ? 'Cancelar agendamento' : 'Marcar como faltou'}
               </h3>
@@ -142,7 +142,7 @@ export function RowActionsMenu({
             <div
               role="menu"
               style={{ top: pos.top, right: pos.right }}
-              className="fixed z-50 w-52 rounded-xl border border-border bg-card p-1 shadow-xl"
+              className="fixed z-50 w-52 rounded-xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.009_300)] p-1 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.7),0_0_0_1px_oklch(0.62_0.19_305/10%)] animate-scale-in"
             >
               {actions.map(({ status, label, icon: Icon, tone }) => {
                 const current = slot.status === status
@@ -153,9 +153,9 @@ export function RowActionsMenu({
                     disabled={current}
                     onClick={() => choose(status)}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-white/5',
+                      'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-all hover:bg-white/5 hover:translate-x-0.5',
                       tone,
-                      current && 'cursor-not-allowed opacity-40 hover:bg-transparent',
+                      current && 'cursor-not-allowed opacity-40 hover:bg-transparent hover:translate-x-0',
                     )}
                   >
                     <Icon className="size-4" />
