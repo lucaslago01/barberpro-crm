@@ -144,7 +144,7 @@ function ServiceModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
@@ -291,7 +291,7 @@ export function ServicesSettings() {
           <button
             type="button"
             onClick={openNew}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-gold px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl btn-gold-glow px-3 text-sm font-semibold"
           >
             <Plus className="size-4" />
             <span className="hidden sm:inline">Novo serviço</span>
@@ -318,7 +318,7 @@ export function ServicesSettings() {
               key={s.id}
               className="flex items-center gap-2.5 rounded-xl border border-border bg-background/30 px-3 py-3 transition-colors hover:border-gold/25 sm:gap-3 sm:px-4"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold/12 text-gold">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg chip-gold">
                 <Scissors className="size-4" />
               </span>
               <div className="min-w-0 flex-1">

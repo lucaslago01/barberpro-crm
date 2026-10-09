@@ -97,10 +97,10 @@ const statIconMap: Record<string, LucideIcon> = {
 }
 
 const statToneMap: Record<string, string> = {
-  gold: 'bg-gold/12 text-gold',
-  success: 'bg-success/12 text-success',
-  danger: 'bg-danger/12 text-danger',
-  muted: 'bg-white/5 text-muted-foreground',
+  gold: 'chip-gold',
+  success: 'chip-success',
+  danger: 'chip-danger',
+  muted: 'chip-muted',
 }
 
 function StatCards() {
@@ -145,26 +145,30 @@ function StatCards() {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 stagger-children xl:grid-cols-4">
       {cards.map((card) => {
         const Icon = statIconMap[card.icon]
         return (
           <div
             key={card.label}
-            className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30"
+            className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.195_0.009_300)] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_20px_40px_-20px_oklch(0.62_0.19_305/40%)]"
           >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gold/0 blur-2xl transition-colors duration-500 group-hover:bg-gold/15"
+            />
             <span
               className={cn(
-                'grid size-10 place-items-center rounded-xl',
+                'relative grid size-10 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
                 statToneMap[card.tone],
               )}
             >
-              <Icon className="size-5" />
+              <Icon className="size-5" strokeWidth={2.2} />
             </span>
-            <p className="mt-3 text-2xl font-bold tracking-tight">
+            <p className="relative mt-3 text-2xl font-bold tracking-tight tabular-nums">
               {card.value === undefined ? '-' : card.value}
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{card.label}</p>
+            <p className="relative mt-0.5 text-xs text-muted-foreground">{card.label}</p>
           </div>
         )
       })}
@@ -477,7 +481,7 @@ function NewClientModal({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="Nome do cliente"
             />
           </div>
@@ -486,7 +490,7 @@ function NewClientModal({
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="(41) 99999-9999"
             />
           </div>
@@ -495,7 +499,7 @@ function NewClientModal({
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="email@exemplo.com"
             />
           </div>
@@ -517,7 +521,7 @@ function NewClientModal({
                 <select
                   value={clubPlan}
                   onChange={(e) => setClubPlan(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                  className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
                 >
                   {CLUB_PLANS.map((p) => (
                     <option key={p} value={p} className="bg-card text-foreground">
@@ -546,7 +550,7 @@ function NewClientModal({
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                    className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
                   />
                 </div>
               )}
@@ -566,7 +570,7 @@ function NewClientModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
@@ -627,7 +631,7 @@ function ConfirmPaymentModal({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           placeholder="0,00"
         />
         <p className="mt-1 text-[11px] text-muted-foreground">
@@ -644,7 +648,7 @@ function ConfirmPaymentModal({
           <button
             onClick={handleConfirm}
             disabled={saving}
-            className="rounded-lg bg-gold px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
           >
             {saving ? 'Confirmando...' : 'Confirmar'}
           </button>
@@ -748,7 +752,7 @@ function ClubSection({ clientId }: { clientId: string }) {
         <select
           value={plan}
           onChange={(e) => setPlan(e.target.value)}
-          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+          className="h-9 w-full rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
         >
           {CLUB_PLANS.map((p) => (
             <option key={p} value={p}>
@@ -785,7 +789,7 @@ function ClubSection({ clientId }: { clientId: string }) {
             type="date"
             value={customDate}
             onChange={(e) => setCustomDate(e.target.value)}
-            className="h-9 flex-1 rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/40"
+            className="h-9 flex-1 rounded-lg border border-border bg-background/60 px-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           />
           <button
             onClick={handleSaveDate}
@@ -803,7 +807,7 @@ function ClubSection({ clientId }: { clientId: string }) {
         <button
           onClick={() => setConfirmingPayment(true)}
           disabled={saving}
-          className="flex-1 rounded-lg bg-gold px-3 py-2 text-xs font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+          className="flex-1 rounded-lg btn-gold-glow px-3 py-2 text-xs font-semibold disabled:opacity-60"
         >
           Marcar pagamento (+30 dias)
         </button>
@@ -876,7 +880,7 @@ function EditClientModal({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="Nome do cliente"
             />
           </div>
@@ -885,7 +889,7 @@ function EditClientModal({
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="(41) 99999-9999"
             />
           </div>
@@ -894,7 +898,7 @@ function EditClientModal({
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="email@exemplo.com"
             />
           </div>
@@ -949,7 +953,7 @@ function EditClientModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
@@ -1287,7 +1291,7 @@ function ClientsTable() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar cliente por nome ou WhatsApp..."
-            className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/40"
+            className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           />
         </div>
 
@@ -1295,7 +1299,7 @@ function ClientsTable() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as ClientStatus | 'todos')}
-            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           >
             {clientStatusFilters.map((f) => (
               <option key={f.key} value={f.key} className="bg-card text-foreground">
@@ -1310,7 +1314,7 @@ function ClientsTable() {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as 'todos' | '3m')}
-            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           >
             <option value="todos" className="bg-card text-foreground">Todos os períodos</option>
             <option value="3m" className="bg-card text-foreground">Últimos 3 meses</option>
@@ -1322,7 +1326,7 @@ function ClientsTable() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'recentes' | 'nome')}
-            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/40"
+            className="h-10 shrink-0 appearance-none rounded-lg border border-border bg-background/40 pl-3 pr-9 text-sm text-foreground outline-none transition-colors hover:text-foreground focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           >
             <option value="recentes" className="bg-card text-foreground">Mais recentes</option>
             <option value="nome" className="bg-card text-foreground">Nome (A-Z)</option>
@@ -1357,7 +1361,7 @@ function ClientsTable() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg btn-gold-glow px-3.5 text-sm font-semibold"
         >
           <Plus className="size-4" />
           Novo cliente
@@ -1375,7 +1379,7 @@ function ClientsTable() {
                 value={minVisits}
                 onChange={(e) => setMinVisits(e.target.value)}
                 placeholder="Mín."
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
               <input
                 type="number"
@@ -1383,7 +1387,7 @@ function ClientsTable() {
                 value={maxVisits}
                 onChange={(e) => setMaxVisits(e.target.value)}
                 placeholder="Máx."
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
             </div>
           </div>
@@ -1397,7 +1401,7 @@ function ClientsTable() {
                 value={minTicket}
                 onChange={(e) => setMinTicket(e.target.value)}
                 placeholder="R$ mín."
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
               <input
                 type="number"
@@ -1405,7 +1409,7 @@ function ClientsTable() {
                 value={maxTicket}
                 onChange={(e) => setMaxTicket(e.target.value)}
                 placeholder="R$ máx."
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
             </div>
           </div>
@@ -1415,7 +1419,7 @@ function ClientsTable() {
             <select
               value={clubPlanFilter}
               onChange={(e) => setClubPlanFilter(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
             >
               <option value="todos" className="bg-card text-foreground">Todos os planos</option>
               {CLUB_PLANS.map((p) => (
@@ -1731,7 +1735,7 @@ function FeaturedPanel() {
             className={cn(
               'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
               tab === t.key
-                ? 'bg-gold/12 text-gold'
+                ? 'chip-gold'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

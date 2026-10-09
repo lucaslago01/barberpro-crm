@@ -271,7 +271,15 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
 
       <div className="flex flex-col gap-3 px-5 pt-4 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
-          <CalendarDays className="size-5 text-gold" />
+          <span className="relative grid size-9 place-items-center rounded-xl bg-gradient-to-br from-gold/25 to-gold/5 ring-1 ring-gold/20">
+            <CalendarDays className="size-4 text-gold" />
+            {isToday && (
+              <span className="absolute -right-0.5 -top-0.5 flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-60" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-gold ring-2 ring-card" />
+              </span>
+            )}
+          </span>
           <h2 className="text-lg font-semibold tracking-tight">
             {isToday ? 'Agenda de hoje' : 'Agenda do dia'}
           </h2>
@@ -300,14 +308,14 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
           {!isToday && (
             <button
               onClick={goToday}
-              className="shrink-0 rounded-lg border border-gold/40 bg-gold/12 px-3 py-2.5 text-xs font-medium text-gold sm:py-2"
+              className="shrink-0 rounded-lg border border-gold/40 bg-gold/12 px-3 py-2.5 text-xs font-semibold text-gold transition-all hover:bg-gold/20 hover:scale-[1.02] active:scale-95 sm:py-2"
             >
               Hoje
             </button>
           )}
           <button
             onClick={() => setBlocking(true)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex-none sm:py-2"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-gold/30 hover:text-foreground active:scale-95 sm:flex-none sm:py-2"
           >
             <Ban className="size-4" />
             <span className="hidden sm:inline">Bloquear horário</span>
@@ -315,7 +323,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
           </button>
           <button
             onClick={() => setManagingFixed(true)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex-none sm:py-2"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-gold/30 hover:text-foreground active:scale-95 sm:flex-none sm:py-2"
           >
             <Repeat className="size-4" />
             <span className="hidden sm:inline">Horários fixos</span>
@@ -323,7 +331,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
           </button>
           <button
             onClick={() => setCreating(true)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:flex-none sm:py-2"
+            className="btn-gold-glow inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold sm:flex-none sm:py-2"
           >
             <Plus className="size-4" />
             <span className="hidden sm:inline">Novo agendamento</span>
@@ -339,19 +347,19 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
             key={tab.key}
             onClick={() => setActive(tab.key)}
             className={cn(
-              'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+              'group relative inline-flex shrink-0 items-center gap-1.5 overflow-hidden rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-300',
               active === tab.key
-                ? 'border-gold/40 bg-gold/12 text-gold'
-                : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
+                ? 'border-gold/50 bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-[0_0_0_1px_oklch(0.62_0.19_305/15%),0_8px_20px_-12px_oklch(0.62_0.19_305/60%)]'
+                : 'border-border bg-background/30 text-muted-foreground hover:border-gold/25 hover:text-foreground',
             )}
           >
             {tab.label}
             <span
               className={cn(
-                'grid min-w-5 place-items-center rounded-full px-1 text-[10px] font-semibold',
+                'relative grid min-w-5 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums transition-colors',
                 active === tab.key
-                  ? 'bg-gold/25 text-gold'
-                  : 'bg-white/8 text-muted-foreground',
+                  ? 'bg-gold/30 text-gold'
+                  : 'bg-white/[0.07] text-muted-foreground group-hover:bg-white/10',
               )}
             >
               {tab.count}
@@ -366,7 +374,9 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
         {loading ? (
           <div className="space-y-2 p-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />
+              <div key={i} className="relative h-20 overflow-hidden rounded-xl bg-white/[0.03]">
+                <div className="absolute inset-0 animate-shimmer" />
+              </div>
             ))}
           </div>
         ) : error ? (
@@ -376,7 +386,7 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
             Nenhum agendamento neste dia.
           </PanelEmpty>
         ) : (
-          <ul className="space-y-2 p-3">
+          <ul className="space-y-2 p-3 stagger-children">
             {rows.map((row) => {
               if (row.kind === 'block') {
                 const b = row.block
@@ -408,10 +418,22 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
 
               const a = row.slot
               const canReschedule = a.status === 'agendado' || a.status === 'confirmado'
+              const statusAccent: Record<string, string> = {
+                agendado: 'before:bg-info',
+                confirmado: 'before:bg-gold',
+                atendimento: 'before:bg-warning',
+                concluido: 'before:bg-success',
+                cancelado: 'before:bg-muted-foreground/40',
+                faltou: 'before:bg-danger',
+              }
               return (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-border bg-background/30 px-3 py-2.5"
+                  className={cn(
+                    'group relative overflow-hidden rounded-xl border border-border bg-background/30 px-3 py-2.5 transition-all hover:border-gold/25 hover:bg-background/50',
+                    'before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full',
+                    statusAccent[a.status] ?? 'before:bg-gold',
+                  )}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-11 shrink-0 text-sm font-semibold tabular-nums">
@@ -555,9 +577,15 @@ export function Agenda({ date: dateProp, onDateChange }: AgendaProps) {
                 return (
                   <tr
                     key={a.id}
-                    className="border-b border-border/60 transition-colors hover:bg-white/[0.02]"
+                    className="group border-b border-border/60 transition-colors hover:bg-gold/[0.03]"
                   >
-                    <td className="px-5 py-3 font-medium tabular-nums">{a.time}</td>
+                    <td className="relative px-5 py-3 font-medium tabular-nums">
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-r-full bg-gold opacity-0 transition-opacity group-hover:opacity-100"
+                      />
+                      {a.time}
+                    </td>
                     <td className="py-3 pr-6">
                       <div className="flex items-center gap-2.5">
                         <UserAvatar name={a.client} size="sm" />

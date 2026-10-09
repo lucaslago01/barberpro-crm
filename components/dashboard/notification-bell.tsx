@@ -63,13 +63,19 @@ export function NotificationBell() {
       <button
         aria-label="Notificações"
         onClick={() => (open ? closePanel() : setOpen(true))}
-        className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+        className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-gold/30 hover:text-gold active:scale-95"
       >
-        <Bell className="size-5" />
+        <Bell className={cn('size-5', unread > 0 && 'animate-float')} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-gold text-[10px] font-bold text-primary-foreground">
-            {unread > 9 ? '9+' : unread}
-          </span>
+          <>
+            <span
+              aria-hidden
+              className="absolute -right-1 -top-1 flex size-5 animate-ping rounded-full bg-gold opacity-30"
+            />
+            <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.75_0.18_310)] to-[oklch(0.52_0.21_300)] text-[10px] font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.62_0.19_305/60%)] ring-2 ring-card">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          </>
         )}
       </button>
 
@@ -80,7 +86,7 @@ export function NotificationBell() {
             onClick={closePanel}
             className="fixed inset-0 z-40 cursor-default"
           />
-          <div className="absolute right-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card p-3 shadow-2xl">
+          <div className="absolute right-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.009_300)] p-3 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8),0_0_0_1px_oklch(0.62_0.19_305/10%)] animate-scale-in">
             <div className="mb-2 flex items-center justify-between px-2">
               <h3 className="text-sm font-semibold">Notificações</h3>
               <a

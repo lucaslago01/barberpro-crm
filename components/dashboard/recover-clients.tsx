@@ -37,7 +37,7 @@ export function RecoverClients() {
     return (
       <li
         key={c.id}
-        className="flex items-center gap-2.5 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.03]"
+        className="group flex items-center gap-2.5 rounded-xl px-2 py-2 transition-all hover:bg-white/[0.03] hover:translate-x-0.5"
       >
         <UserAvatar name={c.name} size="md" />
 
@@ -93,7 +93,7 @@ export function RecoverClients() {
         )}
 
         {!loading && !error && clients.length > 0 && (
-          <ul className="space-y-1 px-3 pb-3">{visible.map(renderRow)}</ul>
+          <ul className="space-y-1 px-3 pb-3 stagger-children">{visible.map(renderRow)}</ul>
         )}
       </Panel>
 

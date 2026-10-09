@@ -36,10 +36,10 @@ const PRESETS: { key: PeriodPreset; label: string }[] = [
 ]
 
 const statToneMap: Record<string, string> = {
-  gold: 'bg-gold/12 text-gold',
-  success: 'bg-success/12 text-success',
-  info: 'bg-info/12 text-info',
-  muted: 'bg-white/5 text-muted-foreground',
+  gold: 'chip-gold',
+  success: 'chip-success',
+  info: 'chip-info',
+  muted: 'chip-muted',
 }
 
 function parseInputDate(value: string) {
@@ -67,7 +67,7 @@ function StatCard({
   tone: string
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/30">
+    <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.195_0.009_300)] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_20px_40px_-20px_oklch(0.62_0.19_305/30%)]">
       <span className={cn('grid size-10 place-items-center rounded-xl', statToneMap[tone])}>
         <Icon className="size-5" />
       </span>
@@ -126,7 +126,7 @@ function EditNotesModal({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40"
+          className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
           placeholder="Observações sobre o atendimento..."
         />
 
@@ -142,7 +142,7 @@ function EditNotesModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
@@ -159,10 +159,10 @@ const statusLabel: Record<string, string> = {
 }
 
 function statusClass(status: string) {
-  if (status === 'concluido') return 'bg-success/12 text-success'
-  if (status === 'faltou') return 'bg-danger/12 text-danger'
-  if (status === 'cancelado') return 'bg-white/5 text-muted-foreground'
-  return 'bg-info/12 text-info'
+  if (status === 'concluido') return 'chip-success'
+  if (status === 'faltou') return 'chip-danger'
+  if (status === 'cancelado') return 'chip-muted'
+  return 'chip-info'
 }
 
 // Versão em card do AttendanceRow, usada só no celular
@@ -401,7 +401,7 @@ export function AtendimentosMes() {
               className={cn(
                 'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
                 preset === p.key
-                  ? 'border-gold/40 bg-gold/12 text-gold'
+                  ? 'border-gold/50 bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-[0_0_0_1px_oklch(0.62_0.19_305/15%),0_8px_20px_-12px_oklch(0.62_0.19_305/60%)]'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
               )}
             >
@@ -490,7 +490,7 @@ export function AtendimentosMes() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por cliente ou serviço..."
-                className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
             </div>
             <button
@@ -498,7 +498,7 @@ export function AtendimentosMes() {
               className={cn(
                 'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors',
                 showAll
-                  ? 'border-gold/40 bg-gold/12 text-gold'
+                  ? 'border-gold/50 bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-[0_0_0_1px_oklch(0.62_0.19_305/15%),0_8px_20px_-12px_oklch(0.62_0.19_305/60%)]'
                   : 'border-border bg-background/40 text-muted-foreground hover:text-foreground',
               )}
             >
@@ -532,7 +532,7 @@ export function AtendimentosMes() {
             </div>
 
             {/* Celular: lista de cards */}
-            <ul className="space-y-2.5 px-3 pb-3 md:hidden">
+            <ul className="space-y-2.5 px-3 pb-3 md:hidden stagger-children">
               {filtered.map((r) => (
                 <AttendanceCard key={r.id} record={r} onEdit={() => setEditingRecord(r)} />
               ))}
@@ -566,7 +566,7 @@ export function AtendimentosMes() {
               {stats.byService.length === 0 ? (
                 <p className="px-4 pb-4 text-sm text-muted-foreground">Nenhum atendimento no período.</p>
               ) : (
-                <ul className="space-y-3 px-4 pb-4">
+                <ul className="space-y-3 px-4 pb-4 stagger-children">
                   {stats.byService.slice(0, 6).map((s) => {
                     const total = stats.byService.reduce((sum, x) => sum + x.count, 0)
                     const percent = total > 0 ? Math.round((s.count / total) * 100) : 0
@@ -596,7 +596,7 @@ export function AtendimentosMes() {
               {stats.byService.length === 0 ? (
                 <p className="px-4 pb-4 text-sm text-muted-foreground">Nenhum atendimento no período.</p>
               ) : (
-                <ul className="space-y-0.5 px-3 pb-3">
+                <ul className="space-y-0.5 px-3 pb-3 stagger-children">
                   {stats.byService.map((s) => (
                     <li
                       key={s.name}
@@ -618,7 +618,7 @@ export function AtendimentosMes() {
             {records.length === 0 ? (
               <p className="px-4 pb-4 text-sm text-muted-foreground">Nenhum atendimento no período.</p>
             ) : (
-              <ul className="space-y-0.5 px-3 pb-3">
+              <ul className="space-y-0.5 px-3 pb-3 stagger-children">
                 {records.slice(0, 6).map((r) => (
                   <li
                     key={r.id}

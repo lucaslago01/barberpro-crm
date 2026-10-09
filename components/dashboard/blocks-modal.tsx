@@ -179,7 +179,7 @@ export function BlocksModal({
               }}
               className={
                 mode === key
-                  ? 'rounded-md bg-gold px-3 py-1.5 text-sm font-semibold text-primary-foreground'
+                  ? 'btn-gold-glow rounded-md px-3 py-1.5 text-sm font-semibold'
                   : 'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground'
               }
             >
@@ -321,7 +321,7 @@ export function BlocksModal({
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+              className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
             >
               {saving ? 'Salvando...' : 'Bloquear'}
             </button>

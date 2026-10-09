@@ -104,17 +104,18 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
         <button
           aria-label="Mês anterior"
           onClick={() => changeMonth(-1)}
-          className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
+          className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-all hover:bg-gold/10 hover:text-gold active:scale-90"
         >
           <ChevronLeft className="size-4" />
         </button>
-        <p className="text-sm font-semibold">
-          {monthNames[month]} {year}
+        <p className="text-sm font-semibold tracking-wide">
+          <span className="gradient-text-gold">{monthNames[month]}</span>{' '}
+          <span className="text-foreground/80">{year}</span>
         </p>
         <button
           aria-label="Próximo mês"
           onClick={() => changeMonth(1)}
-          className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground"
+          className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-all hover:bg-gold/10 hover:text-gold active:scale-90"
         >
           <ChevronRight className="size-4" />
         </button>
@@ -124,7 +125,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
         {weekDays.map((d, i) => (
           <span
             key={i}
-            className="text-[11px] font-medium text-muted-foreground"
+            className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70"
           >
             {d}
           </span>
@@ -139,17 +140,22 @@ export function MiniCalendar({ selectedDate, onSelectDate }: MiniCalendarProps) 
               key={day}
               onClick={() => handleSelect(day)}
               className={cn(
-                'relative mx-auto grid size-8 place-items-center rounded-full text-[13px] transition-colors',
+                'relative mx-auto grid size-8 place-items-center rounded-full text-[13px] transition-all duration-200 active:scale-90',
                 isSelected
-                  ? 'bg-gold font-semibold text-primary-foreground'
+                  ? 'bg-gradient-to-br from-[oklch(0.72_0.19_310)] to-[oklch(0.52_0.21_300)] font-bold text-primary-foreground shadow-[0_6px_16px_-6px_oklch(0.62_0.19_305/60%)] scale-105'
                   : isToday
-                    ? 'border border-gold/50 font-semibold text-gold hover:bg-white/5'
-                    : 'text-foreground/90 hover:bg-white/5',
+                    ? 'ring-1 ring-gold/60 font-semibold text-gold hover:bg-gold/10 hover:scale-105'
+                    : 'text-foreground/90 hover:bg-white/5 hover:scale-105',
               )}
             >
               {day}
               {hasDot && !isSelected && (
-                <span className="absolute bottom-1 size-1 rounded-full bg-gold" />
+                <span
+                  className={cn(
+                    'absolute bottom-0.5 size-1 rounded-full',
+                    isToday ? 'bg-gold' : 'bg-gold/70',
+                  )}
+                />
               )}
             </button>
           )

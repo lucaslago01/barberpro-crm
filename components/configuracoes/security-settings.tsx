@@ -96,7 +96,7 @@ export function SecuritySettings() {
             type="button"
             onClick={handleUpdate}
             disabled={saving}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-gold px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90 disabled:opacity-60"
+            className="inline-flex h-10 items-center gap-2 rounded-xl btn-gold-glow px-4 text-sm font-semibold disabled:opacity-60"
           >
             <Lock className="size-4" />
             {saving ? 'Atualizando...' : 'Atualizar senha'}

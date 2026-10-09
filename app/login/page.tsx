@@ -48,14 +48,30 @@ export default function LoginPage() {
   }
 
   const fieldClass =
-    'h-11 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40'
+    'h-11 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none transition-all focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]'
 
   return (
-    <div className="grid min-h-screen place-items-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6">
+    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-background px-4">
+      {/* Aurora de fundo */}
+      <div className="pointer-events-none absolute inset-0 aurora" aria-hidden />
+
+      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.01_300)] p-7 shadow-[0_30px_80px_-30px_oklch(0_0_0/80%),0_0_0_1px_oklch(0.62_0.19_305/10%)] animate-scale-in">
+        {/* linha de luz no topo */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent"
+        />
         <div className="mb-6 text-center">
-          <Scissors className="mx-auto size-8 text-gold" />
-          <h1 className="mt-3 min-h-[2rem] font-serif text-2xl font-semibold tracking-[0.2em]">
+          <div className="relative mx-auto grid size-14 place-items-center">
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-2xl bg-gold/30 blur-xl animate-pulse-glow"
+            />
+            <span className="relative grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-gold/30 to-gold/5 ring-1 ring-gold/40">
+              <Scissors className="size-6 -rotate-90 text-gold" strokeWidth={2.2} />
+            </span>
+          </div>
+          <h1 className="mt-4 min-h-[2rem] font-serif text-2xl font-bold tracking-[0.2em] gradient-text-gold">
             {barbershopName.toUpperCase()}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -108,9 +124,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-11 w-full rounded-lg bg-gold text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 disabled:opacity-60"
+            className="btn-gold-glow h-11 w-full rounded-lg text-sm font-semibold"
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="size-3 animate-pulse rounded-full bg-white/80" />
+                Entrando...
+              </span>
+            ) : (
+              'Entrar'
+            )}
           </button>
         </form>
       </div>

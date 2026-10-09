@@ -23,10 +23,11 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 const toneMap: Record<string, string> = {
-  gold: 'bg-gold/12 text-gold',
-  success: 'bg-success/12 text-success',
-  info: 'bg-info/12 text-info',
-  muted: 'bg-white/[0.06] text-muted-foreground',
+  gold: 'chip-gold',
+  success: 'chip-success',
+  info: 'chip-info',
+  muted: 'chip-muted',
+  danger: 'chip-danger',
 }
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -38,7 +39,7 @@ type Kpi = {
   label: string
   value: string
   icon: string
-  tone: 'gold' | 'success' | 'info' | 'muted'
+  tone: 'gold' | 'success' | 'info' | 'muted' | 'danger'
 }
 
 export function KpiCards() {
@@ -85,7 +86,7 @@ export function KpiCards() {
           label: `Clientes em risco (+${RISK_DAYS} dias)`,
           value: clients ? String(clients.atRisk) : '-',
           icon: 'Star',
-          tone: 'muted',
+          tone: 'danger',
         },
         {
           label: 'Novos clientes no mês',
@@ -103,42 +104,51 @@ export function KpiCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-thin sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 xl:grid-cols-5">
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className="h-[104px] animate-pulse rounded-2xl border border-border bg-card"
-          />
+            className="relative h-[108px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:w-auto"
+          >
+            <div className="absolute inset-0 animate-shimmer" />
+          </div>
         ))}
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-      {kpis.map((kpi, index) => {
+    <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 stagger-children scrollbar-thin sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 xl:grid-cols-5">
+      {kpis.map((kpi) => {
         const Icon = iconMap[kpi.icon]
         return (
           <div
             key={kpi.label}
             className={cn(
-              'group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25',
-              // com 5 cards em 2 colunas, o último ocupa a linha inteira no celular
-              index === kpis.length - 1 && kpis.length % 2 === 1 && 'col-span-2 sm:col-span-1',
+              'group relative shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.195_0.009_300)] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_20px_40px_-20px_oklch(0.62_0.19_305/40%)]',
+              'w-[160px] sm:w-auto',
             )}
           >
+            {/* Brilho de hover no canto */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-gold/0 blur-2xl transition-colors duration-500 group-hover:bg-gold/20"
+            />
+
             <span
               className={cn(
-                'grid size-9 place-items-center rounded-xl',
+                'relative grid size-10 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
                 toneMap[kpi.tone] ?? toneMap.gold,
               )}
             >
-              <Icon className="size-[18px]" />
+              <Icon className="size-[18px]" strokeWidth={2.2} />
             </span>
-            <p className="mt-3 break-words text-xl font-bold tracking-tight tabular-nums sm:text-2xl">
+            <p className="relative mt-3 break-words text-xl font-bold tracking-tight tabular-nums sm:text-2xl">
               {kpi.value}
             </p>
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{kpi.label}</p>
+            <p className="relative mt-0.5 text-xs leading-snug text-muted-foreground">
+              {kpi.label}
+            </p>
           </div>
         )
       })}

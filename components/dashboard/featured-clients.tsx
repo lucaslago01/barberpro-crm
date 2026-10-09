@@ -122,19 +122,21 @@ export function FeaturedClients() {
       )}
 
       {!loading && !error && clients.length > 0 && (
-        <ul className="space-y-1 px-3 pb-3">
+        <ul className="space-y-1 px-3 pb-3 stagger-children">
           {clients.map((c, i) => (
             <li
               key={c.id}
-              className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]"
+              className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-all hover:bg-white/[0.03] hover:translate-x-0.5"
             >
               {/* posição no ranking: o painel é um top 3 */}
               <span
                 className={cn(
-                  'grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular-nums',
+                  'relative grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular-nums shadow-sm',
                   i === 0
-                    ? 'bg-gold/15 text-gold'
-                    : 'bg-white/[0.06] text-muted-foreground',
+                    ? 'bg-gradient-to-br from-gold to-[oklch(0.52_0.21_298)] text-primary-foreground shadow-[0_0_12px_oklch(0.62_0.19_305/40%)]'
+                    : i === 1
+                      ? 'bg-gradient-to-br from-white/[0.14] to-white/[0.04] text-foreground/80 ring-1 ring-white/10'
+                      : 'bg-gradient-to-br from-amber-700/30 to-amber-900/20 text-amber-300/80 ring-1 ring-amber-700/20',
                 )}
               >
                 {i + 1}

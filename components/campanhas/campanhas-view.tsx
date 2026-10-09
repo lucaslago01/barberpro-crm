@@ -46,9 +46,9 @@ const statusLabels: Record<CampaignStatus, string> = {
 }
 
 const statusToneMap: Record<CampaignStatus, string> = {
-  rascunho: 'bg-white/5 text-muted-foreground',
-  agendada: 'bg-info/12 text-info',
-  concluida: 'bg-success/12 text-success',
+  rascunho: 'chip-muted',
+  agendada: 'chip-info',
+  concluida: 'chip-success',
 }
 
 function StatusBadge({ status }: { status: CampaignStatus }) {
@@ -90,9 +90,9 @@ function StatCards() {
   ]
 
   const toneMap: Record<string, string> = {
-    gold: 'bg-gold/12 text-gold',
-    success: 'bg-success/12 text-success',
-    info: 'bg-info/12 text-info',
+    gold: 'chip-gold',
+    success: 'chip-success',
+    info: 'chip-info',
   }
 
   return (
@@ -100,7 +100,7 @@ function StatCards() {
       {cards.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25 sm:p-5"
+          className="rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.195_0.009_300)] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_20px_40px_-20px_oklch(0.62_0.19_305/30%)] sm:p-5"
         >
           <div className="flex items-center gap-2.5">
             <span
@@ -156,7 +156,7 @@ function CampaignRow({ campaign, onDelete }: { campaign: Campaign; onDelete: () 
     <tr className="group border-t border-border transition-colors hover:bg-white/[0.02]">
       <td className="py-3 pl-4 pr-3">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold/12 text-gold">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-gold">
             <Send className="size-5" />
           </span>
           <div className="min-w-0">
@@ -208,7 +208,7 @@ function CampaignCard({
   return (
     <li className="rounded-xl border border-border bg-background/30 p-3.5">
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gold/12 text-gold">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-gold">
           <Send className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -339,7 +339,7 @@ function NewCampaignModal({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="Ex: Promoção de corte"
             />
           </div>
@@ -350,7 +350,7 @@ function NewCampaignModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="w-full resize-none rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40"
+              className="w-full resize-none rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               placeholder="Texto que será enviado no WhatsApp"
             />
             <p className="mt-1 text-xs text-muted-foreground">
@@ -363,7 +363,7 @@ function NewCampaignModal({
             <select
               value={audience}
               onChange={(e) => setAudience(e.target.value as CampaignAudience)}
-              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+              className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
             >
               {audienceOptions.map((a) => (
                 <option key={a} value={a} className="bg-card text-foreground">
@@ -383,7 +383,7 @@ function NewCampaignModal({
                 type="date"
                 value={sendDate}
                 onChange={(e) => setSendDate(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
             </div>
             <div>
@@ -392,7 +392,7 @@ function NewCampaignModal({
                 type="time"
                 value={sendTime}
                 onChange={(e) => setSendTime(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/40"
+                className="h-10 w-full rounded-lg border border-border bg-background/40 px-3 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
               />
             </div>
           </div>
@@ -428,7 +428,7 @@ function NewCampaignModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Agendar campanha'}
           </button>
@@ -473,7 +473,7 @@ function NextCampaign({
   const sendDate = next ? new Date(next.sendAt) : null
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="aurora relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-[oklch(0.17_0.011_300)] shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_56px_-28px_rgba(0,0,0,0.8)] animate-fade-in-up">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-24 -top-28 size-64 rounded-full bg-gold/10 blur-3xl"
@@ -526,7 +526,7 @@ function NextCampaign({
             </div>
             <button
               onClick={onCreate}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-gold px-4 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl btn-gold-glow px-4 text-sm font-semibold"
             >
               <Plus className="size-4" />
               Criar campanha
@@ -622,7 +622,7 @@ function CampaignsTable({
           </div>
           <button
             onClick={onNew}
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105"
+            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg btn-gold-glow px-3.5 text-sm font-semibold"
           >
             <Plus className="size-4" />
             <span className="hidden sm:inline">Nova campanha</span>
@@ -730,9 +730,9 @@ const suggestedCampaigns: {
 ]
 
 const suggestToneMap: Record<string, string> = {
-  gold: 'bg-gold/12 text-gold',
-  success: 'bg-success/12 text-success',
-  info: 'bg-info/12 text-info',
+  gold: 'chip-gold',
+  success: 'chip-success',
+  info: 'chip-info',
 }
 
 function SuggestedCampaigns({ onPick }: { onPick: (preset: CampaignPreset) => void }) {

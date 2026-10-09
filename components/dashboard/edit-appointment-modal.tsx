@@ -55,7 +55,7 @@ export function EditAppointmentModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
-            className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40"
+            className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
             placeholder="Observações sobre o agendamento..."
           />
         </div>
@@ -70,7 +70,7 @@ export function EditAppointmentModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>

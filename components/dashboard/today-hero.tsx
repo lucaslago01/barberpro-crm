@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowRight, CalendarDays, Clock, Scissors } from 'lucide-react'
+import { ArrowRight, CalendarDays, Clock, Scissors, Sparkles } from 'lucide-react'
 import { getAgendaSlotsByDate } from '@/lib/supabase-data'
 import { onDataChanged } from '@/lib/refresh-bus'
 import type { AgendaSlot } from '@/lib/types'
@@ -38,7 +38,9 @@ export function TodayHero() {
     }
   }, [load])
 
-  const booked = (slots ?? []).filter((s) => !s.available && s.status !== 'cancelado')
+  const booked = (slots ?? []).filter(
+    (s) => !s.available && s.status !== 'cancelado',
+  )
   const done = booked.filter((s) => s.status === 'concluido')
   const expected = booked
     .filter((s) => s.status !== 'faltou')
@@ -54,62 +56,75 @@ export function TodayHero() {
   const loading = slots === null
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border bg-card">
-      {/* brilho dourado discreto no canto */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 size-64 rounded-full bg-gold/10 blur-3xl"
-      />
-
-      <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_20rem] lg:items-center lg:gap-8">
+    <section className="aurora relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-[oklch(0.17_0.011_300)] shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_56px_-28px_rgba(0,0,0,0.8)] animate-fade-in-up">
+      <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_22rem] lg:items-center lg:gap-8">
         {/* Número do dia */}
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <CalendarDays className="size-3.5 text-gold" />
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-gold ring-1 ring-gold/20">
+            <CalendarDays className="size-3" />
             Previsto para hoje
           </p>
 
-          <p className="mt-2 text-[44px] font-bold leading-none tracking-tight tabular-nums sm:text-5xl">
+          <p className="mt-3 text-[44px] font-bold leading-none tracking-tight tabular-nums sm:text-5xl">
             {loading ? (
-              <span className="inline-block h-11 w-40 animate-pulse rounded-lg bg-white/5 align-middle" />
+              <span className="relative inline-block h-11 w-40 overflow-hidden rounded-lg bg-white/5 align-middle">
+                <span className="absolute inset-0 animate-shimmer" />
+              </span>
             ) : (
-              currency.format(expected)
+              <span className="gradient-text-gold">
+                {currency.format(expected)}
+              </span>
             )}
           </p>
 
-          <p className="mt-2.5 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             {loading
               ? 'Carregando o dia...'
               : booked.length === 0
                 ? 'Nenhum agendamento para hoje.'
-                : `${done.length} de ${booked.length} ${booked.length === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}`}
+                : `${done.length} de ${booked.length} ${
+                    booked.length === 1
+                      ? 'atendimento concluído'
+                      : 'atendimentos concluídos'
+                  }`}
           </p>
 
           {!loading && booked.length > 0 && (
-            <div className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-white/8">
-              <div
-                className="h-full rounded-full bg-gold transition-[width] duration-500"
-                style={{ width: `${progress}%` }}
-              />
+            <div className="mt-4 flex items-center gap-3">
+              <div className="relative h-2 flex-1 max-w-sm overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.03]">
+                <div
+                  className="relative h-full rounded-full bg-gradient-to-r from-[oklch(0.56_0.21_302)] via-gold to-[oklch(0.75_0.18_310)] transition-[width] duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                >
+                  <span className="absolute inset-0 animate-shimmer rounded-full opacity-50" />
+                </div>
+              </div>
+              <span className="shrink-0 text-xs font-semibold tabular-nums text-gold">
+                {Math.round(progress)}%
+              </span>
             </div>
           )}
         </div>
 
         {/* Próximo atendimento */}
         <div className="lg:border-l lg:border-border lg:pl-8">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Sparkles className="size-3 text-gold" />
             Próximo atendimento
           </p>
 
           {loading ? (
-            <div className="h-[72px] animate-pulse rounded-xl border border-border bg-background/40" />
+            <div className="relative h-[72px] overflow-hidden rounded-xl border border-border bg-background/40">
+              <div className="absolute inset-0 animate-shimmer" />
+            </div>
           ) : next ? (
             <a
               href="/agenda"
-              className="group flex items-center gap-3 rounded-xl border border-border bg-background/40 px-3.5 py-3 transition-colors hover:border-gold/30"
+              className="group flex items-center gap-3 rounded-xl border border-border bg-background/40 px-3.5 py-3 transition-all duration-300 hover:border-gold/40 hover:bg-background/60 hover:shadow-[0_12px_28px_-16px_oklch(0.62_0.19_305/50%)]"
             >
-              <span className="grid w-12 shrink-0 place-items-center rounded-lg bg-gold/12 py-1.5">
-                <span className="text-sm font-bold tabular-nums text-gold">
+              <span className="relative grid w-14 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-gold/25 to-gold/5 py-2 ring-1 ring-gold/25">
+                <span className="absolute inset-0 rounded-lg animate-pulse-glow" />
+                <span className="relative text-sm font-bold tabular-nums text-gold">
                   {next.time}
                 </span>
               </span>
@@ -121,12 +136,14 @@ export function TodayHero() {
                   {next.service}
                 </p>
               </div>
-              <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-gold" />
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-gold" />
             </a>
           ) : (
             <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-3.5 py-4 text-sm text-muted-foreground">
               <Clock className="size-4 shrink-0" />
-              {booked.length > 0 ? 'Todos os horários já passaram.' : 'Agenda livre hoje.'}
+              {booked.length > 0
+                ? 'Todos os horários já passaram.'
+                : 'Agenda livre hoje.'}
             </div>
           )}
         </div>

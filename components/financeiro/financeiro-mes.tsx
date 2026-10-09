@@ -299,7 +299,7 @@ function ExpenseModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : recurring ? 'Cadastrar' : 'Lançar'}
           </button>
@@ -459,7 +459,7 @@ function ClubModal({
                   }}
                   className={
                     receivedNow === value
-                      ? 'rounded-md bg-gold px-2 py-1.5 text-xs font-semibold text-primary-foreground'
+                      ? 'rounded-md btn-gold-glow px-2 py-1.5 text-xs font-semibold'
                       : 'rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground'
                   }
                 >
@@ -575,7 +575,7 @@ function ClubModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : recurring && !receivedNow ? 'Agendar' : 'Lançar'}
           </button>
@@ -601,7 +601,7 @@ function StatCard({
   tone: string
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/25 sm:p-5">
+    <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.195_0.009_300)] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset] transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/30 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_20px_40px_-20px_oklch(0.62_0.19_305/30%)] sm:p-5">
       <div className="flex items-center gap-2.5">
         <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl', tone)}>
           <Icon className="size-[18px]" />
@@ -920,14 +920,14 @@ function ProductsSection({ products }: { products: ProductsPeriod }) {
           value={currency.format(products.losses)}
           detail="Quebras e ajustes de estoque"
           icon={TrendingDown}
-          tone="bg-white/5 text-muted-foreground"
+          tone="chip-muted"
         />
         <StatCard
           label="Lucro"
           value={currency.format(products.profit)}
           detail={products.sales > 0 ? `Margem ${margin}%` : 'Sem vendas neste mês'}
           icon={CircleDollarSign}
-          tone="bg-gold/12 text-gold"
+          tone="chip-gold"
         />
       </div>
 
@@ -1084,7 +1084,7 @@ function FutureBills({
             value={currency.format(projectedProfit)}
             detail="Lucro do mês + clube previsto − despesas a pagar"
             icon={CircleDollarSign}
-            tone="bg-gold/12 text-gold"
+            tone="chip-gold"
           />
         </div>
       )}
@@ -1465,7 +1465,7 @@ export function FinanceiroMes() {
           </button>
           <button
             onClick={() => setExpenseOpen(true)}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gold px-3 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:h-10 sm:flex-none"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl btn-gold-glow px-3 text-sm font-semibold sm:h-10 sm:flex-none"
           >
             <Plus className="size-4" />
             <span className="hidden sm:inline">Lançar despesa</span>
@@ -1486,7 +1486,7 @@ export function FinanceiroMes() {
         data && (
           <>
             {/* Lucro em destaque: é o número que resume o mês */}
-            <section className="relative overflow-hidden rounded-2xl border border-border bg-card">
+            <section className="aurora relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-[oklch(0.17_0.011_300)] shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_56px_-28px_rgba(0,0,0,0.8)] animate-fade-in-up">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-24 -top-28 size-64 rounded-full bg-gold/10 blur-3xl"
@@ -1575,7 +1575,7 @@ export function FinanceiroMes() {
                 value={currency.format(data.walkIn)}
                 detail={`${data.completed} atendimento(s) concluído(s)`}
                 icon={Scissors}
-                tone="bg-gold/12 text-gold"
+                tone="chip-gold"
               />
               <StatCard
                 label="Clube"

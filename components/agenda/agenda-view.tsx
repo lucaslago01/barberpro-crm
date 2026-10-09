@@ -161,7 +161,7 @@ function EditAppointmentModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
-            className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/40"
+            className="w-full rounded-lg border border-border bg-background/40 px-3 py-2 text-sm outline-none focus:border-gold/60 focus:bg-background/60 focus:shadow-[0_0_0_3px_oklch(0.62_0.19_305/15%)]"
             placeholder="Observações sobre o agendamento..."
           />
         </div>
@@ -176,7 +176,7 @@ function EditAppointmentModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:opacity-60"
+            className="rounded-lg btn-gold-glow px-3.5 py-2 text-sm font-semibold disabled:opacity-60"
           >
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
@@ -793,7 +793,7 @@ export function AgendaView({
               className={cn(
                 'shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
                 isToday
-                  ? 'border-gold/40 bg-gold/12 text-gold'
+                  ? 'border-gold/50 bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-[0_0_0_1px_oklch(0.62_0.19_305/15%),0_8px_20px_-12px_oklch(0.62_0.19_305/60%)]'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
               )}
             >
@@ -815,7 +815,7 @@ export function AgendaView({
                 setCreatingTime(undefined)
                 setCreating(true)
               }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gold px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:flex-none sm:w-auto sm:py-2"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg btn-gold-glow px-3 py-2.5 text-sm font-semibold sm:flex-none sm:w-auto sm:py-2"
             >
               <Plus className="size-4" />
               Novo agendamento
@@ -832,7 +832,7 @@ export function AgendaView({
               className={cn(
                 'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
                 filter === f.key
-                  ? 'border-gold/40 bg-gold/12 text-gold'
+                  ? 'border-gold/50 bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-[0_0_0_1px_oklch(0.62_0.19_305/15%),0_8px_20px_-12px_oklch(0.62_0.19_305/60%)]'
                   : 'border-border bg-background/30 text-muted-foreground hover:text-foreground',
               )}
             >

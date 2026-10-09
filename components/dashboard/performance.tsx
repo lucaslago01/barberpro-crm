@@ -229,10 +229,10 @@ export function Performance() {
               setHover(null)
             }}
             className={cn(
-              'rounded-[7px] px-3 py-1.5 text-xs font-medium transition-colors',
+              'rounded-[7px] px-3 py-1.5 text-xs font-semibold transition-all',
               measure === opt.key
-                ? 'bg-gold text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'bg-gradient-to-br from-[oklch(0.68_0.2_306)] to-[oklch(0.54_0.21_302)] text-primary-foreground shadow-[0_4px_12px_-4px_oklch(0.62_0.19_305/60%)]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/5',
             )}
           >
             {opt.label}
@@ -266,6 +266,16 @@ export function Performance() {
               : 'Atendimentos por dia do mês'
           }
         >
+          <defs>
+            <linearGradient id="perf-grad-active" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="oklch(0.78 0.17 310)" />
+              <stop offset="100%" stopColor="oklch(0.52 0.21 300)" />
+            </linearGradient>
+            <linearGradient id="perf-grad-soft" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="oklch(0.62 0.19 305 / 50%)" />
+              <stop offset="100%" stopColor="oklch(0.52 0.19 290 / 25%)" />
+            </linearGradient>
+          </defs>
           {/* grade */}
           {chart.ticks.map((t, i) => (
             <g key={i}>
@@ -311,8 +321,10 @@ export function Performance() {
                     height={Math.max(2, h)}
                     rx={3}
                     className={cn(
-                      'pointer-events-none transition-[fill]',
-                      i === active ? 'fill-gold' : 'fill-gold/35',
+                      'pointer-events-none transition-all duration-300',
+                      i === active
+                        ? 'fill-[url(#perf-grad-active)]'
+                        : 'fill-[url(#perf-grad-soft)]',
                     )}
                   />
                 )}

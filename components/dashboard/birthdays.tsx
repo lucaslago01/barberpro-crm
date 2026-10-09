@@ -127,17 +127,25 @@ export function Birthdays() {
       )}
 
       {!loading && !error && clients.length > 0 && (
-        <ul className="space-y-1 px-3 pb-3">
+        <ul className="space-y-1 px-3 pb-3 stagger-children">
           {visible.map((b) => {
             const isToday = b.daysUntil === 0
             return (
               <li
                 key={b.id}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-2 py-2 transition-colors',
-                  isToday ? 'bg-gold/[0.07]' : 'hover:bg-white/[0.03]',
+                  'group relative flex items-center gap-3 overflow-hidden rounded-xl px-2 py-2 transition-all hover:translate-x-0.5',
+                  isToday
+                    ? 'bg-gradient-to-r from-gold/[0.12] via-gold/[0.06] to-transparent ring-1 ring-gold/15'
+                    : 'hover:bg-white/[0.03]',
                 )}
               >
+                {isToday && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -left-6 top-1/2 size-12 -translate-y-1/2 rounded-full bg-gold/30 blur-xl animate-pulse-glow"
+                  />
+                )}
                 <UserAvatar name={b.name} size="md" ring={isToday} />
 
                 <div className="min-w-0 flex-1">
@@ -150,9 +158,9 @@ export function Birthdays() {
 
                 <span
                   className={cn(
-                    'shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                    'relative shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
                     isToday
-                      ? 'bg-gold/15 text-gold'
+                      ? 'bg-gold text-primary-foreground shadow-[0_0_12px_oklch(0.62_0.19_305/50%)]'
                       : 'text-muted-foreground',
                   )}
                 >

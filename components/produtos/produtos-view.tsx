@@ -613,7 +613,7 @@ function AdjustModal({
             onClick={() => setDirection(key)}
             className={
               direction === key
-                ? 'rounded-md bg-gold px-2 py-1.5 text-xs font-semibold text-primary-foreground'
+                ? 'rounded-md btn-gold-glow px-2 py-1.5 text-xs font-semibold'
                 : 'rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground'
             }
           >
@@ -757,7 +757,7 @@ const KIND_LABEL: Record<MovementKind, string> = {
 const KIND_TONE: Record<MovementKind, string> = {
   venda: 'bg-success/15 text-success',
   entrada: 'bg-info/15 text-info',
-  ajuste: 'bg-gold/15 text-gold',
+  ajuste: 'chip-gold',
   estorno: 'bg-danger/15 text-danger',
 }
 
@@ -892,7 +892,7 @@ export function ProdutosView() {
               onClick={() => setTab(key)}
               className={
                 tab === key
-                  ? 'rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-primary-foreground'
+                  ? 'rounded-lg btn-gold-glow px-4 py-2 text-sm font-semibold'
                   : 'rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground'
               }
             >
@@ -902,7 +902,7 @@ export function ProdutosView() {
         </div>
         <button
           onClick={() => setModal({ type: 'new' })}
-          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-gold px-4 text-sm font-semibold text-primary-foreground transition-colors hover:brightness-105 sm:h-10 sm:w-auto"
+          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl btn-gold-glow px-4 text-sm font-semibold sm:h-10 sm:w-auto"
         >
           <Plus className="size-4" />
           Novo produto
@@ -926,7 +926,7 @@ export function ProdutosView() {
                 value={String(products.length)}
                 detail="Ativos no cadastro"
                 icon={Package}
-                tone="bg-gold/12 text-gold"
+                tone="chip-gold"
               />
               <StatCard
                 label="Unidades"
@@ -947,7 +947,7 @@ export function ProdutosView() {
                 value={String(summary.low)}
                 detail={summary.low > 0 ? 'Produto(s) no mínimo ou sem estoque' : 'Tudo acima do mínimo'}
                 icon={AlertTriangle}
-                tone={summary.low > 0 ? 'bg-danger/12 text-danger' : 'bg-white/5 text-muted-foreground'}
+                tone={summary.low > 0 ? 'chip-danger' : 'chip-muted'}
               />
             </div>
 
@@ -1017,7 +1017,7 @@ export function ProdutosView() {
                             <button
                               onClick={() => setModal({ type: 'sell', product: p })}
                               disabled={p.stock === 0}
-                              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-gold px-3 text-sm font-semibold text-primary-foreground hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40 sm:h-9"
+                              className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-gold-glow px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 sm:h-9"
                             >
                               <ShoppingBag className="size-4" />
                               Vender

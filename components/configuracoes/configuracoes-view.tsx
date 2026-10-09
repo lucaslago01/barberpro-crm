@@ -92,13 +92,9 @@ function SettingsHero() {
   }, [])
 
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_16px_40px_-24px_rgba(0,0,0,0.7)] sm:p-6">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-gold/10 blur-3xl"
-      />
+    <div className="aurora relative isolate overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-[oklch(0.19_0.009_300)] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_56px_-28px_rgba(0,0,0,0.8)] animate-fade-in-up sm:p-6">
       <div className="relative flex items-center gap-4">
-        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-background/50 sm:size-16">
+        <div className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/20 bg-background/50 ring-1 ring-gold/10 sm:size-16">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="size-full object-cover" />
@@ -394,7 +390,7 @@ function NotificationSettings() {
               <span
                 className={cn(
                   'grid size-9 shrink-0 place-items-center rounded-lg transition-colors',
-                  active ? 'bg-gold/15 text-gold' : 'bg-white/5 text-muted-foreground',
+                  active ? 'chip-gold' : 'chip-muted',
                 )}
               >
                 <Icon className="size-4" />
@@ -464,13 +460,18 @@ export function ConfiguracoesView() {
               type="button"
               onClick={() => setActiveTab(t.key)}
               className={cn(
-                'inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
+                'group inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-300',
                 isActive
-                  ? 'bg-gold text-primary-foreground shadow-[0_8px_24px_-12px_color-mix(in_oklch,var(--gold)_65%,transparent)]'
+                  ? 'bg-gradient-to-br from-[oklch(0.72_0.19_310)] to-[oklch(0.52_0.21_300)] text-primary-foreground shadow-[0_8px_24px_-12px_oklch(0.62_0.19_305/70%)]'
                   : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
               )}
             >
-              <Icon className="size-4" />
+              <Icon
+                className={cn(
+                  'size-4 transition-transform',
+                  isActive && 'scale-110',
+                )}
+              />
               {t.label}
             </button>
           )
